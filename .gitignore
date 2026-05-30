@@ -1,0 +1,4 @@
+# 运行时数据在 ~/.yide(不在本仓库),这里只忽略系统/依赖杂物
+.DS_Store
+node_modules/
+*.log

@@ -1,0 +1,4 @@
+# 保证脚本在 Windows 检出时不被改成 CRLF(Node/bash 都更稳)
+*.js text eol=lf
+*.sh text eol=lf
+*.json text eol=lf

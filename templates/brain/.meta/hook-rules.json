@@ -1,0 +1,9 @@
+{
+  "_comment": "由 wangcai-record 维护。每条 = 一个可确定性拦截的硬规则,被 PreToolUse hook 读取。字段:pattern(ERE 扩展正则,对 tool_input 所有字符串值匹配)、reason(命中时告诉模型的原因)、tools(适用工具数组,如 [\"Bash\",\"Edit\",\"Write\"],或 [\"*\"] 表示全部)。",
+  "_example": {
+    "pattern": "\\bDebug\\.Log\\(",
+    "reason": "调试输出请用项目封装的 Logger,不要用 Debug.Log(教训 L-0003)",
+    "tools": ["Write", "Edit", "MultiEdit"]
+  },
+  "rules": []
+}

@@ -1,0 +1,11 @@
+{
+  "name": "guji-tools",
+  "owner": { "name": "咕鸡" },
+  "plugins": [
+    {
+      "name": "yide",
+      "source": "./",
+      "description": "翼德:Unity 程序员的个人上下文中枢 + best practice 把关助手。自动 brief、记过的错绝不再犯、写 .cs 自动把关。"
+    }
+  ]
+}
