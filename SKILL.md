@@ -17,14 +17,14 @@ allowed-tools: Bash
 | `brief` / `简报` / `导出` / `给别的AI` | `actions/brief.md` | 生成可复制简报 |
 | `consolidate` / `整理` / `清理` | `actions/consolidate.md` | 整理记忆 |
 | `update` / `更新` / `迁移` | `actions/update.md` | 插件更新后安全迁移 |
-| `test` / `测` / `测试` / `qa` / `跑测试` / `测试计划` | `actions/test.md` | QA:测试计划/bug SOP/跑测+三查 |
-| `capture` / `笔记` / `记笔记` / `想法` / `随想` / `note` | `actions/capture.md` | 随手记:归类整理 + 查询 |
-| `distill` / `蒸馏` / `蒸馏同事` / `带走` | `actions/distill.md` | 把某人/某块蒸馏成能召唤的命名专家(maxim 等) |
+| `qa` / `测` / `测试` / `跑测试` / `test` | `actions/qa.md` | QA:测试计划/bug SOP/跑测+三查 |
+| `note` / `笔记` / `记笔记` / `想法` / `随想` / `capture` | `actions/note.md` | 随手记:归类整理 + 查询 |
+| `gaotapi` / `搞他皮` / `蒸馏` / `distill` / `带走` | `actions/distill.md` | 把某人/某块蒸馏成能召唤的命名专家(maxim 等) |
 | `专家` / `experts` / `用 <名>` / `会诊` | `actions/experts.md` | 列出/召唤/推荐专家 + 专家会诊 |
 | `prompt` / `prompts` / `提示词` / `存这条` | `actions/prompts.md` | prompt 库:存(提议+确认)/ 看 / 建议 / 升级成命令 |
 
 ## 规则
-- 路由后,把 `$ARGUMENTS` 里动作词之后的内容当作该动作的输入(如 `/yide 记一下 又用了 Debug.Log` → record,内容=后半句;`/yide 笔记 想做个新手引导` → capture 录入)。
+- 路由后,把 `$ARGUMENTS` 里动作词之后的内容当作该动作的输入(如 `/yide 记一下 又用了 Debug.Log` → record,内容=后半句;`/yide note 想做个新手引导` → note 录入)。
 - **无参数或 `help`/`帮助`**:简短自我介绍 + 列出上面这些能做的事,问他想做哪个。
 - 不确定路由到哪:问一句,别瞎猜(对应红线:不编造)。
 - 只在需要时读对应动作文件,保持上下文精简。
