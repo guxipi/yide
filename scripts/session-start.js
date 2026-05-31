@@ -54,8 +54,8 @@ try {
   let nLessons = 0; try { nLessons = countActive(); } catch {}
   if (nLessons) ctx += `\n---\n## 教训库\n你已积累 ${nLessons} 条教训;它们会在你编辑命中其 scope 的文件时自动浮现,无需开场全列。要查全部可读 ~/.yide/INDEX.md。\n`;
 
-  // prompt 库:轻量被动提示(注意到好用的 prompt 时,任务边界问一次要不要存,别刷屏)
-  ctx += `\n---\n## prompt 库(被动)\n若某条 prompt 明显好用(几轮搞定 / 用户说"对了"),在任务边界问一次"要不要 /yide prompt 存下来",一个任务最多一次,被拒就闭嘴。\n`;
+  // prompt 库:自动静默捕获(不打断)。召回由 UserPromptSubmit hook 负责,无需在此提示。
+  ctx += `\n---\n## prompt 库(自动)\n任务收尾时,若刚才那条 prompt 明显好用(满足≥2:几轮搞定 / 用户说"对了" / 没返工 / 反复出现)且库里没近似的,就**静默存**到 ~/.yide/prompts 并 \`prompts.js index\`(只回一行"已收进库,不要就说删");拿不准就别存。召回是自动的(hook 会在他发话时推荐),你无需主动提。\n`;
 
   // 随手记 inbox:只报未整理条数(手机扔进来的笔记)
   let nInbox = 0;
