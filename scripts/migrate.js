@@ -26,6 +26,8 @@ function isUserOwned(rel) {
     rel === 'INDEX.md' || rel === 'style/coding.md' || rel === 'style/communication.md' ||
     rel === 'style/writing.md' || rel.startsWith('lessons/') && rel !== 'lessons/_TEMPLATE.md' ||
     rel.startsWith('projects/') && rel !== 'projects/_TEMPLATE.md' ||
+    rel.startsWith('notes/') && rel !== 'notes/README.md' ||
+    rel.startsWith('distilled/') && rel !== 'distilled/README.md' ||
     rel.startsWith('.meta/');
 }
 
