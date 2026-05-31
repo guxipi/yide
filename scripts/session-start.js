@@ -64,10 +64,10 @@ try {
   }
   // 教训只报数量,按文件自动浮现(PostToolUse),不在开场全列
   let nLessons = 0; try { nLessons = countActive(); } catch {}
-  if (nLessons) ctx += `\n---\n## 教训库\n你已积累 ${nLessons} 条教训;它们会在你编辑命中其 scope 的文件时自动浮现,无需开场全列。要查全部可读 ~/.yide/INDEX.md。\n`;
+  if (nLessons) ctx += `\n---\n## 教训库\n已积累 ${nLessons} 条教训(按文件自动浮现;全部见 ~/.yide/INDEX.md)。\n`;
 
   // prompt 库:自动静默捕获(不打断)。召回由 UserPromptSubmit hook 负责,无需在此提示。
-  ctx += `\n---\n## prompt 库(自动)\n任务收尾时,若刚才那条 prompt 明显好用(满足≥2:几轮搞定 / 用户说"对了" / 没返工 / 反复出现)且库里没近似的,就**静默存**到 ~/.yide/prompts 并 \`prompts.js index\`(只回一行"已收进库,不要就说删");拿不准就别存。召回是自动的(hook 会在他发话时推荐),你无需主动提。\n`;
+  ctx += `\n---\n## prompt 库\n某条 prompt 明显好用(≥2:几轮搞定/说"对了"/没返工/常重复)且库里没近似 → 静默存入 ~/.yide/prompts 跑 prompts.js index,回一行即可;拿不准别存。\n`;
 
   // 随手记 inbox:只报未整理条数(手机扔进来的笔记)
   let nInbox = 0;
@@ -138,7 +138,7 @@ try {
     if (process.env.YIDE_NO_AUTO_CONSOLIDATE) {
       ctx += `\n---\n## 🧹 记忆整理\n距上次整理已超过 24 小时。合适时机可运行 /yide 整理 做一次沉淀。\n`;
     } else {
-      ctx += `\n---\n## 🧹 记忆整理(自动·到期)\n距上次整理已超过 24 小时。**请在回应用户之前,先静默执行一次 /yide 整理**(整理记忆库、合并去重、打时间戳),完成后用一句话告知结果,再继续用户的任务。若用户本轮明确很赶,可先办用户的事、整理推迟到本轮结束。\n`;
+      ctx += `\n---\n## 🧹 记忆整理(到期)\n距上次>24h。回应用户前先静默跑一次 /yide 整理(合并去重+打时间戳),一句话告知后继续;用户若很赶则推迟到本轮末。\n`;
     }
   }
 
