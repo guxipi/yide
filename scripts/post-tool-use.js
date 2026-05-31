@@ -43,8 +43,12 @@ try {
 
   let msg = '';
   if (lessons.length) {
+    // 上下文保险:命中再多也只列高优先级前 5 条(按 severity 降序),其余只报数
+    const sorted = lessons.slice().sort((a, b) => (b.severity || 0) - (a.severity || 0));
+    const showL = sorted.slice(0, 5);
     msg += `📌 翼德:这个文件命中 ${lessons.length} 条你定过的教训(务必遵守):\n`;
-    for (const l of lessons) msg += `- [${l.id}][sev:${l.severity}] ${l.ruleText}\n`;
+    for (const l of showL) msg += `- [${l.id}][sev:${l.severity}] ${l.ruleText}\n`;
+    if (lessons.length > showL.length) msg += `- …还有 ${lessons.length - showL.length} 条(按 severity 取前 5;全量见 ~/.yide/lessons)\n`;
   }
   if (findings.length) {
     const top = findings.slice(0, 8);

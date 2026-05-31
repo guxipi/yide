@@ -1,5 +1,6 @@
 ---
 description: 翼德(yide)首次访谈 onboarding。当用户第一次设置翼德/yide、想建立或重建个人上下文大脑(~/.yide)、或说"初始化翼德/初始化 yide/建大脑/onboard"时使用。会访谈用户并填充 core/ 与 style/。
+allowed-tools: Bash
 ---
 
 # 翼德 · Onboarding 访谈

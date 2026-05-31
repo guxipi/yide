@@ -1,6 +1,7 @@
 ---
 description: 翼德(yide)记录教训。当用户纠正了 AI、指出一个错误,或说"@翼德 记一下/@yide 记一下/记录/这个错别再犯/记到翼德"时使用。把这次纠错提炼成一张 lesson 卡,确认后写入 ~/.yide/lessons,并按需升级为永久红线或硬拦截。
 argument-hint: [要记录的问题/纠正,可留空由对话上下文推断]
+allowed-tools: Bash
 ---
 
 # 翼德 · 记录教训

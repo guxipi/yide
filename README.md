@@ -26,6 +26,13 @@ claude --plugin-dir /path/to/yide
 | `/yide:yide-record` | 发现问题时记一笔教训,下次绝不再犯 |
 | `/yide:yide-brief` | 生成可复制简报,贴进 Desktop / ChatGPT / Gemini |
 | `/yide:yide-consolidate` | 整理记忆:合并重复、修正过时、升级反复犯的错 |
+| `/yide:yide-update` | 插件更新后安全迁移:补新默认、刷新发货文档,**冲突先问、绝不覆盖你的数据** |
+
+## 更新与数据安全(代码/数据分离)
+
+- **代码**(hooks、lint 规则、skills)在仓库里 → 更新即生效。
+- **你的数据**(lessons、identity、自定义红线)在 `~/.yide` → **更新永不覆盖**。
+- 想把新版的默认规则/文档安全并入老大脑:跑 `/yide:yide-update`(基于 `.meta/shipped-base` 三方比较,只增不删、冲突先问)。
 
 ## 核心能力
 

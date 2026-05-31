@@ -1,5 +1,6 @@
 ---
 description: 翼德(yide)整理记忆。当用户说"整理记忆/翼德整理一下/yide 整理一下/consolidate/清理大脑",或大脑里 lessons 越积越多、可能有重复或过时,或会话开始时提示"记忆整理到期/自动整理"时使用。合并重复、修正过时、把反复出现的教训升级为红线,冲突攒起来问用户。
+allowed-tools: Bash
 ---
 
 # 翼德 · 整理记忆(consolidate)

@@ -31,6 +31,14 @@ try {
     process.exit(0);
   }
   fs.cpSync(TEMPLATE, BRAIN, { recursive: true });
+  // 写"基线快照":记录本次随插件发货的模板原样,供未来 yide-update 做 3-way 合并(区分"用户改过"还是"没动")
+  try {
+    const base = path.join(BRAIN, '.meta', 'shipped-base');
+    fs.cpSync(TEMPLATE, base, { recursive: true });
+    let ver = '0.0.0';
+    try { ver = JSON.parse(fs.readFileSync(path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version || ver; } catch {}
+    fs.writeFileSync(path.join(BRAIN, '.meta', 'plugin-version.txt'), ver);
+  } catch {}
   console.log(`CREATED\t${BRAIN}\t已从模板建立大脑。`);
 } catch (e) {
   console.log(`ERROR\t${e && e.message}`);
