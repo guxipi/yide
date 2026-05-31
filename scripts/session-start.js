@@ -7,6 +7,7 @@ const path = require('path');
 const { brainDir, today } = require(path.join(__dirname, 'lib.js'));
 const { detect, profileText } = require(path.join(__dirname, 'unity-context.js'));
 const { countActive } = require(path.join(__dirname, 'lessons.js'));
+const { syncExperts } = require(path.join(__dirname, 'sync-experts.js'));
 
 const BRAIN = brainDir();
 const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..');
@@ -38,6 +39,9 @@ try {
     process.exit(0);
   }
 
+  // 把可移植的专家副本同步进 ~/.claude/agents/(跨设备后仍可召唤);静默,不污染输出
+  try { syncExperts(); } catch {}
+
   let ctx = '# 🗡️ 翼德简报 — 个人上下文中枢\n' +
     '以下是关于当前用户的持久上下文。请全程遵守,尤其 hard-rules;需要细节就读 ~/.yide 下对应文件,不要猜。\n';
 
@@ -49,6 +53,9 @@ try {
   // 教训只报数量,按文件自动浮现(PostToolUse),不在开场全列
   let nLessons = 0; try { nLessons = countActive(); } catch {}
   if (nLessons) ctx += `\n---\n## 教训库\n你已积累 ${nLessons} 条教训;它们会在你编辑命中其 scope 的文件时自动浮现,无需开场全列。要查全部可读 ~/.yide/INDEX.md。\n`;
+
+  // prompt 库:轻量被动提示(注意到好用的 prompt 时,任务边界问一次要不要存,别刷屏)
+  ctx += `\n---\n## prompt 库(被动)\n若某条 prompt 明显好用(几轮搞定 / 用户说"对了"),在任务边界问一次"要不要 /yide prompt 存下来",一个任务最多一次,被拒就闭嘴。\n`;
 
   // 随手记 inbox:只报未整理条数(手机扔进来的笔记)
   let nInbox = 0;

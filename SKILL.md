@@ -19,7 +19,9 @@ allowed-tools: Bash
 | `update` / `更新` / `迁移` | `actions/update.md` | 插件更新后安全迁移 |
 | `test` / `测` / `测试` / `qa` / `跑测试` / `测试计划` | `actions/test.md` | QA:测试计划/bug SOP/跑测+三查 |
 | `capture` / `笔记` / `记笔记` / `想法` / `随想` / `note` | `actions/capture.md` | 随手记:归类整理 + 查询 |
-| `distill` / `蒸馏` / `蒸馏同事` / `带走` | `actions/distill.md` | 蒸馏公司代码→个人可移植知识库(含 IP 护栏) |
+| `distill` / `蒸馏` / `蒸馏同事` / `带走` | `actions/distill.md` | 把某人/某块蒸馏成能召唤的命名专家(maxim 等) |
+| `专家` / `experts` / `用 <名>` / `会诊` | `actions/experts.md` | 列出/召唤/推荐专家 + 专家会诊 |
+| `prompt` / `prompts` / `提示词` / `存这条` | `actions/prompts.md` | prompt 库:存(提议+确认)/ 看 / 建议 / 升级成命令 |
 
 ## 规则
 - 路由后,把 `$ARGUMENTS` 里动作词之后的内容当作该动作的输入(如 `/yide 记一下 又用了 Debug.Log` → record,内容=后半句;`/yide 笔记 想做个新手引导` → capture 录入)。
