@@ -21,9 +21,16 @@
 - 提醒:翼德不能替他按 Play/出包/上真机;但证据落盘后,翼德能读回来做三查。
 
 ## D. 跑测 + 三查(triage)
-- 若机器有 Unity 编辑器 + license:`Unity -runTests -batchmode -projectPath . -testPlatform EditMode -testResults r.xml`(冒烟子集用 `-testCategory Smoke`)。**别看退出码**(Unity 无统一约定),**解析 NUnit XML** 判定通过/失败。
+- **若接了 Unity MCP**(见 `integrations/unity-mcp/`,且 Unity 开着):直接 `run_tests`(EditMode/PlayMode)读 pass/fail、`read_console` 读报错——真·在引擎里验证。
+- **否则**(纯 CLI,需本机 Unity 编辑器 + license):`Unity -runTests -batchmode -projectPath . -testPlatform EditMode -testResults r.xml`(冒烟子集 `-testCategory Smoke`)。**别看退出码**(Unity 无统一约定),**解析 NUnit XML**。
 - 读 `Player.log` / `adb logcat` / NUnit XML,聚类失败,产出结构化报告(按 SOP)。
-- 需 Editor/真机/UI 自动化(AltTester 等)的部分翼德做不了,如实说明,别假装跑过。
+- 没有以上条件就如实说"跑不了",别假装跑过。
+
+## 文件去哪、怎么跟公司配合(归档口径)
+- **测试计划** → 项目内 `QA/test-plan-<日期>.md`。
+- **bug 报告** → 项目内 `QA/bugs/<日期>-<短标题>.md`;若公司用 Jira/GitHub Issues,改写进对应模板**贴过去**,翼德不擅自建外部工单。
+- **证据**(日志/截图)→ `EvidenceCapture.cs` 默认存到 `Application.persistentDataPath/yide-evidence/`;附进 bug 报告时拷到 `QA/bugs/` 同名目录。
+- **翼德的"教训"(可复用经验)进 ~/.yide**,**项目相关产物进项目仓库**——两者分开,不混。
 
 ## 原则
-- 聚焦重点,不堆边角(对应用户痛点);不编造测过、不编造日志;报告必须可复现+带证据。
+- 聚焦重点,不堆边角;不编造测过/日志;报告必须可复现+带证据。
