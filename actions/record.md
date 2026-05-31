@@ -1,9 +1,3 @@
----
-description: 翼德(yide)记录教训。当用户纠正了 AI、指出一个错误,或说"@翼德 记一下/@yide 记一下/记录/这个错别再犯/记到翼德"时使用。把这次纠错提炼成一张 lesson 卡,确认后写入 ~/.yide/lessons,并按需升级为永久红线或硬拦截。
-argument-hint: [要记录的问题/纠正,可留空由对话上下文推断]
-allowed-tools: Bash
----
-
 # 翼德 · 记录教训
 
 目标:把一次"AI 做错了 + 用户的纠正"变成一条**可复用、绝不再犯**的教训。
@@ -27,7 +21,7 @@ allowed-tools: Bash
 
 5. **写入**:基于 `~/.yide/lessons/_TEMPLATE.md` 写 `~/.yide/lessons/L-XXXX.md`,填好 frontmatter(id / date 用今天 / severity / scope / enforce / status: active)与三段正文。
 
-6. **更新索引**:在 `~/.yide/INDEX.md` 的 lessons 段加一行:`- [L-XXXX](lessons/L-XXXX.md) [sev:N] — 一句话`;然后用 Bash 运行 `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-index.js"` 重建编译索引(供把关器快速按文件匹配)。
+6. **更新索引**:在 `~/.yide/INDEX.md` 的 lessons 段加一行:`- [L-XXXX](lessons/L-XXXX.md) [sev:N] — 一句话`;然后用 Bash 运行 `node "${CLAUDE_SKILL_DIR}/scripts/build-index.js"` 重建编译索引(供把关器快速按文件匹配)。
 
 7. **按 severity 升级**:
    - **severity ≥ 8**:把该规则同时追加到 `~/.yide/core/hard-rules.md`(永远带,全平台软层生效)。

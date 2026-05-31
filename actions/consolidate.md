@@ -1,8 +1,3 @@
----
-description: 翼德(yide)整理记忆。当用户说"整理记忆/翼德整理一下/yide 整理一下/consolidate/清理大脑",或大脑里 lessons 越积越多、可能有重复或过时,或会话开始时提示"记忆整理到期/自动整理"时使用。合并重复、修正过时、把反复出现的教训升级为红线,冲突攒起来问用户。
-allowed-tools: Bash
----
-
 # 翼德 · 整理记忆(consolidate)
 
 目标:防止"记忆腐烂"。这是大脑长期可用的关键维护步骤(事件驱动:每次开会话若距上次 >24h 会被提醒)。
@@ -26,10 +21,10 @@ allowed-tools: Bash
 6. **修订索引**:更新 `INDEX.md` 使其与现状一致;确认它仍在 ≤200 行的预算内。
 
 7. **归档与重建索引**:把 `status: archived/superseded` 的 lesson 移到 `~/.yide/lessons/archive/`(运行时不再扫,保持活跃集精简);然后运行
-   `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-index.js"` 重建编译索引。
+   `node "${CLAUDE_SKILL_DIR}/scripts/build-index.js"` 重建编译索引。
 
 8. **打整理时间戳**:用 Bash 工具运行
-   `node "${CLAUDE_PLUGIN_ROOT}/scripts/stamp-consolidate.js"`
+   `node "${CLAUDE_SKILL_DIR}/scripts/stamp-consolidate.js"`
    (写入 `~/.yide/.meta/last-consolidate.txt`,这样 SessionStart 的"整理到期"会重置 24 小时。)
 
 9. **汇报**:简短列出本次做了什么(合并 N 条、归档 M 条、升级 K 条、待裁决 J 条),并把 conflicts 念给用户。

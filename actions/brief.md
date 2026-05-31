@@ -1,8 +1,3 @@
----
-description: 翼德(yide)生成可移植简报。当用户要把自己的偏好/规则带到 Claude Desktop、ChatGPT、Gemini 等其他 AI,或说"翼德简报/yide 简报/给我简报/brief/导出上下文/复制给别的AI"时使用。生成一段可直接复制粘贴的 Markdown。
-argument-hint: [可选:场景,如 coding / unity / writing / 某项目名]
----
-
 # 翼德 · 生成简报
 
 目标:把大脑浓缩成一段**可复制粘贴**的简报,贴进任何 AI 的对话或自定义指令里。

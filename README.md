@@ -18,21 +18,27 @@ claude --plugin-dir /path/to/yide
 
 装好后**每次开 Claude Code 会话,翼德会自动**:注入你的核心上下文 + 红线、读当前 Unity 项目档案(版本/管线/帧率)、并在你写 .cs 时把关。
 
-## 四个命令
+## 一个命令 `/yide <动作>`(也认自然语言)
 
-| 命令 | 干什么 |
+只有一个轻量入口 `/yide`,后面跟动作词或中文,翼德按需加载对应能力(progressive disclosure,不占上下文):
+
+| 你说 | 干什么 |
 |---|---|
-| `/yide:yide-onboard` | 首次访谈,建你的个人大脑 |
-| `/yide:yide-record` | 发现问题时记一笔教训,下次绝不再犯 |
-| `/yide:yide-brief` | 生成可复制简报,贴进 Desktop / ChatGPT / Gemini |
-| `/yide:yide-consolidate` | 整理记忆:合并重复、修正过时、升级反复犯的错 |
-| `/yide:yide-update` | 插件更新后安全迁移:补新默认、刷新发货文档,**冲突先问、绝不覆盖你的数据** |
+| `/yide onboard` / `/yide 磨合` | 首次访谈(选择题),建你的个人大脑 |
+| `/yide record` / `/yide 记一下 …` | 记一笔教训,下次绝不再犯 |
+| `/yide brief` / `/yide 简报` | 生成可复制简报,贴进 Desktop / ChatGPT / Gemini |
+| `/yide 整理` / `/yide consolidate` | 整理记忆:合并重复、修正过时、升级反复犯的错 |
+| `/yide update` / `/yide 更新` | 插件更新后安全迁移:补新默认,**冲突先问、绝不覆盖你的数据** |
+| `/yide test` / `/yide 测 …` | QA:聚焦测试计划 / 强制 bug SOP / 跑测+三查 |
+| `/yide 笔记 …` / `/yide capture` | 随手记:录入 / 整理手机扔来的笔记 / 查询 |
+
+说"翼德 记一下…/简报/整理/测试"等自然语言也能触发。
 
 ## 更新与数据安全(代码/数据分离)
 
-- **代码**(hooks、lint 规则、skills)在仓库里 → 更新即生效。
-- **你的数据**(lessons、identity、自定义红线)在 `~/.yide` → **更新永不覆盖**。
-- 想把新版的默认规则/文档安全并入老大脑:跑 `/yide:yide-update`(基于 `.meta/shipped-base` 三方比较,只增不删、冲突先问)。
+- **代码**(hooks、lint、actions)在仓库里 → 更新即生效。
+- **你的数据**(lessons、identity、笔记、自定义红线)在 `~/.yide` → **更新永不覆盖**。
+- 把新版默认安全并入老大脑:`/yide update`(基于 `.meta/shipped-base` 三方比较,只增不删、冲突先问)。
 
 ## 核心能力
 

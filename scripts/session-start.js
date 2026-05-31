@@ -25,14 +25,14 @@ try {
   if (!fs.existsSync(BRAIN)) {
     // 首次见面:自我介绍 + 引导 onboard(由模型把这段话讲给用户)
     emit(
-      '【翼德首次启动 · 请把下面这段自我介绍讲给用户,然后引导他运行 /yide:yide-onboard】\n\n' +
+      '【翼德首次启动 · 请把下面这段自我介绍讲给用户,然后引导他运行 /yide onboard】\n\n' +
       '你好,勾哥!我是咕鸡为你打造的专属秘书,叫翼德——随时用 /yide 或 /翼德 喊我。\n\n' +
       '我主要在三件事上帮你:\n\n' +
       '记住你:习惯、风格、规则记一次就牢,以后每开新对话我自动 brief,你不用反复解释;换电脑也认得你。\n' +
       '绝不让你重复踩坑:你纠正过 AI 一次的错,我都会记录下来,并且 brief 给之后任何对话(Claude Code 里还能硬拦)。\n' +
       '帮你把关 Unity:写 C# 时按手游 best practice 盯着——热路径 GC、过时 API、序列化、资源卫生——发现隐患就提醒,绝不擅自大改。\n\n' +
       '我的大脑是一堆纯文本(在 ~/.yide,随时能翻):core=你是谁+红线、lessons=redflag、style=代码与沟通风格、projects=项目背景。\n\n' +
-      '只要花 2–3 分钟、答几道选择题(Unity 版本/风格/红线)跟我磨合,就能正式上岗。准备好就让我跑 /yide:yide-onboard!',
+      '只要花 2–3 分钟、答几道选择题(Unity 版本/风格/红线)跟我磨合,就能正式上岗。准备好就让我跑 /yide onboard!',
       '🗡️ 翼德 · 初次见面'
     );
     process.exit(0);
@@ -49,6 +49,11 @@ try {
   // 教训只报数量,按文件自动浮现(PostToolUse),不在开场全列
   let nLessons = 0; try { nLessons = countActive(); } catch {}
   if (nLessons) ctx += `\n---\n## 教训库\n你已积累 ${nLessons} 条教训;它们会在你编辑命中其 scope 的文件时自动浮现,无需开场全列。要查全部可读 ~/.yide/INDEX.md。\n`;
+
+  // 随手记 inbox:只报未整理条数(手机扔进来的笔记)
+  let nInbox = 0;
+  try { nInbox = fs.readdirSync(path.join(BRAIN, 'notes', 'inbox')).filter(n => !n.startsWith('.') && !n.startsWith('_')).length; } catch {}
+  if (nInbox) ctx += `\n---\n## 📥 随手记\n收件箱有 ${nInbox} 条未整理的笔记。合适时机可运行 /yide 笔记 整理。\n`;
 
   // --- Unity 项目档案:自动探测版本/管线/输入系统/Addressables/脚本后端 ---
   let unity = null;
@@ -75,9 +80,9 @@ try {
   } catch { due = true; }
   if (due) {
     if (process.env.YIDE_NO_AUTO_CONSOLIDATE) {
-      ctx += `\n---\n## 🧹 记忆整理\n距上次整理已超过 24 小时。合适时机可运行 /yide:yide-consolidate 做一次沉淀。\n`;
+      ctx += `\n---\n## 🧹 记忆整理\n距上次整理已超过 24 小时。合适时机可运行 /yide 整理 做一次沉淀。\n`;
     } else {
-      ctx += `\n---\n## 🧹 记忆整理(自动·到期)\n距上次整理已超过 24 小时。**请在回应用户之前,先静默执行一次 /yide:yide-consolidate**(整理记忆库、合并去重、打时间戳),完成后用一句话告知结果,再继续用户的任务。若用户本轮明确很赶,可先办用户的事、整理推迟到本轮结束。\n`;
+      ctx += `\n---\n## 🧹 记忆整理(自动·到期)\n距上次整理已超过 24 小时。**请在回应用户之前,先静默执行一次 /yide 整理**(整理记忆库、合并去重、打时间戳),完成后用一句话告知结果,再继续用户的任务。若用户本轮明确很赶,可先办用户的事、整理推迟到本轮结束。\n`;
     }
   }
 

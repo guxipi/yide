@@ -1,8 +1,3 @@
----
-description: 翼德(yide)安全迁移。当插件更新后(或用户说"翼德更新/yide update/同步新默认/迁移大脑")时使用。把新版带来的默认(新文件、刷新的 Unity 文档、新增默认红线)安全合并进用户大脑——只增不删,冲突先问,绝不覆盖用户自己的数据。
-allowed-tools: Bash
----
-
 # 翼德 · 安全迁移(yide-update)
 
 原则:**用户数据神圣**。身份、教训(lessons)、项目、用户填写的风格——**一律不动**。只做"补充新默认"和"在用户没改过的发货文件上刷新"。
@@ -10,7 +5,7 @@ allowed-tools: Bash
 ## 步骤
 
 1. **跑迁移引擎(安全部分自动应用)**:Bash 运行
-   `node "${CLAUDE_PLUGIN_ROOT}/scripts/migrate.js" --apply`
+   `node "${CLAUDE_SKILL_DIR}/scripts/migrate.js" --apply`
    它返回一段 JSON 报告:`{ added[], refreshed[], conflicts[], rulesToAdd[] }`,并已自动:
    - **added**:用户缺的新文件 → 已新增;
    - **refreshed**:发货知识文件(如 `style/unity.md`)且用户没改过 → 已刷新到新版。
@@ -18,7 +13,7 @@ allowed-tools: Bash
 2. **报告自动部分**:把 added / refreshed 简短念给用户(让他知道补了什么)。
 
 3. **冲突(conflicts):逐个问用户**。这些是"发货文件,但用户改过、上游也更新了"。对每个:
-   - 用 Read 把"用户版"和插件模板版(`${CLAUDE_PLUGIN_ROOT}/templates/brain/<file>`)对比给用户看关键差异;
+   - 用 Read 把"用户版"和插件模板版(`${CLAUDE_SKILL_DIR}/templates/brain/<file>`)对比给用户看关键差异;
    - 问他:**保留我的 / 换成新版 / 手动合并**(默认保留用户的)。
    - 按选择用 Edit/Write 处理;**不要替他擅自决定**。
 
