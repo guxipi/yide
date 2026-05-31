@@ -65,17 +65,36 @@ try {
   const repeatedExplain = [...promptNorm.values()].filter(n => n >= 2).length; // 同一句被重复说的簇数
   const neverUsed = ACTIONS.filter(a => !usedActions.has(a));
 
-  // 只输出数字与主题(安全:不含任何原文/代码/密钥)
+  // === ✅ 翼德已自动处理:只报可度量的真实动作,不夸大 ===
+  const BRAIN = brainDir();
+  const countNew = (sub, ok) => { try { return fs.readdirSync(path.join(BRAIN, sub)).filter(n => ok(n) && fs.statSync(path.join(BRAIN, sub, n)).mtimeMs > last).length; } catch { return 0; } };
+  const newLessons = countNew('lessons', n => /^L-.*\.md$/i.test(n));
+  const newPrompts = countNew('prompts', n => /\.md$/i.test(n) && n !== 'README.md');
+  let consolidated = false; try { consolidated = Number(fs.readFileSync(path.join(META, 'last-consolidate.txt'), 'utf8')) > last; } catch {}
+  let hardRules = 0; try { hardRules = (fs.readFileSync(path.join(BRAIN, 'core', 'hard-rules.md'), 'utf8').match(/^\s*\d+\.\s/gm) || []).length; } catch {}
+  const auto = [];
+  if (newLessons) auto.push(`记下 ${newLessons} 条新教训(已自动注入,之后不再犯)`);
+  if (newPrompts) auto.push(`收了 ${newPrompts} 条好用的 prompt(召回时自动推荐)`);
+  if (consolidated) auto.push(`整理了一次记忆库`);
+  if (hardRules) auto.push(`守着 ${hardRules} 条红线(写代码时自动把关/拦截)`);
+
+  // === 🔧 需要咕鸡手动优化:每条附最佳做法 ===
+  const manual = [];
+  if (repeatedExplain) manual.push(`重复解释 ×${repeatedExplain} → 把这事实固化进项目档案(/yide onboard 补充)或项目 CLAUDE.md,翼德开场自动带,免得勾哥反复说`);
+  if (corrections) manual.push(`纠正/不满 ×${corrections} → 让翼德用 /yide record 记成教训;高频的升级成 hook 硬规则(severity≥8),从此自动拦`);
+  if (errors) manual.push(`报错/中断 ×${errors} → 多半缺默认值或护栏:补一条 PreToolUse 规则或一个合理默认`);
+  if (neverUsed.length) manual.push(`从没用过:${neverUsed.join(' / ')} → 要么改命令 description 提升可发现性,要么砍掉(避免臃肿拖累 Claude)`);
+
+  // 只输出数字、主题、建议(安全:不含任何原文/代码/密钥)
   const lines = [];
-  lines.push(`翼德日报 · 勾哥使用观察`);
+  lines.push(`📋 翼德小报告 · 勾哥使用观察`);
   lines.push(`会话 ${sessions} · 用户提问 ${userPrompts} 条`);
-  if (repeatedExplain) lines.push(`🟠 重复解释 ×${repeatedExplain}(同一句反复说=上下文缺口,建议固化进项目档案/CLAUDE.md)`);
-  if (corrections) lines.push(`🟡 纠正/不满 ×${corrections}(建议:把高频纠正升级成翼德把关规则)`);
-  if (errors) lines.push(`🔴 报错/中断 ×${errors}(建议:看是否缺默认或护栏)`);
-  if (neverUsed.length) lines.push(`💤 从未使用的命令:${neverUsed.join(' / ')}(可发现性问题或无价值?)`);
-  const topTools = Object.entries(toolCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k}×${v}`);
-  if (topTools.length) lines.push(`🔧 高频工具:${topTools.join('、')}`);
-  if (lines.length <= 2) lines.push('(本期无显著信号)');
+  lines.push('');
+  lines.push('✅ 翼德已自动处理:');
+  lines.push(auto.length ? auto.map(s => '  · ' + s).join('\n') : '  ·(本期无)');
+  lines.push('');
+  lines.push('🔧 需要你手动优化(附最佳做法):');
+  lines.push(manual.length ? manual.map(s => '  · ' + s).join('\n') : '  ·(本期无显著信号)');
   const digest = lines.join('\n');
 
   fs.writeFileSync(OUT, digest);

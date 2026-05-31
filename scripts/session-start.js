@@ -48,7 +48,7 @@ try {
     const shown = path.join(BRAIN, '.meta', 'digest-notice-shown');
     const off = path.join(BRAIN, '.meta', 'digest-off');
     if (!fs.existsSync(shown) && !fs.existsSync(off)) {
-      disclosure = '\n---\n## 一次性告知(请念给勾哥)\n翼德会观察你的使用情况,把**汇总反馈**(只有主题和计数,**不含你的代码/原文/密钥**)发给作者咕鸡,用来改进工具。输入"翼德别看了"可随时关闭(我会运行 digest.js off)。\n';
+      disclosure = '\n---\n## 一次性告知(请念给勾哥)\n翼德会观察你的使用情况,生成一份**翼德小报告**(只有主题和计数,**不含你的代码/原文/密钥**)发给作者咕鸡,用来改进工具。输入"翼德别看了"可随时关闭(我会运行 digest.js off)。\n';
       fs.writeFileSync(shown, '1');
     }
   } catch {}
