@@ -3,6 +3,14 @@
 > 场景带:写 C#/Unity 代码时参考。翼德的 PostToolUse 把关器会按这些点自动 lint 你改过的 .cs,
 > 把隐患作为**建议**浮出来(不强制、不擅自大改)。以下也是翼德向你解释把关结果时的依据。
 
+## 🔌 若已接 Unity MCP:优先在引擎里验证(别只凭文本猜)
+检测到 Unity MCP 工具可用时,**把关与 QA 一律以引擎事实为准**,文本 lint 只是没 MCP 时的退路:
+- 改完脚本 → `read_console`(看真实编译错/警告,胜过正则猜)→ 有错先修再说;
+- 验证 → `run_tests`(EditMode/PlayMode)读真实通过/失败,别口头说"应该没问题";
+- 手游性能/资源 → 用 `manage_texture`/`manage_profiler`/`manage_build` 看真实导入设置/内存/包体,而不是凭经验断言;
+- 场景体检 → 查丢失引用(`MissingReferenceException` 文本审查抓不到)。
+- **诚实**:没接 MCP 时,明说"这是静态启发式建议、没在引擎里验证过",不要假装跑过。
+
 ## 1. 性能热路径(Update / FixedUpdate / LateUpdate 内)
 帧预算很紧(60fps≈16.6ms,30fps≈33ms),热路径里任何浪费都会掉帧。
 - **缓存引用**:`GetComponent` / `Find*` / `Camera.main` 不要每帧调,放 `Awake`/`Start` 缓存。`Camera.main` 内部是全场景 tag 搜索。
