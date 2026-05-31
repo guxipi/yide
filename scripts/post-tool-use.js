@@ -20,10 +20,16 @@ try {
   const fp = input.tool_input && input.tool_input.file_path;
   if (!fp) process.exit(0);
 
-  // ① Unity lint(仅 .cs,文件须可读)
+  // ① Unity lint(仅 .cs,文件须可读;带项目 Unity 版本以 gating 过时 API)
   let findings = [];
   if (/\.cs$/i.test(fp)) {
-    try { findings = lint(fs.readFileSync(fp, 'utf8')); } catch {}
+    let unityVersion = null;
+    try {
+      const proj = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+      const m = fs.readFileSync(path.join(proj, 'ProjectSettings', 'ProjectVersion.txt'), 'utf8').match(/m_EditorVersion:\s*(.+)/);
+      if (m) unityVersion = m[1].trim();
+    } catch {}
+    try { findings = lint(fs.readFileSync(fp, 'utf8'), { unityVersion }); } catch {}
   }
   // ② scope 命中的 lessons
   let lessons = [];
