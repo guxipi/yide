@@ -1,0 +1,5 @@
+{
+  "_说明": "翼德把关行为。expertLevel: expert(只报非显而易见,资深友好)| balanced(再加高severity的)| novice(全报)。suppressed: 学到的静音,如 [{\"rule\":\"perf\",\"glob\":\"**/Legacy/*.cs\",\"reason\":\"老模块,故意的\"}]。行内一次性豁免直接在代码行尾写 // yide-ok。",
+  "expertLevel": "expert",
+  "suppressed": []
+}

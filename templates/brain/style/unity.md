@@ -11,6 +11,12 @@
 - 场景体检 → 查丢失引用(`MissingReferenceException` 文本审查抓不到)。
 - **诚实**:没接 MCP 时,明说"这是静态启发式建议、没在引擎里验证过",不要假装跑过。
 
+## 0. 让位项目约定 + 专家友好(把关原则)
+- **项目约定 > 通用建议**:本仓库的 `CLAUDE.md`/`AGENTS.md`/`.editorconfig`/`.cursor/rules`、以及已探测的 Unity 事实(管线/版本/Input/Addressables)**优先**;通用 best practice 与它们冲突时**让位、闭嘴**(那是有意的取舍,不是错)。
+- **资深友好(默认 expert 档)**:只在**非显而易见**的地方开口(async/Task 生命周期、特定版本弃用 API 等);"缓存 GetComponent""用对象池"这类资深本就会的,默认不报。档位在 `~/.yide/.meta/gatekeeper.json`(novice/balanced/expert)。
+- **行内豁免**:某行结尾写 `// yide-ok: 原因`,翼德就不再对该行报任何把关项(像 eslint-disable)。要永久静音某规则,在 gatekeeper.json 的 `suppressed` 加一条。
+- **只看本次改动的行**,不翻旧账。
+
 ## 1. 性能热路径(Update / FixedUpdate / LateUpdate 内)
 帧预算很紧(60fps≈16.6ms,30fps≈33ms),热路径里任何浪费都会掉帧。
 - **缓存引用**:`GetComponent` / `Find*` / `Camera.main` 不要每帧调,放 `Awake`/`Start` 缓存。`Camera.main` 内部是全场景 tag 搜索。
