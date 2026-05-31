@@ -22,6 +22,7 @@ allowed-tools: Bash
 | `gaotapi` / `搞他皮` / `蒸馏` / `distill` / `带走` | `actions/distill.md` | 把某人/某块蒸馏成能召唤的命名专家(maxim 等) |
 | `专家` / `experts` / `用 <名>` / `会诊` | `actions/experts.md` | 列出/召唤/推荐专家 + 专家会诊 |
 | `prompt` / `prompts` / `提示词` / `存这条` | `actions/prompts.md` | prompt 库:存(提议+确认)/ 看 / 建议 / 升级成命令 |
+| `plan` / `计划` / `方案` / `闭环` | `actions/plan.md` | 多文件/架构级任务:按 context 起草闭环计划(架构→实现→QA),批准再做 |
 | `战绩` / `zhanji` / `stats` / `战绩面板` | `actions/zhanji.md` | (extraction 彩蛋)查连斩/打卡链/三国称号战绩 |
 
 ## 规则
