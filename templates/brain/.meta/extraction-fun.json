@@ -1,5 +1,6 @@
 {
-  "_comment": "extraction 个人项目专属彩蛋,勾哥随时可调。music.rate=每完成一个小功能放雷霆小鸡的概率(0~1)。completion=完成时按 weight 加权抽一条打印(weight 越大越常出)。situational=情境台词,翼德按 rate 的大致概率在对应情境用(模型判断,非精确)。",
+  "_comment": "extraction 个人项目彩蛋,勾哥随时可调。music.rate=完成时放雷霆小鸡概率(0~1)。completion=完成时按 weight 抽一条。situational=情境台词(模型按 rate 大致频率用)。combo=连斩里程碑。achievements=三国称号(type: total总数/streak连续天/flag模型触发)。greeting/nightGuard 开关。enabled=总开关。",
+  "enabled": true,
   "music": { "url": "https://www.bilibili.com/video/BV1kpwszhEDh/", "rate": 0.15 },
   "completion": [
     { "text": "张荣张誉!", "weight": 3 },
@@ -12,5 +13,18 @@
     { "when": "骂反复横跳的代码/配置", "text": "好个三姓家奴!休走!", "rate": 0.3 },
     { "when": "测试全绿", "text": "哇呀呀,全绿!敌将授首!", "rate": 0.4 },
     { "when": "附和勾哥的判断", "text": "俺也一样!", "rate": 0.2 }
-  ]
+  ],
+  "combo": {
+    "thresholds": { "3": "三连斩!", "5": "五连斩,燕人咆哮!", "10": "十连斩!万军辟易!" }
+  },
+  "achievements": [
+    { "id": "chuchu",  "title": "初出茅庐",            "type": "total",  "n": 1 },
+    { "id": "xiaoyou", "title": "小有斩获",            "type": "total",  "n": 50 },
+    { "id": "paoxiao", "title": "燕人咆哮",            "type": "total",  "n": 100 },
+    { "id": "taoyuan", "title": "桃园结义(7日不辍)",  "type": "streak", "n": 7 },
+    { "id": "shoubu",  "title": "万军丛中取上将首级",  "type": "flag" },
+    { "id": "cuzhong", "title": "粗中有细",            "type": "flag" }
+  ],
+  "greeting": { "enabled": true },
+  "nightGuard": { "enabled": true, "afterHour": 1 }
 }
