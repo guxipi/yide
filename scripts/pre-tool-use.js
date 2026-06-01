@@ -20,8 +20,10 @@ const ALLOW = path.join(META, 'allow-rules.json');
 // 自动放行默认配置(保守:只读/导航)。可被 .meta/allow-rules.json 覆盖。
 const DEFAULT_ALLOW = {
   tools: ['Read', 'Glob', 'Grep', 'NotebookRead', 'BashOutput', 'TodoWrite'],
-  bashSafe: ['cd', 'ls', 'pwd', 'cat', 'head', 'tail', 'grep', 'egrep', 'fgrep', 'rg', 'find', 'echo', 'printf', 'which', 'type', 'wc', 'file', 'stat', 'tree', 'dirname', 'basename', 'realpath', 'date', 'whoami', 'hostname', 'uname', 'env', 'sort', 'uniq', 'cut', 'column', 'diff', 'cmp', 'git'],
+  bashSafe: ['cd', 'ls', 'pwd', 'cat', 'head', 'tail', 'grep', 'egrep', 'fgrep', 'rg', 'find', 'echo', 'printf', 'which', 'type', 'wc', 'file', 'stat', 'tree', 'dirname', 'basename', 'realpath', 'date', 'whoami', 'hostname', 'uname', 'env', 'sort', 'uniq', 'cut', 'column', 'diff', 'cmp', 'git', 'adb'],
   gitSafe: ['status', 'diff', 'log', 'show', 'branch', 'remote', 'blame', 'rev-parse', 'describe', 'tag', 'ls-files', 'shortlog', 'config', 'cat-file', 'for-each-ref', 'symbolic-ref', 'reflog'],
+  adbSafe: ['devices', 'logcat', 'pull', 'get-state', 'bugreport', 'version', 'start-server', 'kill-server'], // 只读/取证;shell·exec-out·install 等不放行(会落到正常审批)
+
   mcpAllow: ['read', 'get', 'list', 'search', 'console', 'log', 'describe', 'inspect', 'snapshot', 'query', 'info', 'status', 'fetch', 'test', 'find', 'view', 'show', 'count'],
   mcpDeny: ['manage', 'create', 'delete', 'write', 'update', 'modify', 'remove', 'rename', 'move', 'execute', 'exec', 'install', 'build', 'kill', 'stop', 'restart', 'run_command', 'set_', 'add_', 'apply', 'commit', 'push', 'reset', 'checkout', 'clean'],
 };
@@ -47,6 +49,7 @@ function isSafeBash(cmd, conf) {
   if (/>/.test(cmd)) return false;        // 输出重定向(写文件)→ 一律不放行(含 2>&1,从严)
   const safe = new Set(conf.bashSafe || []);
   const gitSafe = new Set(conf.gitSafe || []);
+  const adbSafe = new Set(conf.adbSafe || []);
   const segs = cmd.split(/\||&&|\|\||;|&(?!&)/).map(s => s.trim()).filter(Boolean);
   if (!segs.length) return false;
   for (const seg of segs) {
@@ -60,6 +63,12 @@ function isSafeBash(cmd, conf) {
       while (j < toks.length && toks[j].startsWith('-')) { if (toks[j] === '-C' || toks[j] === '-c') j++; j++; } // 跳过全局选项(-C/-c 带参)
       const sub = toks[j];
       if (!sub || !gitSafe.has(sub)) return false;
+    }
+    if (verb === 'adb') {
+      let j = i + 1;
+      while (j < toks.length && toks[j].startsWith('-')) { if (toks[j] === '-s') j++; j++; } // 跳过 -s <serial>/-d/-e 等选项
+      const sub = toks[j];
+      if (!sub || !adbSafe.has(sub)) return false; // 只放只读取证子命令;shell/exec-out/install 等落回审批
     }
   }
   return true;

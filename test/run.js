@@ -232,6 +232,22 @@ t('resolve:发货默认+用户层 读取时合并(去重不拆 + 自定义 + 禁
   assert(/工作准则/.test(resolve('charter', ROOT, rb)), 'charter 应能从插件读到');
 });
 
+t('adb 只读取证放行;adb shell/install 仍审批', () => {
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'adb logcat -d' } }) === 'allow', 'adb logcat 应放行');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'adb devices' } }) === 'allow', 'adb devices 应放行');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'adb pull /sdcard/x .' } }) === 'allow', 'adb pull 应放行');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'adb shell rm -rf /sdcard' } }) === 'defer', 'adb shell 应回落审批');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'adb install app.apk' } }) === 'defer', 'adb install 应回落审批');
+});
+t('安卓真机 QA:全绿才惊动勾哥、真机可选、adb+SOP', () => {
+  const q = fs.readFileSync(path.join(ROOT, 'actions', 'qa.md'), 'utf8');
+  assert(/安卓真机/.test(q) && /adb pull/.test(q) && /EvidenceCapture/.test(q), 'qa 缺安卓真机取证流程');
+  assert(/全绿/.test(q) && /可选/.test(q), 'qa 缺"全绿才惊动勾哥、真机可选"');
+  const p = fs.readFileSync(path.join(ROOT, 'actions', 'plan.md'), 'utf8');
+  assert(/真机实测.*可选|可选.*真机/.test(p) && /全绿.*惊动勾哥/.test(p), 'plan 阶段四缺"全绿才惊动、真机可选"');
+  assert(fs.existsSync(path.join(ROOT, 'integrations', 'android', 'SETUP.md')), '缺 integrations/android/SETUP.md');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 

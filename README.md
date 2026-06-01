@@ -102,6 +102,12 @@ yide/
 
 ## 更新记录 Changelog
 
+### v0.21.0 — 安卓真机 QA(EvidenceCapture + adb + SOP,无 AltTester)
+- **加**:`qa` / `闭环造鸭` 的安卓真机实测流程——**先自动测到全绿才惊动勾哥;真机实测是可选项**(全绿后问一句,他要才 guide USB 调试)。他在手机上玩 → 游戏里 `EvidenceCapture.cs` 在任何异常自动存 截图+log+机型 → 翼德 `adb pull` 拉回 → 按 `BUG-SOP` 出真机 QA 报告(聚焦真机问题 + 手感项,不混基础 bug)。
+- **加**:`integrations/android/SETUP.md` 傻瓜配置(装 adb、开 USB 调试、EvidenceCapture 只在 dev build 开)。
+- **加**:只读 adb(`devices`/`logcat`/`pull`/`get-state` 等)进自动放行白名单,取证不弹审批;`adb shell`/`install` 仍走审批。
+- **明确不做 AltTester**(会改 build/开端口/必须从 release 剥离/对实时战斗脚本脆),留作"以后要无人值守回归再说"。测试 27 用例。
+
 ### v0.20.0 — 分层架构 + 真·静默更新(发货层 / 用户层 / 读取时合并)
 - **加**:`resolve.js`——唯一懂分层的地方。**发货默认(红线/工作准则)读自插件、用户层(`~/.yide`)只放勾哥的、在"读取时"按 manifest 合并**;消费方只调 `resolve(key)`,合并逻辑不再散落。
 - **真·静默更新**:咕哥更新插件 → 新发货默认**现读现合自动生效,`~/.yide` 一个字都不用动 → 零冲突、零迁移、零审批**。开窗不再卡、不再问;"提醒去 update"换成一行"已自动更新到 vX"(无需操作)。

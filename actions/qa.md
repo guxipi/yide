@@ -27,6 +27,7 @@
 - **若接了 Unity MCP**(见 `integrations/unity-mcp/`,且 Unity 开着):直接 `run_tests`(EditMode/PlayMode)读 pass/fail、`read_console` 读报错——真·在引擎里验证。
 - **否则**(纯 CLI,需本机 Unity 编辑器 + license):`Unity -runTests -batchmode -projectPath . -testPlatform EditMode -testResults r.xml`(冒烟子集 `-testCategory Smoke`)。**别看退出码**(Unity 无统一约定),**解析 NUnit XML**。
 - 读 `Player.log` / `adb logcat` / NUnit XML,聚类失败,产出结构化报告(按 SOP)。
+- **报错 → 自己定位、修、重跑,到全绿为止**;别把没修绿的东西丢给勾哥手测(见 F)。
 - 没有以上条件就如实说"跑不了",别假装跑过。
 
 ## E. 改老代码前先系"安全绳":行为快照测试(治"修一个 bug 坏六个")
@@ -37,6 +38,16 @@
    - **只对非琐碎 / 改到耦合处或关键路径的改动做**;琐碎、可逆、独立的小改**跳过**,别为它写测试拖慢手感。
    - **Claude 自动写、自动跑**,勾哥只看结果——别把写测试甩给他(他不爱写测试)。
    - 那块代码缠得太死、根本没法单独测出来 → **别硬写**:如实说"这块当前测不了",改用 `翼德 评审` + 列一份手测步骤兜底,并记一条"这里缺测试覆盖"的欠账。
+
+## F. 安卓真机实测(可选;**全绿之后才问勾哥**)
+> 顺序很重要:**翼德先自己测 + 自己修到全绿,才惊动勾哥;真机实测是锦上添花的可选项,不是用来抓基础 bug 的。**
+1. **先全绿(不打扰勾哥)**:逻辑+集成测试在电脑上跑(Coplay `run_tests`/`read_console`),报错自己定位修,**循环到全绿**。没绿之前别喊勾哥手测。
+2. **绿了再问一句**:"都测过了、全绿 ✅。**要不要在真机上实测一下?(可选)**" 勾哥说不用 → 直接交付收工。
+3. **他说要 → 第一次 guide**:教他插数据线、开「USB 调试」(步骤在 `integrations/android/SETUP.md`),`adb devices` 确认连上。
+4. **他在手机上玩,翼德后台取证**:游戏里 `EvidenceCapture.cs` 在任何异常时自动把 截图 + 完整 log + 机型 存到手机;翼德 `adb pull <persistentDataPath>/yide-evidence` 拉回(没装 EvidenceCapture 就 `adb logcat -d` 抓栈)。
+5. **按 SOP 出真机 QA 报告**:逻辑/集成已绿,报告**聚焦真机特有问题(闪退/卡顿/触控/发热)+ 手感项(留给勾哥定)**,别再混基础 bug;证据存 `QA/bugs/`。
+- 取证用的只读 adb(`devices`/`logcat`/`pull`)已自动放行、不弹审批;`adb shell` 等仍会问。
+- 诚实:手机只在"测 + 取证那会儿"连着(USB 或同 WiFi),平时不用一直连。
 
 ## 文件去哪、怎么跟公司配合(归档口径)
 - **测试计划** → 项目内 `QA/test-plan-<日期>.md`。
