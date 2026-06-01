@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { brainDir, locationPointerPath } = require(path.join(__dirname, 'lib.js'));
+const { findSyncedBrain } = require(path.join(__dirname, 'detect-sync.js'));
 
 const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..');
 const TEMPLATE = path.join(PLUGIN_ROOT, 'templates', 'brain');
@@ -21,10 +22,20 @@ try {
     console.log(`LOCATION\t${loc}\t已记住大脑位置(指针文件 ~/.yide-location)。`);
   }
 
-  const BRAIN = brainDir(); // 在写完指针后解析,确保用新位置
+  let BRAIN = brainDir(); // 在写完指针后解析,确保用新位置
   if (fs.existsSync(BRAIN) && fs.existsSync(path.join(BRAIN, 'INDEX.md'))) {
     console.log(`EXISTS\t${BRAIN}\t大脑已存在(可能来自其他设备同步),未覆盖。`);
     process.exit(0);
+  }
+
+  // 新设备自动认领:本地没大脑、又没指定位置时,扫同步盘找已有大脑(指针不跟着同步,这里补上)
+  if (!target) {
+    let synced = null; try { synced = findSyncedBrain(); } catch {}
+    if (synced) {
+      fs.writeFileSync(locationPointerPath(), synced);
+      console.log(`ADOPTED\t${synced}\t在同步盘发现已有大脑,已认出你——免重新磨合(只重建了本机指针)。`);
+      process.exit(0);
+    }
   }
   if (!fs.existsSync(TEMPLATE)) {
     console.log(`ERROR\t找不到模板:${TEMPLATE}`);

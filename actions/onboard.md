@@ -6,19 +6,15 @@
 
 0. **自我介绍**:先把翼德介绍给用户(谁做的、能在哪三方面帮他、大脑结构、接下来要几分钟选择题磨合)。语气友好、简短。用户说"好/开始"再继续。
 
-1. **选大脑放哪(用选择题,别让用户敲命令行)**:
-   - 先探测候选同步盘:Bash 运行 `node "${CLAUDE_SKILL_DIR}/scripts/detect-sync.js"`(每行 `标签\t路径`)。
-   - 用 **AskUserQuestion** 让用户挑(他只需点选):把探测到的 Google Drive / Dropbox / iCloud 路径各列一个选项 + "本地(不同步,~/.yide)"。**不要列 OneDrive。**
-   - 推荐顺序:Google Drive 或 git 仓库文件夹 > 其他同步盘 > 本地。告诉他选同步盘的好处=换电脑免重新磨合。
-   - 若他想用自定义文件夹(如某个 git 仓库目录),让他**粘贴一个路径**(一次粘贴,不是命令)。
+1. **先探测:是不是"新设备 / 已有大脑"**:Bash 运行 `node "${CLAUDE_SKILL_DIR}/scripts/detect-sync.js"`。
+   - 若输出里有 `BRAIN\t<路径>` 行 → 说明同步盘里**已有大脑**(换了新设备)→ 跑 `node "${CLAUDE_SKILL_DIR}/scripts/install-brain.js"`(无参数,会 **ADOPTED** 自动认领、重建本机指针)→ **跳过访谈**,告诉用户"已认出你、无需重新磨合(教训/风格/红线都在)",问是否要补充/改某项即可。**结束。**
+   - 若**没有** `BRAIN` 行 → 是首次,进第 2 步。
 
-2. **建大脑(跨平台,Windows 也能跑)**:用 Bash 运行
-   - 选了同步盘/自定义:`node "${CLAUDE_SKILL_DIR}/scripts/install-brain.js" "<用户选的文件夹>/yide-brain"`
-   - 选了本地:`node "${CLAUDE_SKILL_DIR}/scripts/install-brain.js"`
-   - 输出 `CREATED\t...` → 已建好(指针文件已记住位置),继续访谈。
-   - 输出 `EXISTS\t...` → **大脑已存在**(很可能换了设备、同步盘里已有)→ **跳过访谈**,告诉用户"已认出你、无需重新磨合",问他是否补充/修改某项即可。
-   - 输出 `ERROR\t...` → 把错误念给用户。
-   (脚本用 Node `fs.cpSync`,不依赖 `cp`/`ls`;并把所选位置写进指针文件 `~/.yide-location`,以后所有 hook 都用这个位置——用户无需设环境变量。)
+2. **首次:选大脑放哪(选择题,别让用户敲命令行)**:
+   - 把第 1 步探测到的 Google Drive / Dropbox / iCloud 路径用 **AskUserQuestion** 列出 + "本地(不同步,~/.yide)";想用 git 仓库目录就让他**粘贴一个路径**。**不要列 OneDrive。** 推荐同步盘(换电脑免重磨)。
+   - 建大脑(跨平台):选同步盘/自定义 → `node "${CLAUDE_SKILL_DIR}/scripts/install-brain.js" "<选的文件夹>/yide-brain"`;选本地 → 无参数。
+   - 输出 `CREATED\t...` → 已建好(指针已记住),继续访谈;`ADOPTED/EXISTS\t...` → 已认出你,跳过访谈;`ERROR\t...` → 念给用户。
+   (脚本用 Node `fs.cpSync` 不依赖 `cp`/`ls`;位置写进指针 `~/.yide-location`,无需环境变量。)
 
 2. **访谈 —— 用选择题(务必用 AskUserQuestion 工具,不要开放式提问)**。
    分 2-3 批,每批 3-4 题,每题给 2-4 个选项(用户也可选 Other 自填)。能自动探测的先探测、别问:
