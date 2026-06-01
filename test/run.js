@@ -141,7 +141,8 @@ t('版本落后→提醒 update;不落后/无文件→不提醒', () => {
 t('mockup 动作 + 批注层文件齐全', () => {
   assert(fs.existsSync(path.join(ROOT, 'actions', 'mockup.md')), '缺 actions/mockup.md');
   const an = fs.readFileSync(path.join(ROOT, 'templates', 'mockup', 'annotate.html'), 'utf8');
-  assert(/复制反馈给翼德/.test(an) && /mousedown/.test(an), '批注层应含复制按钮 + 拖拽逻辑');
+  assert(/复制反馈给翼德/.test(an) && /yd-region/.test(an) && /openPop/.test(an), '批注层应含复制按钮 + 点选组件逻辑');
+  assert(!/#yd-ov/.test(an), '批注层不应再有拖拽 overlay');
 });
 t('4 个角色镜头存在且 frontmatter name 正确', () => {
   for (const n of ['architect', 'ui-ux', 'art-director', 'pm']) {
@@ -159,6 +160,18 @@ t('战绩判据:更新翼德不算、出现于 extraction 注入', () => {
   const { extractionContext } = require(path.join(SCRIPTS, 'extraction-context.js'));
   const out = extractionContext(eb, '/some/extraction-raiders', ROOT) || '';
   assert(/战绩判据/.test(out) && /更新翼德/.test(out), '应含"只奖励推进产品、更新翼德不算"的判据');
+});
+
+t('项目档案有 UI/UX 预设;mockup 读预设 + 存确认稿文件夹', () => {
+  const tpl = fs.readFileSync(path.join(ROOT, 'templates', 'brain', 'projects', '_TEMPLATE.md'), 'utf8');
+  assert(/UI\/UX 设计预设/.test(tpl) && /确认线稿文件夹/.test(tpl), '项目模板缺 UI/UX 预设 / 确认稿文件夹');
+  const mk = fs.readFileSync(path.join(ROOT, 'actions', 'mockup.md'), 'utf8');
+  assert(/UI\/UX 设计预设/.test(mk) && /确认线稿文件夹/.test(mk), 'mockup 应先读预设并存确认稿');
+});
+t('批注层自动保存(无保存按钮、input 即存)', () => {
+  const an = fs.readFileSync(path.join(ROOT, 'templates', 'mockup', 'annotate.html'), 'utf8');
+  assert(/addEventListener\('input'/.test(an) && /已自动保存/.test(an), '批注层应边打边自动保存');
+  assert(!/id="yd-save"/.test(an), '不应再有"保存"按钮(yd-saved 指示器不算)');
 });
 
 // 清理
