@@ -137,6 +137,30 @@ t('版本落后→提醒 update;不落后/无文件→不提醒', () => {
   assert(!/插件已更新/.test(startCtx(null)), '无版本文件(新用户)不该提醒');
 });
 
+// === 7. mockup / 角色镜头 / 战绩判据(本轮新增)===
+t('mockup 动作 + 批注层文件齐全', () => {
+  assert(fs.existsSync(path.join(ROOT, 'actions', 'mockup.md')), '缺 actions/mockup.md');
+  const an = fs.readFileSync(path.join(ROOT, 'templates', 'mockup', 'annotate.html'), 'utf8');
+  assert(/复制反馈给翼德/.test(an) && /mousedown/.test(an), '批注层应含复制按钮 + 拖拽逻辑');
+});
+t('4 个角色镜头存在且 frontmatter name 正确', () => {
+  for (const n of ['architect', 'ui-ux', 'art-director', 'pm']) {
+    const f = path.join(ROOT, 'templates', 'brain', 'experts', n + '.md');
+    assert(fs.existsSync(f), '缺镜头 ' + n);
+    assert(new RegExp('name:\\s*' + n + '\\b').test(fs.readFileSync(f, 'utf8')), n + ' frontmatter name 不对');
+  }
+});
+t('SKILL 路由含 mockup', () => {
+  assert(/actions\/mockup\.md/.test(fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8')), 'SKILL 缺 mockup 路由');
+});
+t('战绩判据:更新翼德不算、出现于 extraction 注入', () => {
+  const eb = path.join(TMP, 'eggbrain', '.yide');
+  fs.mkdirSync(path.join(eb, '.meta'), { recursive: true });
+  const { extractionContext } = require(path.join(SCRIPTS, 'extraction-context.js'));
+  const out = extractionContext(eb, '/some/extraction-raiders', ROOT) || '';
+  assert(/战绩判据/.test(out) && /更新翼德/.test(out), '应含"只奖励推进产品、更新翼德不算"的判据');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 

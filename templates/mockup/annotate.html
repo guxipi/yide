@@ -1,0 +1,78 @@
+<!-- ============================================================
+  翼德 · 线稿批注层(把这整段原样嵌进每张 mock 的 </body> 之前)
+  勾哥用法:点右上「✏️ 批注」→ 在界面上**拖拽圈出**一块 → 弹框写意见 →
+           圈完点「📋 复制反馈给翼德」→ 粘回 Claude 即可改。
+  纯 vanilla JS,无依赖;批注存浏览器本地(同一文件重开还在)。
+============================================================ -->
+<style>
+  #yd-bar{position:fixed;top:10px;right:10px;z-index:2147483000;display:flex;gap:6px;font:13px/1.4 system-ui,sans-serif}
+  #yd-bar button{padding:6px 10px;border:1px solid #999;border-radius:6px;background:#fff;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+  #yd-bar button.on{background:#e53935;color:#fff;border-color:#e53935}
+  #yd-ov{position:fixed;inset:0;z-index:2147482000;display:none;cursor:crosshair}
+  #yd-ov.on{display:block}
+  .yd-note{position:absolute;z-index:2147481000;border:2px solid #e53935;background:rgba(229,57,53,.08);pointer-events:none}
+  .yd-tag{position:absolute;z-index:2147481500;min-width:18px;height:18px;padding:0 4px;background:#e53935;color:#fff;
+    font:bold 12px/18px system-ui,sans-serif;text-align:center;border-radius:9px;transform:translate(-50%,-50%);pointer-events:none}
+</style>
+<div id="yd-bar">
+  <button id="yd-toggle">✏️ 批注</button>
+  <button id="yd-copy">📋 复制反馈给翼德</button>
+  <button id="yd-clear">🗑 清空</button>
+</div>
+<div id="yd-ov"></div>
+<script>(function(){
+  var KEY='yd-notes:'+location.pathname, notes=[];
+  try{notes=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
+  var ov=document.getElementById('yd-ov'), toggle=document.getElementById('yd-toggle');
+  function docW(){return Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)}
+  function docH(){return Math.max(document.documentElement.scrollHeight,document.body.scrollHeight)}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(notes))}catch(e){}}
+  function zone(cx,cy){var v=cy<.33?'上':cy>.66?'下':'中',h=cx<.33?'左':cx>.66?'右':'中';
+    return (v==='中'&&h==='中')?'正中':(h==='中'?'正'+v:h+v)}
+  function draw(){
+    document.querySelectorAll('.yd-note,.yd-tag').forEach(function(n){n.remove()});
+    notes.forEach(function(a,i){
+      var W=docW(),H=docH();
+      var b=document.createElement('div');b.className='yd-note';
+      b.style.left=a.x*W+'px';b.style.top=a.y*H+'px';b.style.width=a.w*W+'px';b.style.height=a.h*H+'px';
+      document.body.appendChild(b);
+      var t=document.createElement('div');t.className='yd-tag';t.textContent=i+1;t.title=a.note;
+      t.style.left=a.x*W+'px';t.style.top=a.y*H+'px';document.body.appendChild(t);
+    });
+  }
+  var sx,sy,box;
+  ov.addEventListener('mousedown',function(e){
+    sx=e.pageX;sy=e.pageY;box=document.createElement('div');box.className='yd-note';
+    box.style.left=sx+'px';box.style.top=sy+'px';document.body.appendChild(box);
+  });
+  ov.addEventListener('mousemove',function(e){
+    if(!box)return;var x=Math.min(sx,e.pageX),y=Math.min(sy,e.pageY);
+    box.style.left=x+'px';box.style.top=y+'px';box.style.width=Math.abs(e.pageX-sx)+'px';box.style.height=Math.abs(e.pageY-sy)+'px';
+  });
+  ov.addEventListener('mouseup',function(e){
+    if(!box)return;var x=Math.min(sx,e.pageX),y=Math.min(sy,e.pageY),w=Math.abs(e.pageX-sx),h=Math.abs(e.pageY-sy);
+    box.remove();box=null;
+    if(w<8||h<8)return; // 太小当误点
+    var note=prompt('这块有什么问题 / 应该怎么样?');
+    if(note===null||note==='')return;
+    var W=docW(),H=docH();
+    notes.push({x:x/W,y:y/H,w:w/W,h:h/H,note:note});save();draw();
+  });
+  toggle.onclick=function(){var on=ov.classList.toggle('on');toggle.classList.toggle('on',on);
+    toggle.textContent=on?'✏️ 批注中(拖拽圈选)':'✏️ 批注'};
+  document.getElementById('yd-clear').onclick=function(){if(confirm('清空所有批注?')){notes=[];save();draw()}};
+  document.getElementById('yd-copy').onclick=function(){
+    if(!notes.length){alert('还没圈任何区域。先点「✏️ 批注」再拖拽圈出要改的地方。');return}
+    var txt='线稿批注反馈(共 '+notes.length+' 条,粘给翼德即可):\n'+notes.map(function(a,i){
+      var cx=a.x+a.w/2,cy=a.y+a.h/2;
+      return (i+1)+'. ['+zone(cx,cy)+' 约 '+Math.round(cx*100)+'%,'+Math.round(cy*100)+'%] — '+a.note;
+    }).join('\n');
+    function done(){alert('已复制 '+notes.length+' 条批注,粘回 Claude 即可。')}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,function(){fallback(txt)})}
+    else fallback(txt);
+  };
+  function fallback(txt){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);
+    ta.select();try{document.execCommand('copy')}catch(e){}ta.remove();
+    prompt('复制下面这段贴给翼德:',txt);}
+  draw();window.addEventListener('resize',draw);
+})();</script>
