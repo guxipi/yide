@@ -102,6 +102,12 @@ yide/
 
 ## 更新记录 Changelog
 
+### v0.23.0 — 项目文档管理(Confluence → AGENTS.md,自动耦合开发)
+- **加**:`docs`(项目文档管理)动作——把勾哥写在 **Confluence** 的项目文档变成 AI 好用的形态:**首次一键导出空间(免 token)→ 翼德蒸成精简 `AGENTS.md`(放仓库根)→ API token 增量保鲜 → 7 天懒同步**。三层:源(Confluence,不动他习惯)/ 镜像(`~/.yide/.cache/confluence/`,不进 git,可重拉)/ 精简层(仓库 `AGENTS.md`,进 git)。
+- **自动耦合开发(不用提醒)**:`AGENTS.md` 在仓库根 → **Claude Code 每次会话自动加载** → 做功能天然带项目背景;`plan` 的"读 context"含 AGENTS.md,要细节自动钻镜像。关键守则:`AGENTS.md` 必须精简(常驻不撑爆),全量细节留镜像。
+- **加**:`integrations/confluence/SETUP.md`(傻瓜版:一键导出 / 配 API token);`projects` 模板加「📚 项目文档」段。
+- **不引重依赖**:首次走 Confluence 自带导出、增量走免费 REST API;Playwright 仅作以后兜底、不进核心。测试 29 用例。
+
 ### v0.22.0 — QA 报告可交互手感表 + 联合优化回流
 - **加**:`templates/qa/feel-form.html`——QA 报告里"要勾哥定的手感项"做成**可交互**:每项点 👍还行 / 👎要改 / 🤔不确定 + 写一句 → 「📋 提交反馈给翼德」一键复制粘回。
 - **加**:**反馈回流闭环**——翼德拿到手感反馈 → 拉 **art-director(数值)+ ui-ux(设计)联合建议、PM challenge** → **最佳优化方案供勾哥定夺** → 勾哥拍板 → 翼德执行(改 config 数值 / 走小闭环)。写进 `qa.md`(F)+ `plan.md`(试玩反馈回流)。

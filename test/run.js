@@ -255,6 +255,17 @@ t('手感反馈表(交互)+ 联合优化回流', () => {
   assert(/feel-form/.test(q) && /art-director/.test(q) && /ui-ux/.test(q) && /定夺/.test(q), 'qa 缺"交互手感表 + 联合优化(数值/设计+PM)供勾哥定夺"');
 });
 
+t('项目文档管理:docs 动作 + AGENTS.md 自动耦合 + SETUP + 模板', () => {
+  const d = fs.readFileSync(path.join(ROOT, 'actions', 'docs.md'), 'utf8');
+  assert(/AGENTS\.md/.test(d) && /\.cache\/confluence/.test(d) && /导出/.test(d), 'docs 缺三层(源/镜像/AGENTS.md)');
+  assert(/7\s*天|懒同步/.test(d) && /增量/.test(d), 'docs 缺 7 天懒同步/增量');
+  const skill = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8');
+  assert(/actions\/docs\.md/.test(skill) && /项目文档/.test(skill), 'SKILL 缺 docs 路由');
+  assert(fs.existsSync(path.join(ROOT, 'integrations', 'confluence', 'SETUP.md')), '缺 confluence SETUP');
+  assert(/AGENTS\.md/.test(fs.readFileSync(path.join(ROOT, 'actions', 'plan.md'), 'utf8')), 'plan 读 context 应含 AGENTS.md');
+  assert(/项目文档/.test(fs.readFileSync(path.join(ROOT, 'templates', 'brain', 'projects', '_TEMPLATE.md'), 'utf8')), '项目模板缺 项目文档 段');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 
