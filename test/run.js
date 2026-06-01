@@ -174,6 +174,16 @@ t('批注层自动保存(无保存按钮、input 即存)', () => {
   assert(!/id="yd-save"/.test(an), '不应再有"保存"按钮(yd-saved 指示器不算)');
 });
 
+t('闭环造鸭:plan 四阶段 + 占位先复用 prefab + 路由', () => {
+  const p = fs.readFileSync(path.join(ROOT, 'actions', 'plan.md'), 'utf8');
+  assert(/闭环造鸭/.test(p), 'plan 应叫闭环造鸭');
+  for (const ph of ['对齐', '造', '验', '交付']) assert(p.includes('· ' + ph) || p.includes('阶段'), '缺阶段 ' + ph);
+  assert(/复用\/改造|复用.*prefab|已有的 prefab/.test(p), '占位应先复用项目 prefab 再灰盒');
+  assert(/run_tests/.test(p) && /循环到全绿/.test(p), '应有 oracle 验证循环到全绿');
+  assert(/actions\/plan\.md/.test(fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8')), 'SKILL 缺 plan 路由');
+  assert(/闭环造鸭/.test(fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8')), 'SKILL 应含闭环造鸭触发词');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 
