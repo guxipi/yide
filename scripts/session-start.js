@@ -26,14 +26,14 @@ try {
   if (!fs.existsSync(BRAIN)) {
     // 首次见面:自我介绍 + 引导 onboard(由模型把这段话讲给用户)
     emit(
-      '【翼德首次启动 · 请把下面这段自我介绍讲给用户,然后引导他运行 /yide onboard】\n\n' +
-      '你好,勾哥!我是咕鸡为你打造的专属秘书,叫翼德——随时用 /yide 或 /翼德 喊我。\n\n' +
+      '【翼德首次启动 · 请把下面这段自我介绍讲给用户,然后引导他说"翼德,磨合一下"来开始 onboarding】\n\n' +
+      '你好,勾哥!我是咕鸡为你打造的专属秘书,叫翼德——**直接喊我就行**:跟我说"翼德,…"(如"翼德,磨合一下""翼德 记一下…")。\n\n' +
       '我主要在三件事上帮你:\n\n' +
       '记住你:习惯、风格、规则记一次就牢,以后每开新对话我自动 brief,你不用反复解释;换电脑也认得你。\n' +
       '绝不让你重复踩坑:你纠正过 AI 一次的错,我都会记录下来,并且 brief 给之后任何对话(Claude Code 里还能硬拦)。\n' +
       '帮你把关 Unity:写 C# 时按手游 best practice 盯着——热路径 GC、过时 API、序列化、资源卫生——发现隐患就提醒,绝不擅自大改。\n\n' +
       '我的大脑是一堆纯文本(在 ~/.yide,随时能翻):core=你是谁+红线、lessons=redflag、style=代码与沟通风格、projects=项目背景。\n\n' +
-      '只要花 2–3 分钟、答几道选择题(Unity 版本/风格/红线)跟我磨合,就能正式上岗。准备好就让我跑 /yide onboard!',
+      '只要花 2–3 分钟、答几道选择题(Unity 版本/风格/红线)跟我磨合,就能正式上岗。准备好就说一句"翼德,磨合一下"(或打命令 /yide:yide onboard)!',
       '🗡️ 翼德 · 初次见面'
     );
     process.exit(0);
@@ -72,7 +72,7 @@ try {
   // 随手记 inbox:只报未整理条数(手机扔进来的笔记)
   let nInbox = 0;
   try { nInbox = fs.readdirSync(path.join(BRAIN, 'notes', 'inbox')).filter(n => !n.startsWith('.') && !n.startsWith('_')).length; } catch {}
-  if (nInbox) ctx += `\n---\n## 📥 随手记\n收件箱有 ${nInbox} 条未整理的笔记。合适时机可运行 /yide 笔记 整理。\n`;
+  if (nInbox) ctx += `\n---\n## 📥 随手记\n收件箱有 ${nInbox} 条未整理的笔记。合适时机执行一次笔记整理(note 动作:读 actions/note.md),或提醒勾哥说"翼德 整理笔记"。\n`;
 
   // --- Unity 项目档案:自动探测版本/管线/输入系统/Addressables/脚本后端 ---
   let unity = null;
@@ -117,7 +117,7 @@ try {
       `- 测试全绿/构建过:\`node "${progressJs}" win\`(今日首胜 + 打卡链 + 连斩)\n` +
       `- 出错/测试红了:\`node "${progressJs}" fail\`(连斩归零,温和)\n` +
       `- 干掉老大难 bug:\`node "${progressJs}" achieve shoubu\`;把关抓到隐患:\`achieve cuzhong\`\n` +
-      `每个事件只记一次、别替他刷数。勾哥想看战绩可 \`/yide 战绩\`。\n\n` +
+      `每个事件只记一次、别替他刷数。勾哥想看战绩,说一句"翼德 战绩"即可。\n\n` +
       `### 🐯 张飞人格(仅此个人放松项目)\n` +
       `你叫翼德,正是张翼德。可偶尔用张飞的豪爽幽默口吻插科打诨——但**幽默为辅,把事办对才是义气**(张飞粗中有细)。\n` +
       `情境台词(点缀,别整段文言;括号是大致频率,勾哥在配置里可调):\n${sitLines}\n` +
@@ -136,9 +136,9 @@ try {
   } catch { due = true; }
   if (due) {
     if (process.env.YIDE_NO_AUTO_CONSOLIDATE) {
-      ctx += `\n---\n## 🧹 记忆整理\n距上次整理已超过 24 小时。合适时机可运行 /yide 整理 做一次沉淀。\n`;
+      ctx += `\n---\n## 🧹 记忆整理\n距上次整理已超过 24 小时。合适时机执行一次记忆整理(consolidate 动作:读 actions/consolidate.md)。\n`;
     } else {
-      ctx += `\n---\n## 🧹 记忆整理(到期)\n距上次>24h。回应用户前先静默跑一次 /yide 整理(合并去重+打时间戳),一句话告知后继续;用户若很赶则推迟到本轮末。\n`;
+      ctx += `\n---\n## 🧹 记忆整理(到期)\n距上次>24h。回应用户前先静默执行一次记忆整理(consolidate 动作:读 actions/consolidate.md,合并去重+打时间戳),一句话告知后继续;用户若很赶则推迟到本轮末。\n`;
     }
   }
 

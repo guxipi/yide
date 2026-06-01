@@ -36,7 +36,7 @@ created: 2026-01-01
 为 {{target_class}} 生成 NUnit 测试:按生命周期分组、列 edge cases……(核心逐字)
 ```
 
-## /yide prompt(用户主动)
+## 看库(用户说"翼德 prompt")
 无参数/`list` → 列库;`<关键词>` → 搜。
 
 ## 原则

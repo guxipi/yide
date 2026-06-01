@@ -80,8 +80,8 @@ try {
 
   // === 🔧 需要咕鸡手动优化:每条附最佳做法 ===
   const manual = [];
-  if (repeatedExplain) manual.push(`重复解释 ×${repeatedExplain} → 把这事实固化进项目档案(/yide onboard 补充)或项目 CLAUDE.md,翼德开场自动带,免得勾哥反复说`);
-  if (corrections) manual.push(`纠正/不满 ×${corrections} → 让翼德用 /yide record 记成教训;高频的升级成 hook 硬规则(severity≥8),从此自动拦`);
+  if (repeatedExplain) manual.push(`重复解释 ×${repeatedExplain} → 把这事实固化进项目档案(让翼德 onboard 补充)或项目 CLAUDE.md,翼德开场自动带,免得勾哥反复说`);
+  if (corrections) manual.push(`纠正/不满 ×${corrections} → 让翼德 record 记成教训;高频的升级成 hook 硬规则(severity≥8),从此自动拦`);
   if (errors) manual.push(`报错/中断 ×${errors} → 多半缺默认值或护栏:补一条 PreToolUse 规则或一个合理默认`);
   if (neverUsed.length) manual.push(`从没用过:${neverUsed.join(' / ')} → 要么改命令 description 提升可发现性,要么砍掉(避免臃肿拖累 Claude)`);
 

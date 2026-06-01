@@ -4,4 +4,4 @@
 - `<YYYY>/`:翼德整理后按年归档的笔记(带 frontmatter:created/topic/project/tags)。
 - `index.md`:按主题/项目的索引。
 
-用法:`/yide 笔记 <想法>` 直接录入;`/yide 笔记 整理` 整理 inbox;`/yide 笔记 <关键词>` 查询。
+用法:`翼德 笔记 <想法>` 直接录入;`翼德 笔记 整理` 整理 inbox;`翼德 笔记 <关键词>` 查询。

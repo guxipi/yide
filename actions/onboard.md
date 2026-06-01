@@ -54,7 +54,7 @@
    - 文件不存在就创建 `{"permissions":{"allow":["Bash(node:*yide*scripts*)"]}}`;已存在就只往 allow 追加这一条、别动其他。
    - 解释:这只放行"翼德 scripts 目录下的 node 脚本",比放行全部 node 安全。
 
-5. **收尾**:告诉用户——以后每开一个 Claude Code 会话,翼德会自动注入这份简报、读你的 Unity 项目档案、写 .cs 时自动把关;发现问题时用 `/yide record` 记一笔;要贴给 Desktop/其他 AI 时用 `/yide brief`。
+5. **收尾**:告诉用户——以后每开一个 Claude Code 会话,翼德会自动注入这份简报、读你的 Unity 项目档案、写 .cs 时自动把关;发现问题时说"翼德 记一下…";要贴给 Desktop/其他 AI 时说"翼德 简报"(也可打 `/yide:yide record` / `/yide:yide brief`)。
    **跨设备**:大脑位置已记在指针文件 `~/.yide-location`。在另一台电脑上,只要把同一个同步盘文件夹(Google Drive / git 仓库)同步过来,装好翼德跑 onboard 时会"认出"已有大脑、免重新磨合。**不要用 OneDrive。**
 
 ## 原则

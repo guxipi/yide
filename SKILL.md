@@ -1,6 +1,6 @@
 ---
 name: yide
-description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。用 `/yide <动作>` 或自然语言触发,如 `/yide brief`、`/yide onboard this chat`、`/yide 记一下 …`、`/yide 整理`、`/yide 测 …`、`/yide 笔记 …`。也响应"翼德/yide + 记一下/简报/整理/更新/测试/记笔记"等说法。
+description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户说"翼德/yide + 动作"(如"翼德 简报""翼德 磨合""翼德 记一下 …""翼德 整理""翼德 测一下""翼德 笔记 …""翼德 蒸馏""翼德 战绩""翼德 起个计划"),或打命令 `/yide:yide <动作>` 时触发。涵盖:磨合onboard、记教训record、简报brief、整理consolidate、更新update、QA、笔记note、蒸馏gaotapi、专家、prompt、战绩、计划plan。
 allowed-tools: Bash
 ---
 
@@ -26,7 +26,7 @@ allowed-tools: Bash
 | `战绩` / `zhanji` / `stats` / `战绩面板` | `actions/zhanji.md` | (extraction 彩蛋)查连斩/打卡链/三国称号战绩 |
 
 ## 规则
-- 路由后,把 `$ARGUMENTS` 里动作词之后的内容当作该动作的输入(如 `/yide 记一下 又用了 Debug.Log` → record,内容=后半句;`/yide note 想做个新手引导` → note 录入)。
+- 路由后,把 `$ARGUMENTS` 里动作词之后的内容当作该动作的输入(如"翼德 记一下 又用了 Debug.Log" → record,内容=后半句;"翼德 笔记 想做个新手引导" → note 录入)。
 - **无参数或 `help`/`帮助`**:简短自我介绍 + 列出上面这些能做的事,问他想做哪个。
 - 不确定路由到哪:问一句,别瞎猜(对应红线:不编造)。
 - 只在需要时读对应动作文件,保持上下文精简。
