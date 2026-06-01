@@ -47,6 +47,11 @@ AI 常因训练数据混版本而给出过时接口:
 ## 5. 工程结构
 - 尊重已有 `.asmdef` 边界;编辑器代码放 `Editor/` 文件夹/asmdef;运行时程序集**绝不引用 `UnityEditor`**(会构建失败)。
 
+## 7. 测试:EditMode vs PlayMode 分工(勾哥偏好 PlayMode,有道理)
+- **EditMode**(不进游戏、快):只配**纯逻辑**——掉率/伤害公式/计时/状态机这类不依赖运行时的代码。
+- **PlayMode**(真把游戏跑起来):**玩法/集成的唯一真值**——移动、物理、协程、动画、随时间发生的行为(Boss 走位/放技能/死亡/空投),`Update`/协程只在这里真的跑。
+- **以 PlayMode 为准**:玩法相关别用 EditMode"假装测过";EditMode 测试还逼你解耦代码,屎山项目里常常得不偿失。慢就**批量跑**(一次进 Play 多验几条),别靠"少测玩法"省时间。
+
 ## 6. DOTween + Unity UI(UGUI)常见坑(本项目主力栈,作为"建议知识"参考,不做正则 lint)
 **DOTween:**
 - **对象销毁前先 Kill tween**:tween 还在跑、对象已 `Destroy` → 回调访问已销毁对象 → 崩/`MissingReferenceException`。`OnDestroy` 里 `transform.DOKill()`,或建 tween 时 `.SetLink(gameObject)` 绑生命周期(这是"一个动画修坏别处"的高发区)。

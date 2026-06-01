@@ -202,6 +202,13 @@ t('闭环造鸭:开造前检查点 + 失败回滚(归 plan,不另起动作)', ()
   assert(/回滚/.test(fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8')), 'SKILL plan 路由应含回滚触发词');
 });
 
+t('测试分工:玩法以 PlayMode 为真值(plan + unity.md)', () => {
+  const p = fs.readFileSync(path.join(ROOT, 'actions', 'plan.md'), 'utf8');
+  assert(/PlayMode 为真值|玩法以 PlayMode/.test(p) && !/EditMode 优先/.test(p), 'plan 应改成按层分工、玩法以 PlayMode 为真值');
+  const u = fs.readFileSync(path.join(ROOT, 'templates', 'brain', 'style', 'unity.md'), 'utf8');
+  assert(/EditMode/.test(u) && /PlayMode/.test(u) && /真值/.test(u), 'unity.md 应有 EditMode/PlayMode 分工知识');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 
