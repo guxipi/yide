@@ -4,9 +4,10 @@
 //   - 源真相:lessons/*.md(人可读、可 diff、可同步)。归档在 lessons/archive/(运行时不扫)。
 //   - 编译索引:.meta/lessons-index.json(机器快查)。按 mtime 自愈:源比索引新就重建。
 //   - 运行时(hook)只读索引,O(1) 量级;不必每次 glob+解析全部 md。
-const fs = require('fs');
+//   - 索引机械(scan/newestMtime/buildIndex/getIndex)抽到 index-util.js,与 prompts 共用。
 const path = require('path');
 const { brainDir } = require(path.join(__dirname, 'lib.js'));
+const { makeIndex } = require(path.join(__dirname, 'index-util.js'));
 
 function lessonsDir() { return path.join(brainDir(), 'lessons'); }
 function indexPath() { return path.join(brainDir(), '.meta', 'lessons-index.json'); }
@@ -46,52 +47,16 @@ function parseLesson(file, raw) {
   return { id, file, scope, severity, status, enforce, ruleText };
 }
 
-// 直接扫描源 md(不含 archive/)
-function scanLessons() {
-  const dir = lessonsDir();
-  let files = [];
-  try { files = fs.readdirSync(dir).filter(n => /^L-.*\.md$/i.test(n)); } catch { return []; }
-  const out = [];
-  for (const n of files) {
-    const fp = path.join(dir, n);
-    try { out.push(parseLesson(fp, fs.readFileSync(fp, 'utf8'))); } catch {}
-  }
-  return out;
-}
-
-// 源文件最新 mtime(用于索引自愈判断)
-function newestSourceMtime() {
-  const dir = lessonsDir();
-  let m = 0;
-  try {
-    for (const n of fs.readdirSync(dir)) {
-      if (!/^L-.*\.md$/i.test(n)) continue;
-      const st = fs.statSync(path.join(dir, n)); if (st.mtimeMs > m) m = st.mtimeMs;
-    }
-  } catch {}
-  return m;
-}
-
-function buildIndex() {
-  const list = scanLessons();
-  try {
-    fs.mkdirSync(path.dirname(indexPath()), { recursive: true });
-    fs.writeFileSync(indexPath(), JSON.stringify({ builtAt: Date.now(), lessons: list }, null, 2));
-  } catch {}
-  return list;
-}
-
-// 读取:索引新鲜就用索引,否则重建(自愈)
-function getLessons() {
-  try {
-    const st = fs.statSync(indexPath());
-    if (st.mtimeMs >= newestSourceMtime()) {
-      const j = JSON.parse(fs.readFileSync(indexPath(), 'utf8'));
-      if (j && Array.isArray(j.lessons)) return j.lessons;
-    }
-  } catch {}
-  return buildIndex();
-}
+// 索引:源真相 = lessons/L-*.md(不含 archive/);编译缓存 = .meta/lessons-index.json
+const idx = makeIndex({
+  sourceDir: lessonsDir,
+  indexPath,
+  fileFilter: n => /^L-.*\.md$/i.test(n),
+  parse: parseLesson,
+  key: 'lessons',
+});
+function buildIndex() { return idx.buildIndex(); }
+function getLessons() { return idx.getIndex(); }
 
 function matchByPath(filePath) {
   const fp = String(filePath).replace(/\\/g, '/');

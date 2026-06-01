@@ -19,7 +19,7 @@ const BASE = path.join(BRAIN, '.meta', 'shipped-base');
 const APPLY = process.argv.includes('--apply');
 
 // "发货知识"文件:可被刷新(非用户私有数据)
-const SHIPPED = new Set(['style/unity.md', 'README.md', 'lessons/_TEMPLATE.md', 'projects/_TEMPLATE.md']);
+const SHIPPED = new Set(['style/unity.md', 'core/charter.md', 'README.md', 'lessons/_TEMPLATE.md', 'projects/_TEMPLATE.md']);
 // 永不自动刷新的用户私有文件(只在缺失时新增)
 function isUserOwned(rel) {
   return rel === 'core/identity.md' || rel === 'core/hard-rules.md' ||

@@ -1,6 +1,6 @@
 ---
 name: yide
-description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa" / "yide review/test", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan计划。
+description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/评审/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa"/"yide test", "yide review"/"yide 评审", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、review对抗评审、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan计划。
 allowed-tools: Bash
 ---
 
@@ -18,6 +18,7 @@ allowed-tools: Bash
 | `consolidate` / `整理` / `清理` | `actions/consolidate.md` | 整理记忆 |
 | `update` / `更新` / `迁移` | `actions/update.md` | 插件更新后安全迁移 |
 | `qa` / `测` / `测试` / `跑测试` / `test` | `actions/qa.md` | QA:测试计划/bug SOP/跑测+三查 |
+| `review` / `评审` / `挑刺` / `审一下` / `审代码` | `actions/review.md` | 对抗式评审:派新上下文 subagent 只看 diff、只挑正确性/耦合(不挑风格) |
 | `note` / `笔记` / `记笔记` / `想法` / `随想` / `capture` | `actions/note.md` | 随手记:归类整理 + 查询 |
 | `gaotapi` / `搞他皮` / `蒸馏` / `distill` / `带走` | `actions/distill.md` | 把某人/某块蒸馏成能召唤的命名专家(maxim 等) |
 | `专家` / `experts` / `用 <名>` / `会诊` | `actions/experts.md` | 列出/召唤/推荐专家 + 专家会诊 |

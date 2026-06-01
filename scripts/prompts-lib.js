@@ -1,9 +1,10 @@
 'use strict';
 // 翼德 · prompt 库:解析条目 + 编译索引 + 按文本匹配(供 UserPromptSubmit hook 快速召回)。
 // 条目 = ~/.yide/prompts/<slug>.md(frontmatter + 正文)。索引 = prompts/index.json(mtime 自愈)。
-const fs = require('fs');
+// 索引机械(scan/newestMtime/buildIndex/getIndex)与 lessons 共用 index-util.js。
 const path = require('path');
 const { brainDir } = require(path.join(__dirname, 'lib.js'));
+const { makeIndex } = require(path.join(__dirname, 'index-util.js'));
 
 function dir() { return path.join(brainDir(), 'prompts'); }
 function indexPath() { return path.join(dir(), 'index.json'); }
@@ -24,25 +25,16 @@ function parse(file, raw) {
   return e;
 }
 
-function scan() {
-  let files = [];
-  try { files = fs.readdirSync(dir()).filter(n => /\.md$/i.test(n) && n !== 'README.md'); } catch { return []; }
-  const out = [];
-  for (const n of files) { try { out.push(parse(n, fs.readFileSync(path.join(dir(), n), 'utf8'))); } catch {} }
-  return out;
-}
-function newestMtime() {
-  let m = 0; try { for (const n of fs.readdirSync(dir())) { if (!/\.md$/i.test(n)) continue; const st = fs.statSync(path.join(dir(), n)); if (st.mtimeMs > m) m = st.mtimeMs; } } catch {} return m;
-}
-function buildIndex() {
-  const list = scan();
-  try { fs.mkdirSync(dir(), { recursive: true }); fs.writeFileSync(indexPath(), JSON.stringify({ builtAt: Date.now(), prompts: list }, null, 2)); } catch {}
-  return list;
-}
-function getIndex() {
-  try { const st = fs.statSync(indexPath()); if (st.mtimeMs >= newestMtime()) { const j = JSON.parse(fs.readFileSync(indexPath(), 'utf8')); if (j && Array.isArray(j.prompts)) return j.prompts; } } catch {}
-  return buildIndex();
-}
+const idx = makeIndex({
+  sourceDir: dir,
+  indexPath,
+  fileFilter: n => /\.md$/i.test(n) && n !== 'README.md',
+  parse,
+  key: 'prompts',
+});
+const scan = idx.scan;
+const buildIndex = idx.buildIndex;
+const getIndex = idx.getIndex;
 
 // 子串匹配(适配中文,无需分词):统计 keywords/tags/name 在文本中的命中数
 function matchByText(text) {
