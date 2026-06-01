@@ -46,3 +46,15 @@ AI 常因训练数据混版本而给出过时接口:
 
 ## 5. 工程结构
 - 尊重已有 `.asmdef` 边界;编辑器代码放 `Editor/` 文件夹/asmdef;运行时程序集**绝不引用 `UnityEditor`**(会构建失败)。
+
+## 6. DOTween + Unity UI(UGUI)常见坑(本项目主力栈,作为"建议知识"参考,不做正则 lint)
+**DOTween:**
+- **对象销毁前先 Kill tween**:tween 还在跑、对象已 `Destroy` → 回调访问已销毁对象 → 崩/`MissingReferenceException`。`OnDestroy` 里 `transform.DOKill()`,或建 tween 时 `.SetLink(gameObject)` 绑生命周期(这是"一个动画修坏别处"的高发区)。
+- **无限循环 / 复用的 tween 必须手动管**:`SetLoops(-1)` 或关掉 `SetAutoKill(false)` 的 tween,不 Kill 会泄漏、堆积。
+- **别每帧 `new` tween**(`DOMove` 等):热路径里会 GC + 堆积;复用或用回调。
+- **暂停**:`Time.timeScale=0` 时若要 UI 动画仍动,`SetUpdate(true)`(独立于 timeScale)。
+**Unity UI(UGUI):**
+- **拆 Canvas 降重建**:同一 Canvas 上任一元素变化会触发整块 rebuild。把**频繁变的(分数/血条/计时)和静态的分到不同 Canvas**,缩小重建范围。
+- **关掉用不到的 Raycast Target**:不接收点击的 Text/Image 取消勾选,省 raycast 开销(满屏 UI 时明显)。
+- **慎用嵌套 Layout Group + ContentSizeFitter**:层层嵌套会多次 rebuild,列表多了就卡;长列表用对象池/虚拟列表。
+- **频繁显隐别狂 `SetActive`**:用对象池或 `CanvasGroup.alpha`/移出屏幕替代。
