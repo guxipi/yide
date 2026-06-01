@@ -1,6 +1,6 @@
 ---
 name: yide
-description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户说"翼德/yide + 动作"(如"翼德 简报""翼德 磨合""翼德 记一下 …""翼德 整理""翼德 测一下""翼德 笔记 …""翼德 蒸馏""翼德 战绩""翼德 起个计划"),或打命令 `/yide:yide <动作>` 时触发。涵盖:磨合onboard、记教训record、简报brief、整理consolidate、更新update、QA、笔记note、蒸馏gaotapi、专家、prompt、战绩、计划plan。
+description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa" / "yide review/test", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan计划。
 allowed-tools: Bash
 ---
 
