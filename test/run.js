@@ -131,10 +131,10 @@ function startCtx(brainVerOrNull) {
   });
   return JSON.parse(out).hookSpecificOutput.additionalContext || '';
 }
-t('版本落后→提醒 update;不落后/无文件→不提醒', () => {
-  assert(/插件已更新/.test(startCtx('0.1.0')), '落后应提醒');
-  assert(!/插件已更新/.test(startCtx('99.0.0')), '领先不该提醒');
-  assert(!/插件已更新/.test(startCtx(null)), '无版本文件(新用户)不该提醒');
+t('版本落后→一行"已更新"提示;不落后/无文件→不提示', () => {
+  assert(/已更新到 v/.test(startCtx('0.1.0')), '落后应提示已自动更新');
+  assert(!/已更新到 v/.test(startCtx('99.0.0')), '领先不该提示');
+  assert(!/已更新到 v/.test(startCtx(null)), '无版本文件(新用户)不该提示');
 });
 
 // === 7. mockup / 角色镜头 / 战绩判据(本轮新增)===
@@ -207,6 +207,29 @@ t('测试分工:玩法以 PlayMode 为真值(plan + unity.md)', () => {
   assert(/PlayMode 为真值|玩法以 PlayMode/.test(p) && !/EditMode 优先/.test(p), 'plan 应改成按层分工、玩法以 PlayMode 为真值');
   const u = fs.readFileSync(path.join(ROOT, 'templates', 'brain', 'style', 'unity.md'), 'utf8');
   assert(/EditMode/.test(u) && /PlayMode/.test(u) && /真值/.test(u), 'unity.md 应有 EditMode/PlayMode 分工知识');
+});
+
+t('resolve:发货默认+用户层 读取时合并(去重不拆 + 自定义 + 禁用)', () => {
+  const { resolve } = require(path.join(SCRIPTS, 'resolve.js'));
+  const rb = path.join(TMP, 'resolvebrain', '.yide');
+  fs.mkdirSync(path.join(rb, 'core'), { recursive: true });
+  fs.mkdirSync(path.join(rb, '.meta'), { recursive: true });
+  // 模拟"旧大脑":用户层 = 发货 6 条默认(原样) + 1 条自定义
+  const shipped = fs.readFileSync(path.join(ROOT, 'templates', 'brain', 'core', 'hard-rules.md'), 'utf8');
+  fs.writeFileSync(path.join(rb, 'core', 'hard-rules.md'), shipped + '\n7. **[sev:7]** IMPORTANT — 测试自定义规则。(防测试)\n');
+
+  let out = resolve('hard-rules', ROOT, rb);
+  assert(/防测试/.test(out), '应保留用户自定义红线');
+  assert((out.match(/防"hackfix"/g) || []).length === 1, '默认红线不该因"旧大脑也有"而重复(去重不拆)');
+
+  // 禁用某条默认
+  fs.writeFileSync(path.join(rb, '.meta', 'redline-suppress.json'), JSON.stringify(['防"hackfix"']));
+  out = resolve('hard-rules', ROOT, rb);
+  assert(!/防"hackfix"/.test(out), '被 suppress 的默认应消失');
+  assert(/防测试/.test(out), 'suppress 不影响自定义');
+
+  // charter 读发货
+  assert(/工作准则/.test(resolve('charter', ROOT, rb)), 'charter 应能从插件读到');
 });
 
 // 清理

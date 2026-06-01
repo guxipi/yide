@@ -10,6 +10,7 @@ const { countActive } = require(path.join(__dirname, 'lessons.js'));
 const { syncExperts } = require(path.join(__dirname, 'sync-experts.js'));
 const { extractionContext } = require(path.join(__dirname, 'extraction-context.js'));
 const store = require(path.join(__dirname, 'store.js'));
+const { resolve } = require(path.join(__dirname, 'resolve.js'));
 
 // a < b ?(semver,缺位按 0)
 function verLt(a, b) {
@@ -65,12 +66,12 @@ try {
     '以下是关于当前用户的持久上下文。请全程遵守,尤其 hard-rules;需要细节就读 ~/.yide 下对应文件,不要猜。\n';
   if (disclosure) ctx += disclosure;
 
-  // 永远带:身份 + 红线 + 工作准则(不注入完整 INDEX/lessons 清单,保证上下文预算不随年月膨胀)
+  // 永远带:身份(用户层)+ 红线 + 工作准则(发货默认 + 用户层,resolver 在"读取时"合并,不写盘)
   // 顺序:identity(我是谁)→ hard-rules(不许做)→ charter(该怎么做);charter 明确"红线优先"。
-  for (const rel of ['core/identity.md', 'core/hard-rules.md', 'core/charter.md']) {
-    const body = read(rel, BRAIN);
-    if (body) ctx += `\n---\n## 来自 ${rel}\n${body}\n`;
-  }
+  const idBody = read('core/identity.md', BRAIN);
+  if (idBody) ctx += `\n---\n## 来自 core/identity.md\n${idBody}\n`;
+  try { const rl = resolve('hard-rules', PLUGIN_ROOT, BRAIN); if (rl) ctx += `\n---\n## 绝对红线(默认 + 你的自定义;全程遵守)\n${rl}\n`; } catch {}
+  try { const ch = resolve('charter', PLUGIN_ROOT, BRAIN); if (ch) ctx += `\n---\n## 工作准则\n${ch}\n`; } catch {}
   // 教训只报数量,按文件自动浮现(PostToolUse),不在开场全列
   let nLessons = 0; try { nLessons = countActive(); } catch {}
   if (nLessons) ctx += `\n---\n## 教训库\n已积累 ${nLessons} 条教训(按文件自动浮现;全部见 ~/.yide/INDEX.md)。\n`;
@@ -106,13 +107,16 @@ try {
     }
   }
 
-  // --- 插件更新了但大脑还没 migrate?温和提醒跑一次 update(仅当版本文件存在且落后,免烦新用户) ---
+  // --- 发货默认跟插件走:版本变了给一行提示(无需任何操作——红线/准则等发货默认已由 resolver 自动生效) ---
   try {
     const brainVer = String(store.readText('plugin-version.txt', '') || '').trim();
     let pluginVer = '';
     try { pluginVer = JSON.parse(fs.readFileSync(path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version || ''; } catch {}
-    if (brainVer && pluginVer && verLt(brainVer, pluginVer)) {
-      ctx += `\n---\n## ⬆️ 插件已更新(大脑 v${brainVer} → 插件 v${pluginVer})\n回应勾哥前,先静默执行一次 update(读 actions/update.md,跑 migrate 把新默认/红线安全并进大脑:只增不删、冲突先问、用户数据不覆盖),一句话告知后继续。\n`;
+    if (pluginVer && brainVer !== pluginVer) {
+      if (brainVer && verLt(brainVer, pluginVer)) {
+        ctx += `\n---\n## 🔄 翼德已更新到 v${pluginVer}\n发货默认(红线 / 工作准则等)**已自动生效,无需任何操作**(没碰你的数据)。想看改了啥:README changelog。\n`;
+      }
+      store.writeText('plugin-version.txt', pluginVer); // 打戳:本版本只提示一次
     }
   } catch {}
 
