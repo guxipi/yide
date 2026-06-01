@@ -174,14 +174,25 @@ t('批注层自动保存(无保存按钮、input 即存)', () => {
   assert(!/id="yd-save"/.test(an), '不应再有"保存"按钮(yd-saved 指示器不算)');
 });
 
-t('闭环造鸭:plan 四阶段 + 占位先复用 prefab + 路由', () => {
+t('闭环造鸭:plan 四阶段 + 路由', () => {
   const p = fs.readFileSync(path.join(ROOT, 'actions', 'plan.md'), 'utf8');
   assert(/闭环造鸭/.test(p), 'plan 应叫闭环造鸭');
   for (const ph of ['对齐', '造', '验', '交付']) assert(p.includes('· ' + ph) || p.includes('阶段'), '缺阶段 ' + ph);
-  assert(/复用\/改造|复用.*prefab|已有的 prefab/.test(p), '占位应先复用项目 prefab 再灰盒');
-  assert(/run_tests/.test(p) && /循环到全绿/.test(p), '应有 oracle 验证循环到全绿');
-  assert(/actions\/plan\.md/.test(fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8')), 'SKILL 缺 plan 路由');
-  assert(/闭环造鸭/.test(fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8')), 'SKILL 应含闭环造鸭触发词');
+  assert(/run_tests/.test(p) && /自动验到全绿/.test(p), '应有 oracle 验证到全绿');
+  const skill = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8');
+  assert(/actions\/plan\.md/.test(skill) && /闭环造鸭/.test(skill), 'SKILL 缺 plan 路由/闭环造鸭触发词');
+});
+t('闭环造鸭:producer 改进 8 条都在', () => {
+  const p = fs.readFileSync(path.join(ROOT, 'actions', 'plan.md'), 'utf8');
+  assert(/验收分层|逻辑·自动测/.test(p) && /手感·试玩/.test(p), '缺验收分三层(治假绿)');
+  assert(/接口盘点/.test(p), '缺接口盘点(治集成屎山)');
+  assert(/竖切|垂直切片/.test(p), '缺垂直切片优先(治失控/早反馈)');
+  assert(/隔离|additive/.test(p), '缺隔离开发');
+  assert(/掉线/.test(p) && /(上限|卡住)/.test(p), '缺循环护栏(掉线降级/上限/卡住)');
+  assert(/可调参数|config/.test(p), '缺可调参数集中(治试玩回流)');
+  assert(/试玩清单/.test(p), '缺试玩清单(治不信绿)');
+  assert(/\[假设\]|智能默认/.test(p), '缺智能默认(治几句话太模糊)');
+  assert(/借皮/.test(p), '缺 prefab 只借皮');
 });
 
 // 清理
