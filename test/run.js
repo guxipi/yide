@@ -195,6 +195,13 @@ t('闭环造鸭:producer 改进 8 条都在', () => {
   assert(/借皮/.test(p), '缺 prefab 只借皮');
 });
 
+t('闭环造鸭:开造前检查点 + 失败回滚(归 plan,不另起动作)', () => {
+  const p = fs.readFileSync(path.join(ROOT, 'actions', 'plan.md'), 'utf8');
+  assert(/检查点/.test(p) && /git stash/.test(p) && /专用分支|yide\/闭环/.test(p), '缺"开造前问勾哥建检查点(stash+专用分支)"');
+  assert(/回滚/.test(p) && /一个单位/.test(p) && /\.checkpoint/.test(p), '缺失败回滚(整段一次撤 + 读 checkpoint)');
+  assert(/回滚/.test(fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8')), 'SKILL plan 路由应含回滚触发词');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 

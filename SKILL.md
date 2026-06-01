@@ -23,7 +23,7 @@ allowed-tools: Bash
 | `gaotapi` / `搞他皮` / `蒸馏` / `distill` / `带走` | `actions/distill.md` | 把某人/某块蒸馏成能召唤的命名专家(maxim 等) |
 | `专家` / `experts` / `用 <名>` / `会诊` | `actions/experts.md` | 列出/召唤/推荐专家 + 专家会诊 |
 | `prompt` / `prompts` / `提示词` / `存这条` | `actions/prompts.md` | prompt 库:存(提议+确认)/ 看 / 建议 / 升级成命令 |
-| `plan` / `计划` / `闭环造鸭` / `造鸭` / `闭环` / `方案` | `actions/plan.md` | 闭环造鸭:几句话 → 对齐(镜头+线稿)→ 造(占位,先复用 prefab)→ 引擎验到全绿 → 交付可玩切片 |
+| `plan` / `计划` / `闭环造鸭` / `造鸭` / `闭环` / `方案` / `回滚` / `撤销闭环` | `actions/plan.md` | 闭环造鸭:几句话 → 对齐(镜头+线稿)→ 造(占位,先复用 prefab;开造前可建检查点)→ 引擎验到全绿 → 交付可玩切片;失败可一键回滚 |
 | `mockup` / `线稿` / `wireframe` / `画个界面` / `画界面` | `actions/mockup.md` | 从描述出可批注的 HTML UI 线稿确认布局(plan 里界面功能会自动调) |
 | `战绩` / `zhanji` / `stats` / `战绩面板` | `actions/zhanji.md` | (extraction 彩蛋)查连斩/打卡链/三国称号战绩 |
 
