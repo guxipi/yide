@@ -248,6 +248,13 @@ t('安卓真机 QA:全绿才惊动勾哥、真机可选、adb+SOP', () => {
   assert(fs.existsSync(path.join(ROOT, 'integrations', 'android', 'SETUP.md')), '缺 integrations/android/SETUP.md');
 });
 
+t('手感反馈表(交互)+ 联合优化回流', () => {
+  const ff = fs.readFileSync(path.join(ROOT, 'templates', 'qa', 'feel-form.html'), 'utf8');
+  assert(/yd-feel/.test(ff) && /提交反馈给翼德/.test(ff) && /还行/.test(ff) && /要改/.test(ff), 'feel-form 缺交互选项/提交按钮');
+  const q = fs.readFileSync(path.join(ROOT, 'actions', 'qa.md'), 'utf8');
+  assert(/feel-form/.test(q) && /art-director/.test(q) && /ui-ux/.test(q) && /定夺/.test(q), 'qa 缺"交互手感表 + 联合优化(数值/设计+PM)供勾哥定夺"');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 

@@ -102,6 +102,11 @@ yide/
 
 ## 更新记录 Changelog
 
+### v0.22.0 — QA 报告可交互手感表 + 联合优化回流
+- **加**:`templates/qa/feel-form.html`——QA 报告里"要勾哥定的手感项"做成**可交互**:每项点 👍还行 / 👎要改 / 🤔不确定 + 写一句 → 「📋 提交反馈给翼德」一键复制粘回。
+- **加**:**反馈回流闭环**——翼德拿到手感反馈 → 拉 **art-director(数值)+ ui-ux(设计)联合建议、PM challenge** → **最佳优化方案供勾哥定夺** → 勾哥拍板 → 翼德执行(改 config 数值 / 走小闭环)。写进 `qa.md`(F)+ `plan.md`(试玩反馈回流)。
+- 报告 HTML 也用了**自适应缩放填满**(和线稿一致,不再缩在角落留白)。测试 28 用例。
+
 ### v0.21.0 — 安卓真机 QA(EvidenceCapture + adb + SOP,无 AltTester)
 - **加**:`qa` / `闭环造鸭` 的安卓真机实测流程——**先自动测到全绿才惊动勾哥;真机实测是可选项**(全绿后问一句,他要才 guide USB 调试)。他在手机上玩 → 游戏里 `EvidenceCapture.cs` 在任何异常自动存 截图+log+机型 → 翼德 `adb pull` 拉回 → 按 `BUG-SOP` 出真机 QA 报告(聚焦真机问题 + 手感项,不混基础 bug)。
 - **加**:`integrations/android/SETUP.md` 傻瓜配置(装 adb、开 USB 调试、EvidenceCapture 只在 dev build 开)。

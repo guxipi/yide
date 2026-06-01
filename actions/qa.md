@@ -45,7 +45,9 @@
 2. **绿了再问一句**:"都测过了、全绿 ✅。**要不要在真机上实测一下?(可选)**" 勾哥说不用 → 直接交付收工。
 3. **他说要 → 第一次 guide**:教他插数据线、开「USB 调试」(步骤在 `integrations/android/SETUP.md`),`adb devices` 确认连上。
 4. **他在手机上玩,翼德后台取证**:游戏里 `EvidenceCapture.cs` 在任何异常时自动把 截图 + 完整 log + 机型 存到手机;翼德 `adb pull <persistentDataPath>/yide-evidence` 拉回(没装 EvidenceCapture 就 `adb logcat -d` 抓栈)。
-5. **按 SOP 出真机 QA 报告**:逻辑/集成已绿,报告**聚焦真机特有问题(闪退/卡顿/触控/发热)+ 手感项(留给勾哥定)**,别再混基础 bug;证据存 `QA/bugs/`。
+5. **按 SOP 出真机 QA 报告**:逻辑/集成已绿,报告**聚焦真机特有问题(闪退/卡顿/触控/发热)**,别再混基础 bug;证据存 `QA/bugs/`。
+6. **手感项做成可交互**:把"要勾哥定的手感项"用 `${CLAUDE_SKILL_DIR}/templates/qa/feel-form.html`(原样嵌进报告 `</body>` 前;每项写成 `<div class="yd-feel" data-q="…">`)——勾哥对每项点 👍还行 / 👎要改 / 🤔不确定 + 写一句,点「提交反馈给翼德」复制粘回。
+7. **反馈回流(联合优化)**:翼德拿到反馈 → 拉 **art-director(数值)+ ui-ux(design)联合给优化建议**、**PM challenge** 收敛 → 给一份**最佳优化方案供勾哥定夺** → 勾哥拍板 → 翼德**执行**(改 config 数值 / 走小闭环),只重跑相关那条验证。
 - 取证用的只读 adb(`devices`/`logcat`/`pull`)已自动放行、不弹审批;`adb shell` 等仍会问。
 - 诚实:手机只在"测 + 取证那会儿"连着(USB 或同 WiFi),平时不用一直连。
 

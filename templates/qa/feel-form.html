@@ -1,0 +1,61 @@
+<!-- ============================================================
+  翼德 · 手感反馈表(把这整段原样嵌进 QA 报告的 </body> 之前)
+  约定:每个"要勾哥定的手感项"写成 <div class="yd-feel" data-q="问题文字"></div>
+  勾哥用法:每项点 👍还行 / 👎要改 / 🤔不确定,可补一句 → 点「📋 提交反馈给翼德」复制,粘回 Claude。
+  翼德拿到后:拉 art-director(数值)+ ui-ux(design)联合给建议、PM challenge → 最佳优化方案供勾哥定夺 → 执行。
+  纯 vanilla JS,无依赖;答案存浏览器本地。
+============================================================ -->
+<style>
+  .yd-feel{margin:8px 0;padding:10px 12px;background:#fff;border:1px solid #ffe082;border-radius:8px}
+  .yd-feel .q{font-weight:600;margin-bottom:8px}
+  .yd-feel .opts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .yd-feel .opts button{padding:5px 12px;border:1px solid #cfd8dc;border-radius:16px;background:#fafafa;cursor:pointer;font-size:13px}
+  .yd-feel .opts button.on{color:#fff;border-color:transparent}
+  .yd-feel .opts button.on[data-v="ok"]{background:#43a047}
+  .yd-feel .opts button.on[data-v="change"]{background:#e53935}
+  .yd-feel .opts button.on[data-v="unsure"]{background:#fb8c00}
+  .yd-feel input{width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #e0e0e0;border-radius:6px;font:13px system-ui}
+  #yd-feelbar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:2147483600}
+  #yd-feelbar button{padding:10px 18px;border:none;border-radius:24px;background:#37474f;color:#fff;font-size:14px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+</style>
+<div id="yd-feelbar"><button id="yd-feel-submit">📋 提交反馈给翼德</button></div>
+<script>(function(){
+  var items = [].slice.call(document.querySelectorAll('.yd-feel'));
+  if (!items.length) { var b = document.getElementById('yd-feelbar'); if (b) b.style.display = 'none'; return; }
+  var KEY = 'yd-feel:' + location.pathname, state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var LABEL = { ok: '还行', change: '要改', unsure: '不确定' };
+  items.forEach(function (el, i) {
+    var q = el.getAttribute('data-q') || (el.textContent || '').trim() || ('手感项' + (i + 1));
+    el.setAttribute('data-q', q);
+    var cur = state[i] || {};
+    el.innerHTML = '<div class="q">' + q + '</div>' +
+      '<div class="opts">' +
+      '<button data-v="ok">👍 还行</button><button data-v="change">👎 要改</button><button data-v="unsure">🤔 不确定</button>' +
+      '</div><input placeholder="想说的(可选,如:慢一点 / 再给 5 秒 / 奖励太少)">';
+    var btns = el.querySelectorAll('.opts button'), inp = el.querySelector('input');
+    if (cur.choice) el.querySelector('.opts button[data-v="' + cur.choice + '"]').classList.add('on');
+    if (cur.note) inp.value = cur.note;
+    btns.forEach(function (b) {
+      b.onclick = function () {
+        btns.forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
+        state[i] = { q: q, choice: b.getAttribute('data-v'), note: (state[i] || {}).note || inp.value.trim() };
+        save();
+      };
+    });
+    inp.oninput = function () { state[i] = { q: q, choice: (state[i] || {}).choice || '', note: inp.value.trim() }; save(); };
+  });
+  document.getElementById('yd-feel-submit').onclick = function () {
+    var lines = items.map(function (el, i) {
+      var s = state[i] || {}, q = el.getAttribute('data-q');
+      var c = s.choice ? LABEL[s.choice] : '未选';
+      return '· ' + q + ' — ' + c + (s.note ? ':' + s.note : '');
+    });
+    var out = '手感反馈(共 ' + items.length + ' 项,粘给翼德即可):\n' + lines.join('\n');
+    function ok() { alert('已复制,粘回 Claude 即可。翼德会拉数值/设计镜头给优化建议、PM challenge,最后让你定。'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(out).then(ok, function () { prompt('复制下面这段:', out); });
+    else prompt('复制下面这段:', out);
+  };
+})();</script>

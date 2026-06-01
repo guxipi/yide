@@ -1,7 +1,7 @@
 {
   "name": "yide",
   "displayName": "翼德 · Unity 程序员的上下文中枢与把关助手",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "翼德:常驻的个人上下文中枢 + Unity 把关助手。沉淀你的身份/风格/规则/教训,每次开新对话自动 brief,记过的错绝不再犯;并按 Unity 手游 best practice 在写代码时把关。",
   "keywords": [
     "memory",
