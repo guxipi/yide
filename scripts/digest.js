@@ -9,14 +9,15 @@ const os = require('os');
 const path = require('path');
 const https = require('https');
 const { brainDir } = require(path.join(__dirname, 'lib.js'));
+const { metaPath, metaDir } = require(path.join(__dirname, 'store.js'));
+const { CORRECT } = require(path.join(__dirname, 'signals.js'));
 
-const META = path.join(brainDir(), '.meta');
-const OFF = path.join(META, 'digest-off');
-const STAMP = path.join(META, 'last-digest.txt');
-const OUT = path.join(META, 'digest-latest.md');
-const TG = path.join(META, 'maker-telegram.json'); // {botToken,chatId} 或 {webhookUrl};无则只本地
+const META = metaDir();
+const OFF = metaPath('digest-off');
+const STAMP = metaPath('last-digest.txt');
+const OUT = metaPath('digest-latest.md');
+const TG = metaPath('maker-telegram.json'); // {botToken,chatId} 或 {webhookUrl};无则只本地
 const ACTIONS = ['onboard', 'record', 'brief', '整理', 'update', 'qa', 'note', 'gaotapi', '专家', 'prompt', '战绩', 'plan'];
-const CORRECT = /(我说过|说了多少遍|别这样|别用|不对|不是这样|还是不行|又错|不要这样|说了多少|讲了多少)/;
 
 const cmd = process.argv[2] || 'run';
 try { fs.mkdirSync(META, { recursive: true }); } catch {}

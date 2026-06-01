@@ -2,13 +2,12 @@
 // 翼德 · 会话健康度:在 UserPromptSubmit 时按会话累计"纠正次数 / 提问数",
 // 命中阈值就**一次性**温和提醒勾哥重开会话(治"一个 bug 修 6 遍 / 长对话上下文污染")。
 // 关键:提醒里带"重开前我把要点记进教训库,新会话自动带上"——破"重开就忘"的顾虑。
-// 非阻断;每会话每种提醒只发一次;状态存 .meta/session-health.json(按会话,防膨胀)。仅 Node 内置模块。
-const fs = require('fs');
+// 非阻断;每会话每种提醒只发一次;状态走 store(.meta/session-health.json)。仅 Node 内置模块。
 const path = require('path');
-const { brainDir } = require(path.join(__dirname, 'lib.js'));
+const { CORRECT } = require(path.join(__dirname, 'signals.js'));
+const { readJson, writeJson } = require(path.join(__dirname, 'store.js'));
 
-// 勾哥在"纠正/不满"时的口头信号(与 digest 同源,略扩)
-const CORRECT = /(我说过|说了多少遍|说了多少|讲了多少|别这样|别用|不对|不是这样|还是不行|不行啊|又错了|又错|又改坏|改坏了|怎么又|不要这样|你又|说过多少)/;
+const FILE = 'session-health.json';
 const CLEAR_AT = 3;  // 同会话纠正达到此数 → 提醒重开
 const LONG_AT = 50;  // 同会话提问达到此数 → 提醒长会话
 
@@ -18,9 +17,7 @@ function sessionNudge(input) {
   const sid = (input && input.session_id) || 'nosid';
   if (!prompt) return '';
 
-  const file = path.join(brainDir(), '.meta', 'session-health.json');
-  let db = {};
-  try { db = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {}
+  let db = readJson(FILE, {}) || {};
   if (Object.keys(db).length > 60 && !db[sid]) db = {}; // 防无限增长:会话太多就只留当前
 
   const s = db[sid] || { prompts: 0, corrections: 0, nudgedClear: false, nudgedLong: false };
@@ -37,8 +34,8 @@ function sessionNudge(input) {
   }
 
   db[sid] = s;
-  try { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, JSON.stringify(db)); } catch {}
+  writeJson(FILE, db);
   return msg;
 }
 
-module.exports = { sessionNudge, CORRECT };
+module.exports = { sessionNudge };

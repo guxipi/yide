@@ -9,6 +9,15 @@ const { detect, profileText } = require(path.join(__dirname, 'unity-context.js')
 const { countActive } = require(path.join(__dirname, 'lessons.js'));
 const { syncExperts } = require(path.join(__dirname, 'sync-experts.js'));
 const { extractionContext } = require(path.join(__dirname, 'extraction-context.js'));
+const store = require(path.join(__dirname, 'store.js'));
+
+// a < b ?(semver,缺位按 0)
+function verLt(a, b) {
+  const pa = String(a).split('.').map(n => parseInt(n, 10) || 0);
+  const pb = String(b).split('.').map(n => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) { if ((pa[i] || 0) < (pb[i] || 0)) return true; if ((pa[i] || 0) > (pb[i] || 0)) return false; }
+  return false;
+}
 
 const BRAIN = brainDir();
 const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..');
@@ -46,11 +55,9 @@ try {
   // 观察→日报:首次用透明告知勾哥一次(咕鸡也会亲口说);已关闭则不提
   let disclosure = '';
   try {
-    const shown = path.join(BRAIN, '.meta', 'digest-notice-shown');
-    const off = path.join(BRAIN, '.meta', 'digest-off');
-    if (!fs.existsSync(shown) && !fs.existsSync(off)) {
+    if (!store.exists('digest-notice-shown') && !store.exists('digest-off')) {
       disclosure = '\n---\n## 一次性告知(请念给勾哥)\n翼德会观察你的使用情况,生成一份**翼德小报告**(只有主题和计数,**不含你的代码/原文/密钥**)发给作者咕鸡,用来改进工具。输入"翼德别看了"可随时关闭(我会运行 digest.js off)。\n';
-      fs.writeFileSync(shown, '1');
+      store.writeText('digest-notice-shown', '1');
     }
   } catch {}
 
@@ -86,10 +93,9 @@ try {
   try { ctx += extractionContext(BRAIN, PROJECT, PLUGIN_ROOT); } catch {}
 
   // --- 记忆整理是否到期(事件驱动,替代夜间 cron;电脑关机也不丢) ---
-  const stampFile = path.join(BRAIN, '.meta', 'last-consolidate.txt');
   let due = true;
   try {
-    const last = Number(fs.readFileSync(stampFile, 'utf8')) || 0;
+    const last = Number(store.readText('last-consolidate.txt', '0')) || 0;
     due = (Date.now() - last) > 24 * 60 * 60 * 1000;
   } catch { due = true; }
   if (due) {
@@ -99,6 +105,16 @@ try {
       ctx += `\n---\n## 🧹 记忆整理(到期)\n距上次>24h。回应用户前先静默执行一次记忆整理(consolidate 动作:读 actions/consolidate.md,合并去重+打时间戳),一句话告知后继续;用户若很赶则推迟到本轮末。\n`;
     }
   }
+
+  // --- 插件更新了但大脑还没 migrate?温和提醒跑一次 update(仅当版本文件存在且落后,免烦新用户) ---
+  try {
+    const brainVer = String(store.readText('plugin-version.txt', '') || '').trim();
+    let pluginVer = '';
+    try { pluginVer = JSON.parse(fs.readFileSync(path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version || ''; } catch {}
+    if (brainVer && pluginVer && verLt(brainVer, pluginVer)) {
+      ctx += `\n---\n## ⬆️ 插件已更新(大脑 v${brainVer} → 插件 v${pluginVer})\n回应勾哥前,先静默执行一次 update(读 actions/update.md,跑 migrate 把新默认/红线安全并进大脑:只增不删、冲突先问、用户数据不覆盖),一句话告知后继续。\n`;
+    }
+  } catch {}
 
   emit(ctx, '🗡️ 翼德已就位 · ' + today());
 } catch (e) {
