@@ -23,7 +23,7 @@ updated: 2026-01-01
 <!-- 来自 Confluence,蒸成精简层供 AI 自动读;详见 actions/docs.md -->
 - **Confluence space**:<!-- 范围,如 ER -->
 - **本地镜像(缓存,可重拉)**:`~/.yide/.cache/confluence/<项目>/`
-- **精简层(Claude 每次自动读)**:`<仓库>/AGENTS.md`
+- **精简层(Claude 每次自动读)**:`<仓库>/CLAUDE.md`(自动加载的是 CLAUDE.md,非 AGENTS.md;要兼容别的 AI 就 AGENTS.md + CLAUDE.md `@AGENTS.md` 引入)
 - **上次同步**:<!-- 日期;> 7 天翼德会静默增量同步 -->
 
 ## 当前焦点

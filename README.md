@@ -103,13 +103,29 @@ yide/
 
 ---
 
+## ✅ 验证状态(诚实)
+**已验证**(`npm test` 29 用例 / 实跑 / 渲染截图 / 查官方文档):PreToolUse 放行·拦截·adb 门控、resolve 分层去重、索引自愈、charter 注入、注入体量、migrate 加文件、session-health 阈值、线稿/QA 报告 HTML 渲染与交互、`CLAUDE.md` 自动加载机制。
+
+**⚠️ 尚未在真实环境端到端验证**(需勾哥在真机/真项目各跑一遍,验一项划一项):
+- 闭环造鸭:几句话 → 引擎里可玩切片(需真 Unity + Coplay)
+- 安卓真机 QA:EvidenceCapture + `adb pull` + SOP 报告(需真安卓设备)
+- 项目文档管理:Confluence 导出 → 解压 → 蒸成 `CLAUDE.md` → 自动读(需真 Confluence)
+- 角色镜头 `use architect` 在真会话能否召唤(需真 Claude Code 会话)
+- 一键回滚"整段撤"(需真闭环跑一次)
+
+> 诚实底线:`node test` 只覆盖"可控的逻辑/文件层";**"模型在真实会话照做 + 勾哥真实环境"这层必须真机验,翼德不冒充已验证。**
+
 ## 更新记录 Changelog
 
-### v0.23.0 — 项目文档管理(Confluence → AGENTS.md,自动耦合开发)
-- **加**:`docs`(项目文档管理)动作——把勾哥写在 **Confluence** 的项目文档变成 AI 好用的形态:**首次一键导出空间(免 token)→ 翼德蒸成精简 `AGENTS.md`(放仓库根)→ API token 增量保鲜 → 7 天懒同步**。三层:源(Confluence,不动他习惯)/ 镜像(`~/.yide/.cache/confluence/`,不进 git,可重拉)/ 精简层(仓库 `AGENTS.md`,进 git)。
-- **自动耦合开发(不用提醒)**:`AGENTS.md` 在仓库根 → **Claude Code 每次会话自动加载** → 做功能天然带项目背景;`plan` 的"读 context"含 AGENTS.md,要细节自动钻镜像。关键守则:`AGENTS.md` 必须精简(常驻不撑爆),全量细节留镜像。
+### v0.23.1 — 修正:自动加载的是 `CLAUDE.md` 不是 `AGENTS.md`
+- **修 bug**:v0.23.0 误称"`AGENTS.md` 被 Claude Code 每次会话自动加载"——**错**。官方文档:**Claude Code 只自动读 `CLAUDE.md`,不读 `AGENTS.md`**。已全部改为写 `CLAUDE.md`(要兼容别的 AI 就 `AGENTS.md` + `CLAUDE.md` 用 `@AGENTS.md` 引入)。docs/plan/projects 模板同步修正。
+
+### v0.23.0 — 项目文档管理(Confluence → 项目根 CLAUDE.md,自动耦合开发)
+- **加**:`docs`(项目文档管理)动作——把勾哥写在 **Confluence** 的项目文档变成 AI 好用的形态:**首次一键导出空间(免 token)→ 翼德蒸成精简层写进项目根 `CLAUDE.md` → API token 增量保鲜 → 7 天懒同步**。三层:源(Confluence,不动他习惯)/ 镜像(`~/.yide/.cache/confluence/`,不进 git,可重拉)/ 精简层(仓库 `CLAUDE.md`,进 git)。
+- **自动耦合开发(不用提醒)**:`CLAUDE.md` 在仓库根 → **Claude Code 每次会话自动加载** → 做功能天然带项目背景;`plan` 的"读 context"含它,要细节自动钻镜像。守则:精简层必须精简(常驻不撑爆),全量细节留镜像。
 - **加**:`integrations/confluence/SETUP.md`(傻瓜版:一键导出 / 配 API token);`projects` 模板加「📚 项目文档」段。
-- **不引重依赖**:首次走 Confluence 自带导出、增量走免费 REST API;Playwright 仅作以后兜底、不进核心。测试 29 用例。
+- **不引重依赖**:首次走 Confluence 自带导出、增量走免费 REST API;Playwright 仅作以后兜底、不进核心。
+- ⚠️ **端到端尚未在真实 Confluence + 真项目验证**(见 README「验证状态」)。测试 29 用例(覆盖文件/路由/逻辑,不含真实环境链路)。
 
 ### v0.22.0 — QA 报告可交互手感表 + 联合优化回流
 - **加**:`templates/qa/feel-form.html`——QA 报告里"要勾哥定的手感项"做成**可交互**:每项点 👍还行 / 👎要改 / 🤔不确定 + 写一句 → 「📋 提交反馈给翼德」一键复制粘回。
