@@ -21,6 +21,8 @@ function die(m) { console.error('[翼德 playtest] ' + m); process.exit(1); }
 function log(m) { console.log('[翼德 playtest] ' + m); }
 
 function findPython() {
+  // 显式指定优先(用了 venv / py 启动器 / 非默认 python 时设 YIDE_PYTHON)
+  if (process.env.YIDE_PYTHON) return process.env.YIDE_PYTHON;
   for (const p of ['python', 'python3', 'py']) {
     try { if (spawnSync(p, ['--version'], { encoding: 'utf8' }).status === 0) return p; } catch {}
   }

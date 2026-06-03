@@ -17,11 +17,14 @@
 ## 2. 装本地中文转写(SenseVoice)
 不装也能用——降级成"只用打字 + 上下文"。装了才有语音自动转写。**为什么不用 Whisper**:它中文口语弱;SenseVoice 中文强、快、纯 CPU 可跑、自带标点。
 
-**默认:funasr**
-1. 装 Python 3.10/3.11。
-2. 终端跑:`pip install funasr`(会带上 PyTorch CPU 版;首次运行自动从 ModelScope 拉 ~400MB 模型)。
-3. 验证:`python "<本插件>/integrations/playtest-capture/asr_sensevoice.py" 任意.wav` 能打印 JSON 文字即成。
-4. 翼德跑 `scripts/playtest.js` 时会自动找 `python` 调它,批量转写本场所有语音。
+**默认:funasr(本地 SenseVoice)** —— 注意顺序,funasr **不会**自动装 PyTorch:
+1. 装 **Python 3.10 或 3.11**(python.org;安装时勾上 **Add Python to PATH**)。验证:`python --version`。
+2. **先**装 PyTorch(CPU 版,显式 CPU 源、不拉 CUDA):
+   `pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu`
+3. **再**装 funasr + modelscope:`pip install funasr modelscope`
+4. 验证装好:`python -c "from funasr import AutoModel; print('funasr OK')"` 打印 OK 即成。
+5. **首次转写**会自动从 ModelScope 拉 ~400MB 模型(一次性,需联网;海外连慢可改用 HF 源——跟翼德说,它给脚本加 `hub='hf'`)。之后翼德跑 `scripts/playtest.js` 自动调 `python asr_sensevoice.py` 批量转写本场语音。
+   - 若默认 `python` 不是装了 funasr 的那个(用了 venv / `py` 启动器),设环境变量 **`YIDE_PYTHON`** 指到对应 python.exe 即可。
 
 > **更轻的跑法(可选)**:嫌 PyTorch 重,可用 **sherpa-onnx** 跑 SenseVoice 的 ONNX 版(免 PyTorch、有预编译包)。要走这条跟翼德说,它把 `asr_sensevoice.py` 换成 sherpa-onnx 版。
 > ⚠️ 本地转写这步**尚未在勾哥机器端到端验证**;装好后第一次跑请确认能出中文稿(出不来翼德会如实报、自动降级,不假装)。
