@@ -1,6 +1,6 @@
 ---
 name: yide
-description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/评审/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa"/"yide test", "yide review"/"yide 评审", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、review对抗评审、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan闭环造鸭(几句话→对齐→造→引擎验→交付)、mockup线稿、docs项目文档管理(Confluence→AGENTS.md)、playtest录屏反馈(试玩录像→抽帧+中文转写→问题清单)。
+description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/评审/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa"/"yide test", "yide review"/"yide 评审", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、review对抗评审、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan闭环造鸭(几句话→对齐→造→引擎验→交付)、mockup线稿、docs项目文档管理(Confluence→CLAUDE.md)、playtest冻帧标注(Unity按F8冻帧+抓命中元素/上下文→本地SenseVoice转写→带定位问题清单)。
 allowed-tools: Bash
 ---
 
@@ -25,8 +25,8 @@ allowed-tools: Bash
 | `prompt` / `prompts` / `提示词` / `存这条` | `actions/prompts.md` | prompt 库:存(提议+确认)/ 看 / 建议 / 升级成命令 |
 | `plan` / `计划` / `闭环造鸭` / `造鸭` / `闭环` / `方案` / `回滚` / `撤销闭环` | `actions/plan.md` | 闭环造鸭:几句话 → 对齐(镜头+线稿)→ 造(占位,先复用 prefab;开造前可建检查点)→ 引擎验到全绿 → 交付可玩切片;失败可一键回滚 |
 | `mockup` / `线稿` / `wireframe` / `画个界面` / `画界面` | `actions/mockup.md` | 从描述出可批注的 HTML UI 线稿确认布局(plan 里界面功能会自动调) |
-| `docs` / `项目文档` / `吸收文档` / `更新文档` / `文档管理` | `actions/docs.md` | 项目文档管理:Confluence 导出/增量 → 蒸成精简 AGENTS.md(每次会话自动读)→ 7 天懒同步 |
-| `playtest` / `录屏` / `试玩录像` / `playtest 反馈` / `看录像` | `actions/playtest.md` | playtest 录屏反馈:录像 → 抽关键帧 + 中文转写 → 带时间戳问题清单 → 联合优化回流 |
+| `docs` / `项目文档` / `吸收文档` / `更新文档` / `文档管理` | `actions/docs.md` | 项目文档管理:Confluence 导出/增量 → 蒸成精简 CLAUDE.md(每次会话自动读)→ 7 天懒同步 |
+| `playtest` / `冻帧标注` / `标注` / `试玩反馈` | `actions/playtest.md` | playtest 冻帧标注:Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |
 | `战绩` / `zhanji` / `stats` / `战绩面板` | `actions/zhanji.md` | (extraction 彩蛋)查连斩/打卡链/三国称号战绩 |
 
 ## 规则
