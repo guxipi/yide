@@ -88,12 +88,12 @@
 yide/
 ├── .claude-plugin/{plugin.json, marketplace.json}
 ├── SKILL.md                 # 单一 /yide 入口(派发)
-├── actions/                 # 按需加载:onboard/record/brief/consolidate/update/qa/review/note/distill/experts/prompts/plan/zhanji
+├── actions/                 # 按需加载:onboard/record/brief/consolidate/update/qa/review/note/distill/experts/prompts/plan/mockup/docs/playtest/zhanji
 ├── hooks/hooks.json         # exec 形式(Windows-safe)
 ├── scripts/*.js             # 全 Node,无第三方依赖
 ├── templates/brain/         # onboard 时复制到 ~/.yide
 ├── templates/qa/            # bug SOP / 报告模板 / EvidenceCapture.cs
-└── integrations/            # 可选:telegram(随手记)/ unity-mcp(看 Editor)
+└── integrations/            # 可选:telegram(随手记)/ unity-mcp(看 Editor)/ android(真机取证)/ confluence(项目文档)/ playtest-capture(冻帧标注+本地转写)
 ```
 
 ## 跨平台 / Windows
@@ -112,10 +112,21 @@ yide/
 - 项目文档管理:Confluence 导出 → 解压 → 蒸成 `CLAUDE.md` → 自动读(需真 Confluence)
 - 角色镜头 `use architect` 在真会话能否召唤(需真 Claude Code 会话)
 - 一键回滚"整段撤"(需真闭环跑一次)
+- Playtest 冻帧标注:Unity 按 F8 冻帧+抓命中元素/上下文+录音 → 本地 SenseVoice 转写 → 带定位问题清单(需真 Unity 项目 + 装好本地转写)
 
 > 诚实底线:`node test` 只覆盖"可控的逻辑/文件层";**"模型在真实会话照做 + 勾哥真实环境"这层必须真机验,翼德不冒充已验证。**
 
 ## 更新记录 Changelog
+
+### v0.24.0 — Playtest 冻帧标注反馈(Unity 内按 F8 → 翼德直通代码的问题清单)
+- **加**:`playtest` 动作 + `integrations/playtest-capture/` + `templates/qa/PlaytestMarker.cs`(运行时)+ `templates/qa/Editor/PlaytestMarkerWindow.cs`(编辑器停靠窗口)。勾哥试玩时按 **F8** → **冻帧**(`Time.timeScale=0`)+ 自动截图 + **抓游戏内状态**(命中的 UI/物体**层级路径 + 来源 Prefab** + 场景 + 分辨率/FPS/版本)+ 录一小段语音;**语音为主、可打字补充**;再按 F8 存成一个 marker。说"**翼德 playtest**" → `scripts/playtest.js` **本地 SenseVoice 批量转写** + 合并打字 + 读截图/上下文 → 翼德出**带定位问题清单**(`现象 → BattleHUD/TopBar/PauseBtn ← PauseButton.prefab`)→ 接 v0.22 **联合优化回流**。
+- **为什么比录屏强**:翼德拿到的是**游戏内部状态**(直通脚本/Prefab,不靠看图猜)+ 一条标注 = 一个干净问题包(低噪音)。**标注面板是独立编辑器停靠窗口,绝不遮挡游戏**;打字时**完全不需转写**。
+- **中文转写本地化(适配在海外)**:不用 Whisper(中文口语弱);走**本地 SenseVoice / funasr**(`asr_sensevoice.py`,离线、免费、CPU 可跑、自带标点),**不上云、不跨境**。没装 → **降级成只用打字+上下文,不阻断**。
+- **铁律**:勾哥只做"按 F8 / 测 / 说或打字 / 再按 F8",其余翼德全自动。
+- **隐私**:录麦**全程本地处理、不外传**;不想说话只打字;产物进项目 `QA/playtest/`(`.gitignore`)。
+- **反臃肿**:lazy action(零常驻,`npm run audit` 仍 816 tokens)+ opt-in + 无新 hook。`#if UNITY_EDITOR||DEVELOPMENT_BUILD` 包住,不进正式包。测试 31 用例。
+- **可选保留**:整段屏幕录屏老方案(`playtest-rec.bat`)默认不启用,专看手感/动效时才用。
+- ⚠️ **整条链路(Unity 工具 / 录音 / 本地 SenseVoice 转写)尚未在真 Unity 端到端验证**(见上「验证状态」)。
 
 ### v0.23.1 — 修正:自动加载的是 `CLAUDE.md` 不是 `AGENTS.md`
 - **修 bug**:v0.23.0 误称"`AGENTS.md` 被 Claude Code 每次会话自动加载"——**错**。官方文档:**Claude Code 只自动读 `CLAUDE.md`,不读 `AGENTS.md`**。已全部改为写 `CLAUDE.md`(要兼容别的 AI 就 `AGENTS.md` + `CLAUDE.md` 用 `@AGENTS.md` 引入)。docs/plan/projects 模板同步修正。
