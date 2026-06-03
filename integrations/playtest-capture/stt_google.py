@@ -35,19 +35,27 @@ def main():
     except Exception as e:
         fatal("google-cloud-speech 未安装: %s(pip install google-cloud-speech)" % e, 3)
 
-    cred = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-    if not cred or not os.path.exists(cred):
-        fatal("未设置 GOOGLE_APPLICATION_CREDENTIALS 或文件不存在(指向 service account JSON)", 4)
-
+    # 认证两种都支持:
+    #   ① service account JSON —— 环境变量 GOOGLE_APPLICATION_CREDENTIALS 指向它(库自动读)。
+    #   ② gcloud ADC 登录 —— 无密钥文件(组织禁了密钥下载时用):先 `gcloud auth application-default login`。
+    # 都不设也行:只要机器上有任一可用的默认凭证,SpeechClient() 会自动找到。
     project = os.environ.get("YIDE_GCP_PROJECT")
     if not project:
+        cred = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        if cred and os.path.exists(cred):
+            try:
+                with open(cred, "r", encoding="utf-8") as f:
+                    project = json.load(f).get("project_id")
+            except Exception:
+                project = None
+    if not project:
         try:
-            with open(cred, "r", encoding="utf-8") as f:
-                project = json.load(f).get("project_id")
+            import google.auth
+            _, project = google.auth.default()   # ADC / 默认凭证里带的 project
         except Exception:
             project = None
     if not project:
-        fatal("拿不到 GCP project_id(设 YIDE_GCP_PROJECT,或用含 project_id 的 service account JSON)", 5)
+        fatal("拿不到 GCP project_id(设 YIDE_GCP_PROJECT,或用 service account JSON / 先跑 gcloud auth application-default login 并 set-quota-project)", 5)
 
     location = os.environ.get("YIDE_GCP_LOCATION", "us").strip() or "us"   # Chirp 3: us / eu 多区
     lang = os.environ.get("YIDE_STT_LANG", "cmn-Hans-CN")                  # 普通话

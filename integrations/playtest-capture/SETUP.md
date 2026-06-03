@@ -27,19 +27,28 @@
 1. **建项目**:Console 顶部「选择项目 → 新建项目」,起个名(如 `er-playtest`)。
 2. **开结算**:左侧「Billing」给项目绑一张卡(开通才可用;Chirp 在免费额度内基本不花钱)。
 3. **启用 API**:搜索栏搜「Cloud Speech-to-Text API」→ **Enable**。
-4. **建 service account + 下密钥**:「IAM & Admin → Service Accounts → 创建」→ 角色给 **Cloud Speech Client**(或 Editor)→ 建好后点它「Keys → Add Key → JSON」→ **下载那个 .json**(这就是钥匙,别外传、别进 git)。
-5. **装客户端库**(在勾哥那台装了 Python 的机器):
-   `pip install google-cloud-speech`(轻量,**不带 PyTorch**)。
+4. **建 service account**:「IAM & Admin → Service Accounts → 创建」→ 给它角色 **Cloud Speech Client**(没在建账号时选成,可回 IAM 页「Grant access」补:Principal=该账号邮箱,Role=Cloud Speech Client)。
+5. **拿凭证 —— 两条路,任选一条:**
+   - **(A) 下密钥 JSON**:点该账号「Keys → Add Key → JSON」→ 下载那个 .json(=钥匙,别外传、别进 git)。
+     ⚠️ **若报「Service account key creation is disabled / `iam.disableServiceAccountKeyCreation`」**(组织开了 secure-by-default,挡密钥下载)→ 别去关那条策略,直接走下面 (B)。
+   - **(B) gcloud ADC 登录(推荐,无密钥文件)**:在**勾哥那台**装 Google Cloud CLI(`cloud.google.com/sdk` 一路 next),然后跑:
+     ```
+     gcloud auth application-default login          # 浏览器登有项目权限的 Google 账号
+     gcloud auth application-default set-quota-project <你的项目ID>
+     ```
+     库会自动用这份登录,不用任何密钥文件、也绕开组织策略。(登录的账号需有 Cloud Speech Client 权限;用项目 Owner 账号最省事。)
+6. **装客户端库**(勾哥那台装了 Python 的机器):`pip install google-cloud-speech`(轻量,**不带 PyTorch**)。
    - 默认 `python` 不对(venv / `py` 启动器)→ 在 Unity ⚙ 里把 **Python** 填对,或设 `YIDE_PYTHON`。
 
 ### 2.2 让 Unity 里"停录即出字"(配一次)
 标注窗口会调 `integrations/playtest-capture/stt_google.py`(常驻,省 Python 启动)。进 Play 按一次 F8 → 窗口底部展开 **「⚙ 转写设置」**:
 - **stt_google.py**:点「选择…」指到 `yide` 仓库里的 `integrations/playtest-capture/stt_google.py`。
-- **服务账号 JSON**:点「选择…」指到第 4 步下载的那个 .json(它会作为 `GOOGLE_APPLICATION_CREDENTIALS` 传给转写进程)。
+- **服务账号 JSON**:走 (A) 的填那个 .json(会作为 `GOOGLE_APPLICATION_CREDENTIALS` 传给转写进程);**走 (B) ADC 的留空**(库自动用 gcloud 登录)。
 - **区域**:海外填 `eu` 延迟更低(或 `us`)。
 - **Python**:填装了 google-cloud-speech 的那个。
-- 设一次永久记住。也可改设系统环境变量 `GOOGLE_APPLICATION_CREDENTIALS`(指 JSON)+ `YIDE_ASR_SCRIPT`(指脚本)+ `YIDE_GCP_LOCATION`,Unity 会自动读作默认。**事后 `翼德 playtest` 批量补转需要系统环境变量 `GOOGLE_APPLICATION_CREDENTIALS` 已设**(它是另一个进程,读不到 Unity 里的设置)。
-- 项目 ID 默认从 JSON 的 `project_id` 自动读,不用单独填(要覆盖可设 `YIDE_GCP_PROJECT`)。
+- 设一次永久记住。也可改设系统环境变量(`GOOGLE_APPLICATION_CREDENTIALS` / `YIDE_ASR_SCRIPT` / `YIDE_GCP_LOCATION`),Unity 自动读作默认。
+- 项目 ID:(A) 从 JSON 自动读;(B) 从 `set-quota-project` 自动读;都要覆盖可设 `YIDE_GCP_PROJECT`。
+- **事后 `翼德 playtest` 批量补转**用同一套凭证:(A) 需系统环境变量 `GOOGLE_APPLICATION_CREDENTIALS` 已设;(B) gcloud 登录过即可(它是另一个进程,读不到 Unity 里的设置)。
 
 > ⚠️ Google 转写这步**尚未在勾哥机器端到端验证**(开发机无 GCP 凭证);脚本的 import/请求结构已在本机验过,但真转一句中文要你这边第一次跑确认。出不来翼德会如实报、自动降级成打字,不假装。
 > 旧的本地方案 `asr_sensevoice.py`(funasr/SenseVoice,离线)仍留在仓库作应急备选,但默认走 Google,不再依赖它。

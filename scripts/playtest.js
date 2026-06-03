@@ -39,10 +39,7 @@ function transcribeAll(wavs, skillDir) {
     log('⚠️ 未找到 Python 或 stt_google.py → 跳过语音转写(降级:用打字/上下文)。配置见 SETUP.md');
     return out;
   }
-  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    log('⚠️ 未设置 GOOGLE_APPLICATION_CREDENTIALS(Google 服务账号 JSON)→ 跳过补转(降级:用打字/上下文)。见 SETUP.md');
-    return out;
-  }
+  // 认证:service account JSON(GOOGLE_APPLICATION_CREDENTIALS)或 gcloud ADC,二者皆可;都没有则脚本会自报错、本函数降级。
   log(`Google STT 转写 ${wavs.length} 段(没在 Unity 当场确认的)…`);
   const r = spawnSync(py, [script, ...wavs], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (r.status !== 0) {
