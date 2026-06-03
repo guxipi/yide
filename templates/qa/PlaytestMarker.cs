@@ -253,6 +253,8 @@ namespace Yide.Playtest
         static string BuildContextJson(PendingMarker m, string wav, string note)
         {
             string res = m.screenW + "x" + m.screenH;
+            string timeStr = m.timeInGame.ToString("0.0");
+            string voiceVal = wav == null ? "null" : J(wav);
             var sb = new StringBuilder();
             sb.Append("{\n");
             sb.Append($"  \"index\": {m.index},\n");
@@ -262,9 +264,9 @@ namespace Yide.Playtest
             sb.Append($"  \"resolution\": {J(res)},\n");
             sb.Append($"  \"fps\": {m.fps},\n");
             sb.Append($"  \"version\": {J(m.version)},\n");
-            sb.Append($"  \"timeInGame\": {m.timeInGame.ToString("0.0")},\n");
+            sb.Append($"  \"timeInGame\": {timeStr},\n");
             sb.Append($"  \"shot\": \"shot.png\",\n");
-            sb.Append($"  \"voice\": {(wav == null ? "null" : J(wav))},\n");
+            sb.Append($"  \"voice\": {voiceVal},\n");
             sb.Append($"  \"typedNote\": {J(note)}\n");
             sb.Append("}\n");
             return sb.ToString();
