@@ -70,12 +70,44 @@ namespace Yide.Playtest
 
         void Update()
         {
-            if (Input.GetKeyDown(markKey))
+            if (KeyDown(markKey))
             {
                 if (!PlaytestMarkerBridge.Active) BeginMark();
                 else SaveMark();           // 再按一次 = 保存本条(toggle,留出打字时间)
             }
-            if (PlaytestMarkerBridge.Active && Input.GetKeyDown(KeyCode.Escape)) CancelMark();
+            if (PlaytestMarkerBridge.Active && KeyDown(KeyCode.Escape)) CancelMark();
+        }
+
+        // ── 输入:同时兼容 新 / 旧 / Both 输入系统(Unity 按 Active Input Handling 自动定义这两个宏)──
+        // 默认键 F8、Escape 的名字在新旧两套里一致,可直接映射;换成别的键时优先用 F 系列/Escape。
+        static bool KeyDown(KeyCode key)
+        {
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetKeyDown(key);
+#elif ENABLE_INPUT_SYSTEM
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb == null) return false;
+            if (System.Enum.TryParse<UnityEngine.InputSystem.Key>(key.ToString(), out var k))
+                return kb[k].wasPressedThisFrame;
+            return false;
+#else
+            return false;
+#endif
+        }
+
+        static Vector3 PointerPos()
+        {
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.mousePosition;
+#elif ENABLE_INPUT_SYSTEM
+            var m = UnityEngine.InputSystem.Mouse.current;
+            if (m != null) return m.position.ReadValue();
+            var t = UnityEngine.InputSystem.Touchscreen.current;
+            if (t != null) return t.primaryTouch.position.ReadValue();
+            return new Vector3(Screen.width / 2f, Screen.height / 2f, 0f);
+#else
+            return new Vector3(Screen.width / 2f, Screen.height / 2f, 0f);
+#endif
         }
 
         // ── 开始标注:冻帧 + 截图 + 抓上下文 + 开录 ──
@@ -160,10 +192,11 @@ namespace Yide.Playtest
         // ── 命中元素:先 UI(EventSystem),再世界物体(Physics) ──
         (string, string) ResolveHit()
         {
+            var ptr = PointerPos();
             // UI
             if (EventSystem.current != null)
             {
-                var ped = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
+                var ped = new PointerEventData(EventSystem.current) { position = ptr };
                 var results = new List<RaycastResult>();
                 EventSystem.current.RaycastAll(ped, results);
                 if (results.Count > 0)
@@ -176,11 +209,11 @@ namespace Yide.Playtest
             var cam = Camera.main;
             if (cam != null)
             {
-                var ray = cam.ScreenPointToRay(Input.mousePosition);
+                var ray = cam.ScreenPointToRay(ptr);
                 if (Physics.Raycast(ray, out var rh, 1000f))
                     return (HierarchyPath(rh.collider.transform), DescribeSource(rh.collider.gameObject));
                 // 2D
-                var p = cam.ScreenToWorldPoint(Input.mousePosition);
+                var p = cam.ScreenToWorldPoint(ptr);
                 var c2d = Physics2D.OverlapPoint(p);
                 if (c2d != null) return (HierarchyPath(c2d.transform), DescribeSource(c2d.gameObject));
             }
