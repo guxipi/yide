@@ -97,9 +97,10 @@ function main() {
   if (!markers.length) die('这一场没有 marker 文件夹。');
   log(`收集到 ${markers.length} 条标注。`);
 
-  // 转写
-  const wavs = noAsr ? [] : markers.filter(m => m.wav).map(m => m.wav);
+  // 转写:只补转"录制时没当场确认过文字"的(有 note.txt = 勾哥在 Unity 里已转写+确认,直接用,不重转免重复)
+  const wavs = noAsr ? [] : markers.filter(m => m.wav && !m.typed).map(m => m.wav);
   const trans = transcribeAll(wavs, skillDir);
+  if (!noAsr && markers.some(m => m.typed)) log(`其中 ${markers.filter(m => m.typed).length} 条已在 Unity 里当场转写确认,直接采用。`);
 
   // 合成清单
   const items = markers.map(m => {

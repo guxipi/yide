@@ -281,8 +281,11 @@ t('playtest 冻帧标注:action + 路由 + Unity 工具 + 处理脚本 + 本地A
   const cs = fs.readFileSync(path.join(ROOT, 'templates', 'qa', 'PlaytestMarker.cs'), 'utf8');
   assert(/Time\.timeScale/.test(cs) && /Microphone/.test(cs) && /RaycastAll/.test(cs), 'PlaytestMarker.cs 缺 冻帧/录音/命中射线');
   assert(/UNITY_EDITOR \|\| DEVELOPMENT_BUILD/.test(cs), 'PlaytestMarker.cs 应只在编辑器/Dev包编译,不进正式包');
+  assert(/MarkPhase/.test(cs) && /StopRecord/.test(cs), 'PlaytestMarker.cs 缺 三段状态机/停录(停录后转写回填)');
   assert(fs.existsSync(path.join(ROOT, 'templates', 'qa', 'Editor', 'PlaytestMarkerWindow.cs')), '缺 编辑器停靠窗口(不挡游戏)');
+  assert(fs.existsSync(path.join(ROOT, 'templates', 'qa', 'Editor', 'PlaytestAsrServer.cs')), '缺 转写常驻服务的编辑器驱动');
   assert(fs.existsSync(path.join(ROOT, 'integrations', 'playtest-capture', 'asr_sensevoice.py')), '缺 本地 SenseVoice 转写脚本');
+  assert(fs.existsSync(path.join(ROOT, 'integrations', 'playtest-capture', 'asr_server.py')), '缺 常驻转写服务 asr_server.py(停录即出字)');
   assert(fs.existsSync(path.join(ROOT, 'integrations', 'playtest-capture', 'SETUP.md')), '缺 playtest SETUP');
 });
 t('playtest 脚本:--help 正常退出并打印用法(冻帧标注模式)', () => {

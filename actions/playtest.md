@@ -6,23 +6,23 @@
 > 比整段录屏强在:① 翼德拿到的是**游戏内部状态**(哪个 GameObject/Prefab/场景),能直通代码;② 一条标注 = 一个干净问题包,噪音低;③ 打字时**完全不用转写**,语音也走**本地 SenseVoice 离线转**,不上云、不跨境(适配你们在海外)。
 
 ## 铁律(勾哥只做这几件,其余全自动)
-**① 按标注键(默认 F8)→ ② 测/说出问题(中文)/ 或打字 → ③ 再按 F8 保存 → 继续玩。** 测完回 Claude Code 说"翼德 playtest",其余翼德全包。**别让勾哥做任何额外手动操作。**
+**① F8 开始录音 → ② 测/说出问题(中文) → ③ F8 停录(屏上自动出字,看一眼对不对、不对就改)→ ④ F8 保存 → 继续玩。** 不想说话就直接在框里打字。测完回 Claude Code 说"翼德 playtest",其余翼德全包。**别让勾哥做任何额外手动操作。**
 
 ## 首次:确认配好(没配先 guide,别假装能转写)
 见 `integrations/playtest-capture/SETUP.md`(一次性):
-1. 把 `templates/qa/PlaytestMarker.cs` 放进项目 Scripts 目录;`templates/qa/Editor/PlaytestMarkerWindow.cs` 放进任意 `Editor/` 文件夹。(自动在 Play 时生成,不用手挂;`#if UNITY_EDITOR||DEVELOPMENT_BUILD` 包住,不进正式包。)
-2. 本地中文转写:装 Python + `pip install funasr`(首次拉 ~400MB 模型,纯 CPU 可跑)。**没装也能用,降级成"只用打字 + 上下文"。**
+1. 把 `templates/qa/PlaytestMarker.cs` 放进项目 Scripts 目录;`templates/qa/Editor/PlaytestMarkerWindow.cs` 和 `templates/qa/Editor/PlaytestAsrServer.cs` 放进任意 `Editor/` 文件夹。(自动在 Play 时生成,不用手挂;`#if UNITY_EDITOR(||DEVELOPMENT_BUILD)` 包住,不进正式包。)
+2. 本地中文转写:装 Python + `pip install funasr`(首次拉 ~900MB 模型,纯 CPU 可跑)。**想要"停录即出字"**还要在标注窗口「⚙ 转写设置」里把 `asr_server.py` 路径指一次(见 SETUP 2.1)。**没装/没配也能用**,降级成"只用打字 + 上下文",事后 `翼德 playtest` 仍会批量补转。
 3. 隐私:录的是麦克风,**全程本地处理、不外传**;不想录就只打字。
 
 ## 正常流程
-1. 勾哥进 Playmode 玩,遇到问题按 **F8** → 画面冻住、自动截图 + 抓上下文 + 开始录音;**「翼德 标注」编辑器窗口**自动弹出(停靠在 Game 视图旁,**不挡游戏**),里面能看到命中元素、也能打字补充。
-2. 说完/打完,再按 **F8**(或点窗口里「保存并继续」)→ 存成一个 marker,解冻继续玩。`Esc` 取消当前这条。
+1. 勾哥进 Playmode 玩,遇到问题按 **F8** → 画面冻住、自动截图(窗口里**大图、可点开放大**)+ 抓上下文 + 开始录音;**「翼德 标注」编辑器窗口**自动弹出(停靠在 Game 视图旁,**不挡游戏**),能看到命中元素。
+2. 说完按 **F8 停录** → 几秒后**本地转写的中文自动填进打字框**,勾哥**当场确认/修改**(没配转写/没说话就直接打字)。再按 **F8**(或点绿钮)保存成一个 marker,解冻继续玩。`Esc` 取消当前这条。
 3. 测完,回 Claude Code 说"**翼德 playtest**"。
 4. 翼德跑(写文件,过一次审批):
    ```
    node ${CLAUDE_SKILL_DIR}/scripts/playtest.js
    ```
-   (不带参=自动取 `QA/playtest` 最新一场;`--no-asr` 跳过转写。)它会:**本地 SenseVoice 批量转写**每条语音 + 合并打字 + 读 `context.json` → 写 `manifest.json` + 打印速览。
+   (不带参=自动取 `QA/playtest` 最新一场;`--no-asr` 跳过转写。)它会:**补转**那些录制时没当场确认过文字的语音(已在 Unity 里确认的直接用 `note.txt`,不重转)+ 合并 + 读 `context.json` → 写 `manifest.json` + 打印速览。
 5. 翼德**逐条 Read `shot.png`** 看画面,结合"勾哥说的(语音转写+打字)+ 命中元素路径"→ 出**带定位问题清单**:`[marker-03] 现象 → BattleHUD/TopBar/PauseBtn ← PauseButton.prefab(场景 Battle)→ 类型(UI/手感/逻辑/性能)`。
 6. 接 **联合优化回流**(同 `qa.md` F.7):art-director(数值)+ ui-ux(设计)联合建议、PM challenge → 最佳方案供勾哥定夺 → 执行;能进 bug 的按 SOP 立项。
 

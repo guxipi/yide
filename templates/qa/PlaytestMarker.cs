@@ -19,13 +19,23 @@ using UnityEditor;
 
 namespace Yide.Playtest
 {
-    /// <summary>运行时桥:把"当前待标注"数据暴露给编辑器窗口;窗口把打字内容写回这里。</summary>
+    // 标注三阶段:Idle 空闲 → Recording 冻帧录音中 → Reviewing 已停录、转写/复核中。
+    public enum MarkPhase { Idle = 0, Recording = 1, Reviewing = 2 }
+
+    /// <summary>运行时桥:把"当前待标注"数据暴露给编辑器窗口;窗口把转写/打字内容写回这里。</summary>
     public static class PlaytestMarkerBridge
     {
-        public static bool Active;                 // 是否正在标注(已冻帧)
+        public static bool Active;                 // 是否正在标注(Phase != Idle)
+        public static MarkPhase Phase;             // 当前阶段
         public static PendingMarker Pending;       // 当前这条
-        public static string TypedNote = "";       // 编辑器窗口里打的字(可选)
-        public static Action RequestSave;          // 窗口点"保存"回调
+        public static string TypedNote = "";       // 框里的文字(转写自动填入 + 勾哥可改)
+
+        // 转写(只在编辑器侧消费;运行时只负责停录后把 wav 路径递过来)
+        public static string VoiceWavPath;         // 停录后写好的 voice.wav 绝对路径(无语音=null)
+        public static int VoiceJobId;              // 每次停录自增,编辑器据此判断"来了新的一条要转写"
+        public static string TranscriptStatus = "";// 编辑器写回的状态:"转写中…"/"转写失败:…"/""
+
+        public static Action RequestAdvance;       // 窗口绿钮 / F8:推进到下一阶段
         public static Action RequestCancel;        // 窗口点"取消"回调
         public static event Action OnChanged;      // 数据变了通知窗口刷新
         public static void Changed() { OnChanged?.Invoke(); }
@@ -70,12 +80,19 @@ namespace Yide.Playtest
 
         void Update()
         {
-            if (KeyDown(markKey))
-            {
-                if (!PlaytestMarkerBridge.Active) BeginMark();
-                else SaveMark();           // 再按一次 = 保存本条(toggle,留出打字时间)
-            }
+            if (KeyDown(markKey)) Advance();
             if (PlaytestMarkerBridge.Active && KeyDown(KeyCode.Escape)) CancelMark();
+        }
+
+        // F8 / 绿钮:按当前阶段推进。①Idle→开始 ②Recording→停录(触发转写) ③Reviewing→保存。
+        void Advance()
+        {
+            switch (PlaytestMarkerBridge.Phase)
+            {
+                case MarkPhase.Idle:      BeginMark();  break;
+                case MarkPhase.Recording: StopRecord(); break;   // 停录,留出转写+复核时间
+                case MarkPhase.Reviewing: SaveMark();   break;
+            }
         }
 
         // ── 输入:同时兼容 新 / 旧 / Both 输入系统(Unity 按 Active Input Handling 自动定义这两个宏)──
@@ -138,34 +155,54 @@ namespace Yide.Playtest
 
             PlaytestMarkerBridge.Pending = m;
             PlaytestMarkerBridge.TypedNote = "";
+            PlaytestMarkerBridge.VoiceWavPath = null;
+            PlaytestMarkerBridge.TranscriptStatus = "";
+            PlaytestMarkerBridge.Phase = MarkPhase.Recording;
             PlaytestMarkerBridge.Active = true;
-            PlaytestMarkerBridge.RequestSave = SaveMark;
+            PlaytestMarkerBridge.RequestAdvance = Advance;
             PlaytestMarkerBridge.RequestCancel = CancelMark;
             PlaytestMarkerBridge.Changed();   // 编辑器窗口在 Editor 程序集里监听此事件并自动弹出(运行时不能反向引用 Editor 类型)
-            Debug.Log($"[翼德] ● 标注 #{_count} 开始:{m.scene} / {m.hitPath}");
+            Debug.Log($"[翼德] ● 标注 #{_count} 开始录音:{m.scene} / {m.hitPath}");
         }
 
-        // ── 保存本条:停录 + 写 wav + 写 context.json + 写 note.txt ──
-        void SaveMark()
+        // ── 第②步:停录 + 写 wav → 让编辑器侧去转写填框(此时仍冻帧,留足复核时间)──
+        void StopRecord()
         {
             var m = PlaytestMarkerBridge.Pending;
             if (m == null) return;
 
-            // 语音
-            string wavRel = null;
             var samples = StopMic();
             if (samples != null && samples.Length > 0)
             {
                 var wavPath = Path.Combine(m.folder, "voice.wav");
                 File.WriteAllBytes(wavPath, EncodeWav(samples, 1, sampleRate));
-                wavRel = "voice.wav";
+                PlaytestMarkerBridge.VoiceWavPath = wavPath;
+                PlaytestMarkerBridge.VoiceJobId++;            // 通知编辑器:有新一条要转写
+                PlaytestMarkerBridge.TranscriptStatus = "转写中…";
             }
+            else
+            {
+                PlaytestMarkerBridge.VoiceWavPath = null;
+                PlaytestMarkerBridge.TranscriptStatus = "(无语音 — 可直接打字)";
+            }
+            PlaytestMarkerBridge.Phase = MarkPhase.Reviewing;
+            PlaytestMarkerBridge.Changed();
+            Debug.Log($"[翼德] ■ 标注 #{m.index} 停录,转写中…(确认文字后再按 F8 保存)");
+        }
 
-            // 打字补充
+        // ── 第③步:保存本条(wav 已在停录时写好)→ 写 note.txt(转写+改) + context.json ──
+        void SaveMark()
+        {
+            var m = PlaytestMarkerBridge.Pending;
+            if (m == null) return;
+
+            string wavRel = (PlaytestMarkerBridge.VoiceWavPath != null
+                             && File.Exists(PlaytestMarkerBridge.VoiceWavPath)) ? "voice.wav" : null;
+
+            // 框里的文字 = 转写自动填 + 勾哥改;有内容就落 note.txt(它成为人确认过的权威文本)
             var note = (PlaytestMarkerBridge.TypedNote ?? "").Trim();
             if (note.Length > 0) File.WriteAllText(Path.Combine(m.folder, "note.txt"), note, new UTF8Encoding(false));
 
-            // 上下文
             File.WriteAllText(Path.Combine(m.folder, "context.json"), BuildContextJson(m, wavRel, note), new UTF8Encoding(false));
 
             EndMarkCommon();
@@ -185,7 +222,10 @@ namespace Yide.Playtest
         {
             Time.timeScale = _prevTimeScale;   // 解冻
             PlaytestMarkerBridge.Active = false;
+            PlaytestMarkerBridge.Phase = MarkPhase.Idle;
             PlaytestMarkerBridge.Pending = null;
+            PlaytestMarkerBridge.VoiceWavPath = null;
+            PlaytestMarkerBridge.TranscriptStatus = "";
             PlaytestMarkerBridge.Changed();
         }
 
