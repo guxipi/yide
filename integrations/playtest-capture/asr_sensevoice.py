@@ -5,7 +5,7 @@
 # 装法见 SETUP.md(pip install funasr;首次自动拉 ~400MB 模型;纯 CPU 可跑)。
 #
 # 用法:python asr_sensevoice.py a/voice.wav b/voice.wav ...
-import sys, json
+import os, sys, json
 
 def main():
     wavs = [a for a in sys.argv[1:] if a and not a.startswith("-")]
@@ -19,9 +19,15 @@ def main():
         print(json.dumps({"error": "funasr 未安装: %s" % e}), file=sys.stderr)
         sys.exit(3)
 
-    # 加载一次:SenseVoice-Small + VAD(切分) + ITN(标点/数字规整)
+    # 源:默认 ModelScope(ms);海外慢可设 YIDE_ASR_HUB=hf 切到 HuggingFace
+    hub = os.environ.get("YIDE_ASR_HUB", "ms").lower()
+    model_id = "FunAudioLLM/SenseVoiceSmall" if hub == "hf" else "iic/SenseVoiceSmall"
+
+    # 加载一次:SenseVoice-Small + VAD(切分) + ITN(标点/数字规整)。trust_remote_code 让 funasr 自动拉模型代码
     model = AutoModel(
-        model="iic/SenseVoiceSmall",
+        model=model_id,
+        hub=hub,
+        trust_remote_code=True,
         vad_model="fsmn-vad",
         vad_kwargs={"max_single_segment_time": 30000},
         device="cpu",
@@ -29,7 +35,8 @@ def main():
     )
     for wav in wavs:
         try:
-            res = model.generate(input=wav, cache={}, language="zh", use_itn=True, batch_size_s=60)
+            res = model.generate(input=wav, cache={}, language="zh", use_itn=True,
+                                 batch_size_s=60, merge_vad=True, merge_length_s=15)
             text = rich_transcription_postprocess(res[0]["text"]) if res else ""
             print(json.dumps({"wav": wav, "text": text}, ensure_ascii=False))
         except Exception as e:
