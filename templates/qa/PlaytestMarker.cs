@@ -1,7 +1,7 @@
 // 翼德 · Playtest 冻帧标注工具(运行时)
 // 勾哥试玩时按一个键(默认 F8)→ 冻帧 + 截当前帧 + 自动抓"命中的 UI/物体 + 场景 + 分辨率/FPS/版本"
 // + 录一小段语音(语音为主)/ 也可在编辑器窗口里打字 → 一键归档成一个 marker 文件夹。
-// 之后翼德跑 scripts/playtest.js:本地 SenseVoice 转写语音 + 读截图/上下文 → 出带定位的问题清单。
+// 之后翼德跑 scripts/playtest.js:Google STT 补转未确认的语音 + 读截图/上下文 → 出带定位的问题清单。
 //
 // 放置:把本文件放进项目任意 Scripts 目录;再把 Editor/PlaytestMarkerWindow.cs 放进一个 Editor/ 文件夹。
 // 用法:场景里随便挂一个空物体加本组件(或让它在 RuntimeInitializeOnLoad 自动生成,见底部)。
@@ -62,7 +62,7 @@ namespace Yide.Playtest
         public KeyCode markKey = KeyCode.F8;
         [Header("单条语音最长秒数")]
         public int maxClipSeconds = 30;
-        [Tooltip("采样率;SenseVoice 用 16k 即可")]
+        [Tooltip("采样率;STT 用 16k 即可")]
         public int sampleRate = 16000;
 
         int _count;

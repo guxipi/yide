@@ -284,8 +284,9 @@ t('playtest 冻帧标注:action + 路由 + Unity 工具 + 处理脚本 + 本地A
   assert(/MarkPhase/.test(cs) && /StopRecord/.test(cs), 'PlaytestMarker.cs 缺 三段状态机/停录(停录后转写回填)');
   assert(fs.existsSync(path.join(ROOT, 'templates', 'qa', 'Editor', 'PlaytestMarkerWindow.cs')), '缺 编辑器停靠窗口(不挡游戏)');
   assert(fs.existsSync(path.join(ROOT, 'templates', 'qa', 'Editor', 'PlaytestAsrServer.cs')), '缺 转写常驻服务的编辑器驱动');
-  assert(fs.existsSync(path.join(ROOT, 'integrations', 'playtest-capture', 'asr_sensevoice.py')), '缺 本地 SenseVoice 转写脚本');
-  assert(fs.existsSync(path.join(ROOT, 'integrations', 'playtest-capture', 'asr_server.py')), '缺 常驻转写服务 asr_server.py(停录即出字)');
+  assert(fs.existsSync(path.join(ROOT, 'integrations', 'playtest-capture', 'stt_google.py')), '缺 Google STT 转写脚本(双模式:Unity stdin 常驻 + playtest.js 批量)');
+  const stt = fs.readFileSync(path.join(ROOT, 'integrations', 'playtest-capture', 'stt_google.py'), 'utf8');
+  assert(/chirp_3/.test(stt) && /speech_v2/.test(stt) && /__READY__/.test(stt), 'stt_google.py 缺 Chirp3/v2/常驻就绪标记');
   assert(fs.existsSync(path.join(ROOT, 'integrations', 'playtest-capture', 'SETUP.md')), '缺 playtest SETUP');
 });
 t('playtest 脚本:--help 正常退出并打印用法(冻帧标注模式)', () => {

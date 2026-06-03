@@ -1,7 +1,7 @@
-// 翼德 · Playtest 标注 — 本地转写常驻服务的"编辑器端驱动"(放进任意 Editor/ 文件夹)。
-// 它在标注录音一开始就把 integrations/playtest-capture/asr_server.py 拉起来预热(模型只载一次),
+// 翼德 · Playtest 标注 — Google STT 转写常驻服务的"编辑器端驱动"(放进任意 Editor/ 文件夹)。
+// 它在标注录音一开始就把 integrations/playtest-capture/stt_google.py 拉起来(常驻,省 Python 启动),
 // 停录时把 voice.wav 路径喂进去,几秒后拿到中文文字回填到打字框 —— 让勾哥"停说即看字、当场确认"。
-// 纯编辑器代码,#if UNITY_EDITOR 包住,绝不进包。
+// 转写走 Google Cloud Speech-to-Text(Chirp 3 · v2),认证用 service account JSON。纯编辑器代码,#if UNITY_EDITOR 包住,绝不进包。
 #if UNITY_EDITOR
 using System;
 using System.Collections.Concurrent;
@@ -21,7 +21,8 @@ namespace Yide.Playtest
         // 配置存 EditorPrefs(设一次永久记住),默认从环境变量种子。
         const string KPy = "Yide.Playtest.Python";
         const string KScript = "Yide.Playtest.AsrScript";
-        const string KHub = "Yide.Playtest.AsrHub";
+        const string KCred = "Yide.Playtest.GcpCredential";
+        const string KRegion = "Yide.Playtest.GcpRegion";
 
         public static string PythonPath
         {
@@ -33,10 +34,16 @@ namespace Yide.Playtest
             get => EditorPrefs.GetString(KScript, EnvOr("YIDE_ASR_SCRIPT", ""));
             set => EditorPrefs.SetString(KScript, value);
         }
-        public static string Hub
+        // Google service account JSON(留空则用进程已有的 GOOGLE_APPLICATION_CREDENTIALS 环境变量)
+        public static string CredentialPath
         {
-            get => EditorPrefs.GetString(KHub, EnvOr("YIDE_ASR_HUB", "ms"));
-            set => EditorPrefs.SetString(KHub, value);
+            get => EditorPrefs.GetString(KCred, EnvOr("GOOGLE_APPLICATION_CREDENTIALS", ""));
+            set => EditorPrefs.SetString(KCred, value);
+        }
+        public static string Region
+        {
+            get => EditorPrefs.GetString(KRegion, EnvOr("YIDE_GCP_LOCATION", "us"));
+            set => EditorPrefs.SetString(KRegion, value);
         }
         static string EnvOr(string key, string fallback)
         {
@@ -62,7 +69,7 @@ namespace Yide.Playtest
             if (string.IsNullOrEmpty(script) || !File.Exists(script))
             {
                 Status = State.Failed;
-                LastError = "未配置 asr_server.py 路径(展开下方「⚙ 转写设置」设一次)";
+                LastError = "未配置 stt_google.py 路径(展开下方「⚙ 转写设置」设一次)";
                 return false;
             }
             try
@@ -80,7 +87,10 @@ namespace Yide.Playtest
                     CreateNoWindow = true,
                     WorkingDirectory = Path.GetDirectoryName(script),
                 };
-                psi.EnvironmentVariables["YIDE_ASR_HUB"] = Hub;
+                if (!string.IsNullOrEmpty(CredentialPath))
+                    psi.EnvironmentVariables["GOOGLE_APPLICATION_CREDENTIALS"] = CredentialPath;
+                if (!string.IsNullOrEmpty(Region))
+                    psi.EnvironmentVariables["YIDE_GCP_LOCATION"] = Region;
                 psi.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
                 _proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
                 _proc.OutputDataReceived += (s, e) => { if (e.Data != null) _stdout.Enqueue(e.Data); };

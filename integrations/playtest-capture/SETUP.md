@@ -3,47 +3,51 @@
 **目的**:试玩时按一个键(默认 **F8**)冻帧、说出/打出问题,翼德自动把这些变成"哪里要改 + 在哪个脚本/Prefab"的清单。
 **铁律**:你只做几件——按 F8 开始、测、说反馈(或打字)、F8 停录(屏上会自动出字、看一眼对不对)、F8 存。其余翼德全自动。
 
-> 比录屏强在:翼德拿到的是**游戏内部状态**(命中的 GameObject/Prefab/场景),能直通代码;语音走**本地 SenseVoice 离线转写**,不上云、不跨境(适配在海外)。
+> 比录屏强在:翼德拿到的是**游戏内部状态**(命中的 GameObject/Prefab/场景),能直通代码;语音走 **Google Cloud STT(Chirp 3)**,海外可用、普通话准、带标点,停录即出字当场确认。
 
 ---
 
 ## 1. 放入标注工具(3 个文件)
 1. `templates/qa/PlaytestMarker.cs` → 放进项目任意 `Scripts` 目录。
 2. `templates/qa/Editor/PlaytestMarkerWindow.cs` → 放进任意 **`Editor/`** 文件夹(必须在 Editor 目录,否则出包报错)。
-3. `templates/qa/Editor/PlaytestAsrServer.cs` → 同样放进 **`Editor/`** 文件夹(它在录音时把本地转写服务拉起来,让你"停录即看字")。
+3. `templates/qa/Editor/PlaytestAsrServer.cs` → 同样放进 **`Editor/`** 文件夹(它在录音时把转写服务拉起来,让你"停录即看字")。
 
 进 Play 模式它会**自动生成**(不用手挂物体);文件都用 `#if UNITY_EDITOR`(或 `|| DEVELOPMENT_BUILD`)包住,**不会进正式上线包**。
 - 想换标注键:在场景里那个 `~YidePlaytestMarker` 物体上改 `Mark Key`(默认 F8;**别用空格**,通常被跳跃/确认占用)。
 
-## 2. 装本地中文转写(SenseVoice)
-不装也能用——降级成"只用打字 + 上下文"。装了才有语音自动转写。**为什么不用 Whisper**:它中文口语弱;SenseVoice 中文强、快、纯 CPU 可跑、自带标点。
+## 2. 配 Google Cloud 转写(Chirp 3)
+不配也能用——降级成"只用打字 + 上下文"。配了才有语音自动转写。**为什么选它**:海外可用(不像腾讯/阿里要跨境)、普通话是它最准的语言之一、带标点、每月**前 60 分钟免费**(试玩这点量基本免费),超了 $0.016/min。Chirp 3 只在 **Speech-to-Text v2**,认证用 **service account**(不是简单 API key)。
 
-**默认:funasr(本地 SenseVoice)** —— 顺序要对(经 funasr/SenseVoice 官方文档核实):
-1. 装 **Python 3.10 或 3.11**(python.org;勾上 **Add Python to PATH**)。验证 `python --version`。(官方对上限口径不一,3.10/3.11 是 wheel 覆盖最稳的区间。)
-2. **先**装 PyTorch(CPU 版,官方 CPU 源、不拉 CUDA)—— funasr **不**自动带它:
-   `pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu`
-3. 装 funasr(会自动带 modelscope/huggingface_hub/soundfile,**不用单独装 modelscope**):
-   `pip install -U funasr`
-4. **再显式补一遍 `soundfile`** —— Windows 上 torchaudio 默认没 wav 解码后端,不补会报"找不到 backend":
-   `pip install soundfile`
-5. 自检装好没:`python -c "import torch,torchaudio,soundfile; from funasr import AutoModel; print('OK')"` 打印 `OK` 即成。
-6. **首次转写**自动拉 SenseVoice 模型(~900MB,一次性,需联网)。默认走 ModelScope;**海外连慢 → 设环境变量 `YIDE_ASR_HUB=hf` 切 HuggingFace 源**(脚本已支持)。之后翼德跑 `scripts/playtest.js` 自动调它批量转写。
-   - 若默认 `python` 不是装了 funasr 的那个(venv / `py` 启动器),设 **`YIDE_PYTHON`** 指到对应 python.exe。
-   - ⚠️ 别把测试脚本命名成 `funasr.py`/`torch.py`(会触发循环导入报错)。
+### 2.0 先确认有没有 Google Cloud 账号(一看就知道)
+浏览器打开 **https://console.cloud.google.com/** 用你的 Google 账号登:
+- 顶部能选到一个**项目(Project)**、且左侧能进「Billing 结算」看到已绑卡 → **已有**,跳到 2.1。
+- 提示要「创建项目 / 启用结算 / 同意条款」→ **从零**,按 2.1 全做一遍(新账号通常还有 $300 试用额度)。
 
-### 2.1 让 Unity 里"停录即出字"(配一次转写脚本路径)
-为了试玩时**当场看到转写、确认对不对**,标注窗口会调常驻服务 `integrations/playtest-capture/asr_server.py`(和上面同一个模型,只是常驻、不每次重载)。Unity 在你的 ER 工程里,得告诉它这个脚本在哪:
-- 进 Play 按一次 F8,「翼德 标注」窗口底部展开 **「⚙ 转写设置」** → 把 **asr_server.py** 指到 `yide` 仓库里的 `integrations/playtest-capture/asr_server.py`(点「选择…」选文件即可),**Python** 填装了 funasr 的那个(默认 `python`),海外把 **模型源** 填 `hf`。设一次永久记住。
-- 也可改设环境变量 `YIDE_ASR_SCRIPT`(指向 asr_server.py)+ `YIDE_PYTHON` + `YIDE_ASR_HUB`,Unity 会自动读作默认值。
-- **没配也能用**:停录后不自动出字,照常打字即可;事后 `翼德 playtest` 仍会用 `asr_sensevoice.py` 批量补转。
-- 首条转写慢(载模型约 10 秒,窗口会显示「转写中…」);之后每条 1-3 秒。录音一开始服务就预热,通常你说完停录时已就绪。
+### 2.1 GCP 一次性配置(从零也就 5 步)
+1. **建项目**:Console 顶部「选择项目 → 新建项目」,起个名(如 `er-playtest`)。
+2. **开结算**:左侧「Billing」给项目绑一张卡(开通才可用;Chirp 在免费额度内基本不花钱)。
+3. **启用 API**:搜索栏搜「Cloud Speech-to-Text API」→ **Enable**。
+4. **建 service account + 下密钥**:「IAM & Admin → Service Accounts → 创建」→ 角色给 **Cloud Speech Client**(或 Editor)→ 建好后点它「Keys → Add Key → JSON」→ **下载那个 .json**(这就是钥匙,别外传、别进 git)。
+5. **装客户端库**(在勾哥那台装了 Python 的机器):
+   `pip install google-cloud-speech`(轻量,**不带 PyTorch**)。
+   - 默认 `python` 不对(venv / `py` 启动器)→ 在 Unity ⚙ 里把 **Python** 填对,或设 `YIDE_PYTHON`。
 
-> **更轻的跑法(可选)**:嫌 PyTorch 重,可用 **sherpa-onnx** 跑 SenseVoice 的 ONNX 版(免 PyTorch、有预编译包)。要走这条跟翼德说,它把 `asr_sensevoice.py` 换成 sherpa-onnx 版。
-> ⚠️ 本地转写这步**尚未在勾哥机器端到端验证**;装好后第一次跑请确认能出中文稿(出不来翼德会如实报、自动降级,不假装)。
+### 2.2 让 Unity 里"停录即出字"(配一次)
+标注窗口会调 `integrations/playtest-capture/stt_google.py`(常驻,省 Python 启动)。进 Play 按一次 F8 → 窗口底部展开 **「⚙ 转写设置」**:
+- **stt_google.py**:点「选择…」指到 `yide` 仓库里的 `integrations/playtest-capture/stt_google.py`。
+- **服务账号 JSON**:点「选择…」指到第 4 步下载的那个 .json(它会作为 `GOOGLE_APPLICATION_CREDENTIALS` 传给转写进程)。
+- **区域**:海外填 `eu` 延迟更低(或 `us`)。
+- **Python**:填装了 google-cloud-speech 的那个。
+- 设一次永久记住。也可改设系统环境变量 `GOOGLE_APPLICATION_CREDENTIALS`(指 JSON)+ `YIDE_ASR_SCRIPT`(指脚本)+ `YIDE_GCP_LOCATION`,Unity 会自动读作默认。**事后 `翼德 playtest` 批量补转需要系统环境变量 `GOOGLE_APPLICATION_CREDENTIALS` 已设**(它是另一个进程,读不到 Unity 里的设置)。
+- 项目 ID 默认从 JSON 的 `project_id` 自动读,不用单独填(要覆盖可设 `YIDE_GCP_PROJECT`)。
 
-## 3. 隐私
-- 录的是**你的麦克风**:**全程本地处理、录音不外传**(本地 SenseVoice,不上任何云)。
-- 不想说话就**只打字**(标注窗口里有输入框)。产物都在项目 `QA/playtest/`,你能直接删。
+> ⚠️ Google 转写这步**尚未在勾哥机器端到端验证**(开发机无 GCP 凭证);脚本的 import/请求结构已在本机验过,但真转一句中文要你这边第一次跑确认。出不来翼德会如实报、自动降级成打字,不假装。
+> 旧的本地方案 `asr_sensevoice.py`(funasr/SenseVoice,离线)仍留在仓库作应急备选,但默认走 Google,不再依赖它。
+
+## 3. 隐私 & 数据
+- 录的是**你的麦克风**;语音会发到 **Google Cloud** 转写(海外服务、非中国云)。Google 默认按其条款处理;如需更严可在 Console 开「不记录数据 / data logging off」(可能小幅加价)。
+- 不想说话就**只打字**(标注窗口里有输入框,全程不发云)。产物都在项目 `QA/playtest/`,你能直接删。
+- **service account JSON 是密钥**:别外传、别提交进 git。
 - 建议把 `QA/playtest/` 加进 `.gitignore`(截图/录音是大文件,别进 git)。
 
 ## 4. 怎么用(配好之后)· F8 三段
@@ -55,7 +59,7 @@
 ---
 
 ## 可选:整段屏幕录屏(老方案,默认不用)
-若某场就想要"连续画面看手感",仓库里还留着 `playtest-rec.bat`(ffmpeg 录屏录麦)+ 旧的处理路径。**默认不启用**——冻帧标注已覆盖绝大多数反馈,录屏只在专看动效/手感时偶尔用,且转写同样建议走本地。
+若某场就想要"连续画面看手感",仓库里还留着 `playtest-rec.bat`(ffmpeg 录屏录麦)+ 旧的处理路径。**默认不启用**——冻帧标注已覆盖绝大多数反馈,录屏只在专看动效/手感时偶尔用。
 
 ## 验证边界(诚实)
-冻帧/截图/抓上下文是确定性的 Unity 调用;**本地 SenseVoice 转写、真机录音**这两环需你这边真环境验一次。翼德跑时如实报结果,不冒充。
+冻帧/截图/抓上下文是确定性的 Unity 调用;**Google STT 转写、真机录音**这两环需你这边真环境验一次(脚本 import/请求结构已在开发机验过,真凭证+真转写没验)。翼德跑时如实报结果,不冒充。

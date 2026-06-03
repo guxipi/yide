@@ -1,7 +1,7 @@
 // 翼德 · Playtest 标注 — 编辑器停靠窗口(放进任意 Editor/ 文件夹)
 // 它是独立的 EditorWindow,停靠在 Game 视图旁/下,绝不遮挡游戏画面。
 // 冻帧时自动弹出:大图截图(可点开放大)+ 自动抓到的命中元素/上下文 + 语音转写自动回填的打字框 + 保存/取消。
-// 流程(F8 三段):①开始录音 → ②停录(自动本地转写,几秒后中文回填到框,可改)→ ③保存。
+// 流程(F8 三段):①开始录音 → ②停录(自动 Google STT 转写,几秒后中文回填到框,可改)→ ③保存。
 #if UNITY_EDITOR
 using System.IO;
 using UnityEditor;
@@ -35,7 +35,7 @@ namespace Yide.Playtest
                 _lastSubmittedJob = PlaytestMarkerBridge.VoiceJobId;
                 if (PlaytestAsrServer.EnsureStarted())
                 {
-                    PlaytestMarkerBridge.TranscriptStatus = "转写中…(首次载模型约 10 秒)";
+                    PlaytestMarkerBridge.TranscriptStatus = "转写中…(Google STT)";
                     PlaytestAsrServer.Submit(PlaytestMarkerBridge.VoiceWavPath);
                 }
                 else
@@ -181,15 +181,17 @@ namespace Yide.Playtest
             DrawSettings();
         }
 
-        // 一次性配置:Python 与 asr_server.py 路径(EditorPrefs 永久记住,默认从环境变量种子)
+        // 一次性配置:Python / stt_google.py / Google 凭证(EditorPrefs 永久记住,默认从环境变量种子)
         void DrawSettings()
         {
             EditorGUILayout.Space(6);
-            bool needSetup = string.IsNullOrEmpty(PlaytestAsrServer.ScriptPath) || !File.Exists(PlaytestAsrServer.ScriptPath);
+            bool needScript = string.IsNullOrEmpty(PlaytestAsrServer.ScriptPath) || !File.Exists(PlaytestAsrServer.ScriptPath);
+            bool needCred = string.IsNullOrEmpty(PlaytestAsrServer.CredentialPath) || !File.Exists(PlaytestAsrServer.CredentialPath);
+            bool needSetup = needScript || needCred;
             if (needSetup)
-                EditorGUILayout.HelpBox("还没设置本地转写脚本路径 → 停录后不会自动出字(可照常打字)。\n展开下方「⚙ 转写设置」指向 asr_server.py,设一次即可。", MessageType.Warning);
+                EditorGUILayout.HelpBox("Google 转写还没配好 → 停录后不会自动出字(可照常打字,事后再补转)。\n展开下方「⚙ 转写设置」:指向 stt_google.py + service account JSON,设一次即可。", MessageType.Warning);
 
-            _showSettings = EditorGUILayout.Foldout(_showSettings || needSetup, "⚙ 转写设置(设一次)", true);
+            _showSettings = EditorGUILayout.Foldout(_showSettings || needSetup, "⚙ 转写设置(Google STT · 设一次)", true);
             if (!(_showSettings || needSetup)) return;
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
@@ -197,18 +199,27 @@ namespace Yide.Playtest
                 PlaytestAsrServer.PythonPath = EditorGUILayout.TextField("Python", PlaytestAsrServer.PythonPath);
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    PlaytestAsrServer.ScriptPath = EditorGUILayout.TextField("asr_server.py", PlaytestAsrServer.ScriptPath);
+                    PlaytestAsrServer.ScriptPath = EditorGUILayout.TextField("stt_google.py", PlaytestAsrServer.ScriptPath);
                     if (GUILayout.Button("选择…", GUILayout.Width(56)))
                     {
-                        var p = EditorUtility.OpenFilePanel("选择 asr_server.py", "", "py");
+                        var p = EditorUtility.OpenFilePanel("选择 stt_google.py", "", "py");
                         if (!string.IsNullOrEmpty(p)) PlaytestAsrServer.ScriptPath = p;
                     }
                 }
-                PlaytestAsrServer.Hub = EditorGUILayout.TextField("模型源 (ms/hf)", PlaytestAsrServer.Hub);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    PlaytestAsrServer.CredentialPath = EditorGUILayout.TextField("服务账号 JSON", PlaytestAsrServer.CredentialPath);
+                    if (GUILayout.Button("选择…", GUILayout.Width(56)))
+                    {
+                        var p = EditorUtility.OpenFilePanel("选择 Google service account JSON", "", "json");
+                        if (!string.IsNullOrEmpty(p)) PlaytestAsrServer.CredentialPath = p;
+                    }
+                }
+                PlaytestAsrServer.Region = EditorGUILayout.TextField("区域 (us/eu)", PlaytestAsrServer.Region);
                 EditorGUILayout.LabelField("状态:" + PlaytestAsrServer.Status
                     + (string.IsNullOrEmpty(PlaytestAsrServer.LastError) ? "" : " · " + PlaytestAsrServer.LastError),
                     EditorStyles.miniLabel);
-                EditorGUILayout.LabelField("海外(阿布扎比)建议模型源填 hf。", EditorStyles.centeredGreyMiniLabel);
+                EditorGUILayout.LabelField("需先 pip install google-cloud-speech;配置见 SETUP.md。海外区域填 eu 延迟更低。", EditorStyles.centeredGreyMiniLabel);
             }
         }
     }

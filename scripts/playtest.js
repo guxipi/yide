@@ -1,12 +1,12 @@
 'use strict';
 // 翼德 · playtest 冻帧标注处理流水线(纯 Node,无第三方依赖)。
 //   勾哥在 Unity 里按 F8 标注 → 每条一个 marker 文件夹(shot.png + context.json + voice.wav? + note.txt?)。
-//   本脚本:批量本地转写语音(SenseVoice)+ 把 打字补充 / 转写 / 上下文 合成一份清单 → 翼德据此出问题清单。
+//   本脚本:批量补转没当场确认的语音(Google STT)+ 把 打字补充 / 转写 / 上下文 合成一份清单 → 翼德据此出问题清单。
 //
 // 设计(诚实):
 //   · 扫 marker、读 context、合并文本、出 manifest —— 确定性,可单测。
-//   · 语音转写走本地 SenseVoice(integrations/playtest-capture/asr_sensevoice.py),离线免费、中文强、不上云。
-//     没装 Python/funasr → 不报错,降级:有打字就用打字,没有就标"仅截图+上下文"。
+//   · 语音转写走 Google Cloud STT(integrations/playtest-capture/stt_google.py,Chirp 3);多数标注已在 Unity 当场确认(note.txt),这里只补转没确认的。
+//     没装 Python / 没设 GOOGLE_APPLICATION_CREDENTIALS → 不报错,降级:有打字就用打字,没有就标"仅截图+上下文"。
 //
 // 用法:
 //   node scripts/playtest.js [session目录]     # 不给=自动取 QA/playtest 最新一场
@@ -29,17 +29,21 @@ function findPython() {
   return null;
 }
 
-// 调本地 SenseVoice 批量转写,返回 { wavAbsPath: text }
+// 调 Google STT(Chirp 3)批量转写,返回 { wavAbsPath: text }。仅兜底"录制时没当场确认过的"语音。
 function transcribeAll(wavs, skillDir) {
   const out = {};
   if (!wavs.length) return out;
   const py = findPython();
-  const script = path.join(skillDir, 'integrations', 'playtest-capture', 'asr_sensevoice.py');
+  const script = path.join(skillDir, 'integrations', 'playtest-capture', 'stt_google.py');
   if (!py || !fs.existsSync(script)) {
-    log('⚠️ 未找到 Python 或 asr_sensevoice.py → 跳过语音转写(降级:用打字/上下文)。装法见 SETUP.md');
+    log('⚠️ 未找到 Python 或 stt_google.py → 跳过语音转写(降级:用打字/上下文)。配置见 SETUP.md');
     return out;
   }
-  log(`本地 SenseVoice 转写 ${wavs.length} 段(首次会拉模型,稍候)…`);
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    log('⚠️ 未设置 GOOGLE_APPLICATION_CREDENTIALS(Google 服务账号 JSON)→ 跳过补转(降级:用打字/上下文)。见 SETUP.md');
+    return out;
+  }
+  log(`Google STT 转写 ${wavs.length} 段(没在 Unity 当场确认的)…`);
   const r = spawnSync(py, [script, ...wavs], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (r.status !== 0) {
     log('⚠️ 转写失败(降级):' + ((r.stderr || '').split('\n').find(Boolean) || 'unknown'));
