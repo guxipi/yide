@@ -1,7 +1,8 @@
-// 翼德 · Playtest 标注 — Google STT 转写常驻服务的"编辑器端驱动"(放进任意 Editor/ 文件夹)。
-// 它在标注录音一开始就把 integrations/playtest-capture/stt_google.py 拉起来(常驻,省 Python 启动),
-// 停录时把 voice.wav 路径喂进去,几秒后拿到中文文字回填到打字框 —— 让勾哥"停说即看字、当场确认"。
-// 转写走 Google Cloud Speech-to-Text(Chirp 3 · v2),认证用 service account JSON。纯编辑器代码,#if UNITY_EDITOR 包住,绝不进包。
+// 翼德 · Playtest 标注 — Google STT 实时流式转写的"编辑器端驱动"(放进任意 Editor/ 文件夹)。
+// 标注一开始就把 stt_google.py 拉起来(常驻,省 Python 启动);F8 冻帧时发 START(让 Python 持麦+流式转写),
+// 边说边把 interim 文字回填打字框;再按 F8 发 STOP,Python 收尾、落 voice.wav、回最终全文。
+// 转写走 Google Cloud Speech-to-Text(Chirp 3 · v2 StreamingRecognize)。认证默认用 gcloud ADC,也支持 service account JSON。
+// 纯编辑器代码,#if UNITY_EDITOR 包住,绝不进包。
 #if UNITY_EDITOR
 using System;
 using System.Collections.Concurrent;
@@ -34,7 +35,7 @@ namespace Yide.Playtest
             get => EditorPrefs.GetString(KScript, EnvOr("YIDE_ASR_SCRIPT", ""));
             set => EditorPrefs.SetString(KScript, value);
         }
-        // Google service account JSON(留空则用进程已有的 GOOGLE_APPLICATION_CREDENTIALS 环境变量)
+        // Google service account JSON;留空则走 gcloud ADC(推荐)或进程已有的 GOOGLE_APPLICATION_CREDENTIALS。
         public static string CredentialPath
         {
             get => EditorPrefs.GetString(KCred, EnvOr("GOOGLE_APPLICATION_CREDENTIALS", ""));
@@ -51,12 +52,14 @@ namespace Yide.Playtest
             return string.IsNullOrEmpty(v) ? fallback : v;
         }
 
-        public struct Result { public string wav; public string text; public string error; }
+        // type: interim(边说边更新)/ final(一段定稿)/ done(STOP 后,wav 已写)/ error
+        // auto: done 时为 true 表示是"静音自动停"(非用户按停录)
+        public struct Result { public string type; public string text; public string wav; public string error; public bool auto; }
 
         static Process _proc;
         static readonly ConcurrentQueue<string> _stdout = new ConcurrentQueue<string>();
         static readonly ConcurrentQueue<string> _stderr = new ConcurrentQueue<string>();
-        static string _pending;   // 还没发出去的 wav(等服务 ready)
+        static string _pendingStartWav;   // 还没发出去的 START(等服务 ready)
 
         // 拉起服务并预热(可重复调,已起则忽略)。返回 false=配置不全没法起。
         public static bool EnsureStarted()
@@ -110,28 +113,37 @@ namespace Yide.Playtest
             }
         }
 
-        // 提交一条 wav 去转写(服务没 ready 就先存着,ready 后自动发)。
-        public static void Submit(string wavPath)
+        // 冻帧开始:让 Python 持麦 + 流式转写,整段音频存到 wavPath。服务没 ready 就先存着,ready 后自动发。
+        public static void BeginStream(string wavPath)
         {
             if (string.IsNullOrEmpty(wavPath)) return;
             if (_proc == null || _proc.HasExited) EnsureStarted();
-            _pending = wavPath;
-            TryFlushPending();
+            _pendingStartWav = wavPath;
+            TryFlushStart();
         }
 
-        static void TryFlushPending()
+        // 停录:让 Python 收尾、落 wav、回最终全文。
+        public static void EndStream()
         {
-            if (_pending == null || Status != State.Ready || _proc == null || _proc.HasExited) return;
+            _pendingStartWav = null;
+            if (_proc == null || _proc.HasExited || Status != State.Ready) return;
+            try { _proc.StandardInput.WriteLine("STOP"); _proc.StandardInput.Flush(); }
+            catch (Exception ex) { Status = State.Failed; LastError = "写入失败:" + ex.Message; }
+        }
+
+        static void TryFlushStart()
+        {
+            if (_pendingStartWav == null || Status != State.Ready || _proc == null || _proc.HasExited) return;
             try
             {
-                _proc.StandardInput.WriteLine(_pending);
+                _proc.StandardInput.WriteLine("START\t" + _pendingStartWav);
                 _proc.StandardInput.Flush();
-                _pending = null;
+                _pendingStartWav = null;
             }
             catch (Exception ex) { Status = State.Failed; LastError = "写入失败:" + ex.Message; }
         }
 
-        // 编辑器每帧调:消化服务输出。got=true 表示本帧拿到一条转写结果。
+        // 编辑器每帧调:消化服务输出。got=true 表示本帧拿到一条结果(interim/final/done/error)。
         public static bool Poll(out Result result)
         {
             result = default;
@@ -140,7 +152,7 @@ namespace Yide.Playtest
             {
                 line = (line ?? "").Trim();
                 if (line.Length == 0) continue;
-                if (line == "__READY__") { Status = State.Ready; TryFlushPending(); continue; }
+                if (line == "__READY__") { Status = State.Ready; TryFlushStart(); continue; }
                 result = ParseResult(line);
                 got = true;
             }
@@ -167,26 +179,28 @@ namespace Yide.Playtest
             {
                 if (_proc != null && !_proc.HasExited)
                 {
+                    try { _proc.StandardInput.WriteLine("QUIT"); _proc.StandardInput.Flush(); } catch { }
                     try { _proc.StandardInput.Close(); } catch { }
-                    _proc.Kill();
+                    if (!_proc.WaitForExit(400)) _proc.Kill();
                 }
             }
             catch { }
             _proc = null;
-            _pending = null;
+            _pendingStartWav = null;
             Status = State.Off;
             LastError = "";
             while (_stdout.TryDequeue(out _)) { }
             while (_stderr.TryDequeue(out _)) { }
         }
 
-        [Serializable] class Resp { public string wav; public string text; public string error; }
+        [Serializable] class Resp { public string type; public string wav; public string text; public string error; public bool auto; }
         static Result ParseResult(string line)
         {
             try
             {
                 var r = JsonUtility.FromJson<Resp>(line);
-                return new Result { wav = r != null ? r.wav : null, text = r != null ? r.text : "", error = r != null ? r.error : null };
+                if (r == null) return new Result { error = "结果解析失败" };
+                return new Result { type = r.type, text = r.text ?? "", wav = r.wav, error = r.error, auto = r.auto };
             }
             catch { return new Result { error = "结果解析失败" }; }
         }

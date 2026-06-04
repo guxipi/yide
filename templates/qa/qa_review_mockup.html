@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>翼德 · Playtest QA 清单(mockup)</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --ink:#e6e9ef; --sub:#9aa3b2; --accent:#36d6a0; --accent2:#2bb389;
+    --hi:#ff6b6b; --mid:#ffb454; --lo:#5aa9ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,"Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink)}
+  /* 顶栏 */
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#171a21,#14171d);
+    border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.3px}
+  header h1 .dim{color:var(--sub);font-weight:400;font-size:13px;margin-left:8px}
+  .spacer{flex:1}
+  .count{font-size:13px;color:var(--sub)}
+  .count b{color:var(--accent);font-size:16px}
+  .btn{border:1px solid var(--line);background:var(--panel2);color:var(--ink);padding:7px 14px;border-radius:8px;
+    font-size:13px;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.ghost{background:transparent}
+  /* 列表 */
+  main{max-width:980px;margin:0 auto;padding:20px 22px 120px}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px}
+  .filter{font-size:12px;color:var(--sub)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden;
+    transition:.15s}
+  .card.checked{border-color:var(--accent2);box-shadow:0 0 0 1px var(--accent2) inset}
+  .card.dim{opacity:.5}
+  .row{display:flex;gap:14px;padding:14px 16px;align-items:flex-start}
+  .chk{appearance:none;width:22px;height:22px;border:2px solid #3a4150;border-radius:6px;cursor:pointer;flex:none;
+    margin-top:2px;position:relative;transition:.15s}
+  .chk:checked{background:var(--accent);border-color:var(--accent)}
+  .chk:checked::after{content:"✓";position:absolute;color:#0b0e12;font-weight:900;left:3px;top:-2px;font-size:16px}
+  .body{flex:1;min-width:0}
+  .titleline{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .pri{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;flex:none}
+  .pri.high{background:rgba(255,107,107,.15);color:var(--hi);border:1px solid rgba(255,107,107,.4)}
+  .pri.mid{background:rgba(255,180,84,.15);color:var(--mid);border:1px solid rgba(255,180,84,.4)}
+  .pri.lo{background:rgba(90,169,255,.15);color:var(--lo);border:1px solid rgba(90,169,255,.4)}
+  .title{font-size:15px;font-weight:650}
+  .meta{margin-top:8px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12.5px}
+  .meta .k{color:var(--sub);white-space:nowrap}
+  .meta .v{color:var(--ink);font-family:"Cascadia Code",Consolas,monospace;word-break:break-all}
+  .meta .v.fix{color:var(--accent)}
+  .quote{margin-top:10px;padding:9px 12px;background:var(--panel2);border-left:3px solid #3a4150;border-radius:0 6px 6px 0;
+    font-size:13px;color:#cfd6e2}
+  .quote .lbl{color:var(--sub);font-size:11px;margin-right:6px}
+  .analysis{margin-top:8px;font-size:13px;color:#bfc8d6;line-height:1.5}
+  .analysis .lbl{color:var(--accent);font-size:11px;font-weight:700;margin-right:6px}
+  .shot{flex:none;width:120px;height:200px;border-radius:8px;border:1px solid var(--line);
+    background:linear-gradient(135deg,#222733,#2c3340);display:flex;align-items:center;justify-content:center;
+    color:#4a5161;font-size:11px;text-align:center;cursor:pointer}
+  .note{margin-top:10px}
+  .note input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);
+    padding:8px 11px;font-size:13px}
+  .note input::placeholder{color:#5a6170}
+  .note input:focus{outline:none;border-color:var(--accent)}
+  /* 底栏 */
+  footer{position:fixed;bottom:0;left:0;right:0;background:rgba(20,23,29,.96);backdrop-filter:blur(6px);
+    border-top:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;gap:16px}
+  footer .sum{font-size:13px;color:var(--sub)}
+  footer .sum b{color:var(--accent)}
+  .go{margin-left:auto;background:var(--accent);color:#08110d;font-weight:800;border:none;padding:11px 22px;
+    border-radius:9px;font-size:14px;cursor:pointer}
+  .go:hover{background:var(--accent2)}
+  /* 工单弹窗 */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+  .overlay.on{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(620px,92vw);max-height:80vh;
+    overflow:auto;padding:22px}
+  .modal h2{margin:0 0 6px;font-size:16px}
+  .modal p{color:var(--sub);font-size:13px;margin:0 0 14px}
+  pre{background:#0b0e12;border:1px solid var(--line);border-radius:9px;padding:14px;font-size:12px;
+    color:#cfe9dd;overflow:auto;white-space:pre-wrap}
+  .modal .row2{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗡️ 翼德 · Playtest QA 清单 <span class="dim">session-20260604-133427 · 共 4 条 · GameScene / Level_C1_L01</span></h1>
+  <div class="spacer"></div>
+  <div class="count">已批准修 <b id="cnt">0</b> / 4</div>
+  <button class="btn ghost" onclick="setAll(true)">✅ 全修</button>
+  <button class="btn ghost" onclick="setAll(false)">❌ 全不修</button>
+</header>
+
+<main id="list"></main>
+
+<footer>
+  <div class="sum">勾哥勾选要修的 → 翼德按清单开修 · <span id="fsum">0 项待修</span></div>
+  <button class="go" onclick="generate()">确认 → 让翼德开修 ▶</button>
+</footer>
+
+<div class="overlay" id="ov">
+  <div class="modal">
+    <h2>📋 生成的修复工单</h2>
+    <p>这就是勾哥确认后翼德拿到的东西(真实版会写成文件,翼德据此逐条修 + 改完回报)。</p>
+    <pre id="json"></pre>
+    <div class="row2">
+      <button class="btn" onclick="document.getElementById('ov').classList.remove('on')">返回改</button>
+      <button class="go" onclick="document.getElementById('ov').classList.remove('on')">就这么修 ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 样例数据(真实版由翼德读 marker 的 context.json + note.txt + 截图 + 分析后填充)
+const ISSUES=[
+ {id:1,pri:"high",priLabel:"高",title:"退出门一站上去就触发,缺少蓄力等待",
+  scene:"GameScene",hit:"Level_C1_L01/Exits/Exit_Door_Test",src:"Exit_Door_Test.prefab · ExitDoor",
+  fix:"ExitDoor.cs · 检查 _activationDuration 是否生效 / _stayTimer 累计逻辑",
+  quote:"这个门我一站上去马上就传送了,应该要站几秒蓄力才对",
+  analysis:"ExitDoor 用 _stayTimer 累计停留时长到 _activationDuration(默认2s)才激活。现象疑似 duration 被设成 0 或进度圈没显示。先查该 Prefab 上的 _activationDuration 值。"},
+ {id:2,pri:"mid",priLabel:"中",title:"开战利品箱没有任何特效/音效反馈",
+  scene:"GameScene",hit:"...PoolManager/.../Loot_LootableContainer(Clone)",src:"Loot_LootableContainer.prefab",
+  fix:"LootableContainer 交互:开箱时缺 VFX/SFX/动画 hook",
+  quote:"开箱子的时候没有任何特效和声音,感觉不出来开成功了没",
+  analysis:"开箱交互只改了状态没接反馈表现。建议在开启成功回调里加:开盖动画 + 一次性 VFX + SFX。符合『成品级视觉』默认。"},
+ {id:3,pri:"mid",priLabel:"中",title:"经验球吸取范围太小,要贴脸才吸",
+  scene:"GameScene",hit:"Drops/XPOrbPickup(Clone)",src:"XPOrbPickup.prefab · PickupBase",
+  fix:"PickupBase.cs · 吸取/磁吸半径(magnet radius)调大或加随等级成长",
+  quote:"经验球要走到非常近才会被吸过来,范围太小了,捡得很累",
+  analysis:"PickupBase 的吸取半径偏小。建议提高基础磁吸半径,或随玩家拾取范围属性成长。注意与掉落密度联动测试。"},
+ {id:4,pri:"lo",priLabel:"低",title:"Boss 血条挡住屏幕中央准星",
+  scene:"GameScene",hit:"UI/Boss/Boss_HeavyCommander_HealthBar",src:"UIBossHealthBar",
+  fix:"Boss 血条 UI 布局:下移/缩小,避开准星区域(竖屏)",
+  quote:"打boss的时候血条正好挡住中间的准星,看不清",
+  analysis:"竖屏下 Boss 血条占了中上区域与准星重叠。建议把血条移到顶部安全区,或半透明化。属打磨项,优先级低。"},
+];
+
+const list=document.getElementById('list');
+ISSUES.forEach(it=>{
+  const c=document.createElement('div');c.className='card';c.id='card'+it.id;
+  c.innerHTML=`
+    <div class="row">
+      <input type="checkbox" class="chk" data-id="${it.id}" onchange="onChk(this)">
+      <div class="body">
+        <div class="titleline">
+          <span class="pri ${it.pri}">${it.priLabel}优先</span>
+          <span class="title">${it.title}</span>
+        </div>
+        <div class="meta">
+          <span class="k">场景</span><span class="v">${it.scene}</span>
+          <span class="k">命中元素</span><span class="v">${it.hit}</span>
+          <span class="k">来源</span><span class="v">${it.src}</span>
+          <span class="k">建议改</span><span class="v fix">${it.fix}</span>
+        </div>
+        <div class="quote"><span class="lbl">勾哥原话</span>${it.quote}</div>
+        <div class="analysis"><span class="lbl">翼德分析</span>${it.analysis}</div>
+        <div class="note"><input type="text" placeholder="✏️ 补充意见(可选):比如『只改门,箱子先不动』" data-id="${it.id}"></div>
+      </div>
+      <div class="shot" title="点开看截图">📷<br>shot.png<br>(竖屏截图)</div>
+    </div>`;
+  list.appendChild(c);
+});
+
+function onChk(el){
+  const card=document.getElementById('card'+el.dataset.id);
+  card.classList.toggle('checked',el.checked);
+  refresh();
+}
+function setAll(v){document.querySelectorAll('.chk').forEach(c=>{c.checked=v;onChk(c)})}
+function refresh(){
+  const n=document.querySelectorAll('.chk:checked').length;
+  document.getElementById('cnt').textContent=n;
+  document.getElementById('fsum').textContent=n+' 项待修';
+}
+function generate(){
+  const picked=[];
+  document.querySelectorAll('.chk:checked').forEach(c=>{
+    const id=+c.dataset.id;const it=ISSUES.find(x=>x.id===id);
+    const note=document.querySelector('.note input[data-id="'+id+'"]').value.trim();
+    picked.push({id,title:it.title,priority:it.pri,fixHint:it.fix,userComment:note||null});
+  });
+  document.getElementById('json').textContent=JSON.stringify({
+    session:"session-20260604-133427",approvedCount:picked.length,fixList:picked
+  },null,2);
+  document.getElementById('ov').classList.add('on');
+}
+refresh();
+</script>
+</body>
+</html>

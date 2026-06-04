@@ -1,6 +1,6 @@
 // 翼德 · Playtest 冻帧标注工具(运行时)
 // 勾哥试玩时按一个键(默认 F8)→ 冻帧 + 截当前帧 + 自动抓"命中的 UI/物体 + 场景 + 分辨率/FPS/版本"
-// + 录一小段语音(语音为主)/ 也可在编辑器窗口里打字 → 一键归档成一个 marker 文件夹。
+// + 实时语音转写(编辑器侧由 Python 持麦走 Google STT,边说边出字)/ 也可打字 → 一键归档成一个 marker 文件夹。
 // 之后翼德跑 scripts/playtest.js:Google STT 补转未确认的语音 + 读截图/上下文 → 出带定位的问题清单。
 //
 // 放置:把本文件放进项目任意 Scripts 目录;再把 Editor/PlaytestMarkerWindow.cs 放进一个 Editor/ 文件夹。
@@ -30,10 +30,9 @@ namespace Yide.Playtest
         public static PendingMarker Pending;       // 当前这条
         public static string TypedNote = "";       // 框里的文字(转写自动填入 + 勾哥可改)
 
-        // 转写(只在编辑器侧消费;运行时只负责停录后把 wav 路径递过来)
-        public static string VoiceWavPath;         // 停录后写好的 voice.wav 绝对路径(无语音=null)
-        public static int VoiceJobId;              // 每次停录自增,编辑器据此判断"来了新的一条要转写"
-        public static string TranscriptStatus = "";// 编辑器写回的状态:"转写中…"/"转写失败:…"/""
+        // 转写(编辑器侧消费):冻帧时运行时把目标 wav 路径递过来,编辑器驱动 Python 持麦流式转写。
+        public static string VoiceWavPath;         // 本条 voice.wav 的目标绝对路径(Python 写入)
+        public static string TranscriptStatus = "";// 编辑器写回的状态:"🎙 听写中…"/"✓ 已转写"/"转写失败:…"
 
         public static Action RequestAdvance;       // 窗口绿钮 / F8:推进到下一阶段
         public static Action RequestCancel;        // 窗口点"取消"回调
@@ -60,21 +59,14 @@ namespace Yide.Playtest
     {
         [Header("标注键(默认 F8;空格常被游戏占用,别用)")]
         public KeyCode markKey = KeyCode.F8;
-        [Header("单条语音最长秒数")]
-        public int maxClipSeconds = 30;
-        [Tooltip("采样率;STT 用 16k 即可")]
-        public int sampleRate = 16000;
 
         int _count;
         string _sessionDir;
         float _prevTimeScale = 1f;
-        AudioClip _clip;
-        string _micDevice;
-        bool _recording;
 
         void Awake()
         {
-            _sessionDir = Path.Combine(BaseDir(), "QA", "playtest", "session-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+            _sessionDir = Path.Combine(SessionRoot(), "session-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
             DontDestroyOnLoad(gameObject);
         }
 
@@ -150,12 +142,10 @@ namespace Yide.Playtest
             _prevTimeScale = Time.timeScale;
             Time.timeScale = 0f;
 
-            // 开录(语音为主)
-            StartMic();
-
+            // 语音:不在 Unity 录;编辑器侧让 Python 持麦+流式转写,整段音频存到这个 wav。
             PlaytestMarkerBridge.Pending = m;
             PlaytestMarkerBridge.TypedNote = "";
-            PlaytestMarkerBridge.VoiceWavPath = null;
+            PlaytestMarkerBridge.VoiceWavPath = Path.Combine(m.folder, "voice.wav");
             PlaytestMarkerBridge.TranscriptStatus = "";
             PlaytestMarkerBridge.Phase = MarkPhase.Recording;
             PlaytestMarkerBridge.Active = true;
@@ -171,23 +161,11 @@ namespace Yide.Playtest
             var m = PlaytestMarkerBridge.Pending;
             if (m == null) return;
 
-            var samples = StopMic();
-            if (samples != null && samples.Length > 0)
-            {
-                var wavPath = Path.Combine(m.folder, "voice.wav");
-                File.WriteAllBytes(wavPath, EncodeWav(samples, 1, sampleRate));
-                PlaytestMarkerBridge.VoiceWavPath = wavPath;
-                PlaytestMarkerBridge.VoiceJobId++;            // 通知编辑器:有新一条要转写
-                PlaytestMarkerBridge.TranscriptStatus = "转写中…";
-            }
-            else
-            {
-                PlaytestMarkerBridge.VoiceWavPath = null;
-                PlaytestMarkerBridge.TranscriptStatus = "(无语音 — 可直接打字)";
-            }
+            // 停录:编辑器侧发 STOP 给 Python 收尾、落 wav、回最终全文(此时仍冻帧,留足复核时间)。
+            PlaytestMarkerBridge.TranscriptStatus = "转写收尾…";
             PlaytestMarkerBridge.Phase = MarkPhase.Reviewing;
             PlaytestMarkerBridge.Changed();
-            Debug.Log($"[翼德] ■ 标注 #{m.index} 停录,转写中…(确认文字后再按 F8 保存)");
+            Debug.Log($"[翼德] ■ 标注 #{m.index} 停录,转写收尾…(确认文字后再按 F8 保存)");
         }
 
         // ── 第③步:保存本条(wav 已在停录时写好)→ 写 note.txt(转写+改) + context.json ──
@@ -211,7 +189,6 @@ namespace Yide.Playtest
 
         void CancelMark()
         {
-            StopMic();
             var m = PlaytestMarkerBridge.Pending;
             try { if (m != null && Directory.Exists(m.folder)) Directory.Delete(m.folder, true); } catch { }
             EndMarkCommon();
@@ -284,44 +261,6 @@ namespace Yide.Playtest
             return src;
         }
 
-        // ── 麦克风 ──
-        void StartMic()
-        {
-            if (Microphone.devices.Length == 0) { Debug.LogWarning("[翼德] 没有麦克风设备,本条只存截图+上下文"); return; }
-            _micDevice = Microphone.devices[0];
-            _clip = Microphone.Start(_micDevice, false, maxClipSeconds, sampleRate);
-            _recording = true;
-        }
-
-        float[] StopMic()
-        {
-            if (!_recording || _clip == null) return null;
-            int pos = Microphone.GetPosition(_micDevice);
-            Microphone.End(_micDevice);
-            _recording = false;
-            if (pos <= 0) pos = _clip.samples;
-            var data = new float[pos * _clip.channels];
-            _clip.GetData(data, 0);
-            return data;
-        }
-
-        // ── 16-bit PCM WAV 编码(无依赖) ──
-        static byte[] EncodeWav(float[] samples, int channels, int rate)
-        {
-            using (var ms = new MemoryStream())
-            using (var bw = new BinaryWriter(ms))
-            {
-                int dataLen = samples.Length * 2;
-                bw.Write(Encoding.ASCII.GetBytes("RIFF")); bw.Write(36 + dataLen);
-                bw.Write(Encoding.ASCII.GetBytes("WAVE")); bw.Write(Encoding.ASCII.GetBytes("fmt "));
-                bw.Write(16); bw.Write((short)1); bw.Write((short)channels);
-                bw.Write(rate); bw.Write(rate * channels * 2); bw.Write((short)(channels * 2)); bw.Write((short)16);
-                bw.Write(Encoding.ASCII.GetBytes("data")); bw.Write(dataLen);
-                foreach (var s in samples) bw.Write((short)(Mathf.Clamp(s, -1f, 1f) * short.MaxValue));
-                return ms.ToArray();
-            }
-        }
-
         static string J(string s) => "\"" + (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
         static string BuildContextJson(PendingMarker m, string wav, string note)
         {
@@ -345,13 +284,15 @@ namespace Yide.Playtest
             return sb.ToString();
         }
 
-        // 项目根(编辑器=工程根;真机=persistentDataPath)
-        static string BaseDir()
+        // session 根目录:编辑器优先读 EditorPrefs(本机已指到 Google Drive),否则工程内 QA/playtest;真机用 persistentDataPath。
+        static string SessionRoot()
         {
 #if UNITY_EDITOR
-            return Directory.GetParent(Application.dataPath).FullName;
+            var custom = UnityEditor.EditorPrefs.GetString("Yide.Playtest.SessionRoot", "");
+            if (!string.IsNullOrEmpty(custom)) return custom;
+            return Path.Combine(Directory.GetParent(Application.dataPath).FullName, "QA", "playtest");
 #else
-            return Application.persistentDataPath;
+            return Path.Combine(Application.persistentDataPath, "QA", "playtest");
 #endif
         }
 
