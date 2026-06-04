@@ -121,7 +121,7 @@ yide/
 - 项目文档管理:Confluence 导出 → 解压 → 蒸成 `CLAUDE.md` → 自动读(需真 Confluence)
 - 角色镜头 `use architect` 在真会话能否召唤(需真 Claude Code 会话)
 - 一键回滚"整段撤"(需真闭环跑一次)
-- Playtest 冻帧标注:Unity 按 F8 冻帧+抓命中元素/上下文+录音 → 本地 SenseVoice 转写 → 带定位问题清单(需真 Unity 项目 + 装好本地转写)
+- Playtest 冻帧标注:Unity 按 F8 冻帧+抓命中元素/上下文 → Google Cloud STT(Chirp 3)实时流式转写(已真机验证)→ 带定位 QA 清单(扫 marker→修复回流待真实 session 验)
 
 > 诚实底线:`node test` 只覆盖"可控的逻辑/文件层";**"模型在真实会话照做 + 勾哥真实环境"这层必须真机验,翼德不冒充已验证。**
 
