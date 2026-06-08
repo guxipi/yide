@@ -135,7 +135,8 @@ def build_clients_and_config():
             sample_rate_hertz=SAMPLE_RATE,
             audio_channel_count=CHANNELS,
         ),
-        language_codes=[lang],
+        # 逗号分隔多语言码(如 cmn-Hans-CN,en-US)做中英 code-switching;单值则纯单语
+        language_codes=[c.strip() for c in lang.split(",") if c.strip()],
         model=model,
         features=cloud_speech.RecognitionFeatures(enable_automatic_punctuation=True),
     )
