@@ -39,6 +39,7 @@ HOTKEY = os.environ.get("YIDE_VOICE_HOTKEY", "<ctrl>+<f9>")
 SUBMIT = os.environ.get("YIDE_VOICE_SUBMIT", "0") == "1"
 KEEP_WAV = os.environ.get("YIDE_VOICE_KEEP_WAV", "0") == "1"
 PYTHON = os.environ.get("YIDE_VOICE_PY", "python")
+PROMPT = "🎙 请说话…"   # 按热键后在输入框显示的占位提示，转写完后退格替换
 
 
 def _default_stt_script():
@@ -55,8 +56,8 @@ def log(msg):
 
 
 # ── 把字符串用 Windows SendInput 以 Unicode 打进当前焦点窗口（CJK 直出，不依赖键盘布局）──
-def type_unicode(text):
-    if not text:
+def type_unicode(text, backspaces=0):
+    if not text and backspaces <= 0:
         return
     if os.name != "nt":
         # 非 Windows 兜底：打印出来，让你手动复制（本工具按需求面向 Windows）
@@ -102,6 +103,12 @@ def type_unicode(text):
         ki = KEYBDINPUT(vk, 0, flags, 0, 0)
         return INPUT(INPUT_KEYBOARD, _INPUTunion(ki=ki))
 
+    # 先退格删掉之前键入的占位提示（每个可见字符一次退格）
+    VK_BACK = 0x08
+    for _ in range(backspaces):
+        _send([_vk_event(VK_BACK, keyup=False)])
+        _send([_vk_event(VK_BACK, keyup=True)])
+
     # 用 UTF-16 码元逐个发（含中文 BMP；emoji 等代理对也按码元发，down+up）
     units = []
     for ch in text:
@@ -125,6 +132,7 @@ class VoiceDaemon:
         self.lock = threading.Lock()
         self.cur_wav = None
         self._last_interim = ""
+        self._prompt_len = 0
 
     # —— 启动 stt_google.py 常驻服务，等到 __READY__ ——
     def start_stt(self):
@@ -197,6 +205,9 @@ class VoiceDaemon:
                 log("\n⚠ STT 出错：%s（这次没转成，可直接打字）" % msg.get("error"))
                 with self.lock:
                     self.recording = False
+                if self._prompt_len:
+                    type_unicode("", backspaces=self._prompt_len)
+                    self._prompt_len = 0
 
     def _on_done(self, text, auto, wav):
         with self.lock:
@@ -205,12 +216,15 @@ class VoiceDaemon:
         sys.stdout.write("\r" + " " * 64 + "\r")
         sys.stdout.flush()
         text = (text or "").strip()
+        bs = self._prompt_len
+        self._prompt_len = 0
         if not text:
-            log("（没听到内容，未键入）" + ("[静音自动停]" if auto else ""))
+            log("（没听到内容，已撤回提示）" + ("[静音自动停]" if auto else ""))
+            type_unicode("", backspaces=bs)        # 删掉占位提示
         else:
             log("✓ 键入：" + text + ("  [静音自动停]" if auto else ""))
             time.sleep(0.18)  # 给焦点一点时间，确保打进 Claude Code 输入框
-            type_unicode(text)
+            type_unicode(text, backspaces=bs)      # 删占位 + 打转写结果
         if wav and not KEEP_WAV:
             try:
                 os.remove(wav)
@@ -237,6 +251,8 @@ class VoiceDaemon:
                     log("⚠ 启动录音失败：%s" % e)
                     return
                 log("● 录音中…（说中文；再按一次热键停，或停顿自动停）")
+                type_unicode(PROMPT)          # 输入框占位提示，转写完退格替换
+                self._prompt_len = len(PROMPT)
             else:
                 try:
                     self.proc.stdin.write("STOP\n")
@@ -256,6 +272,13 @@ class VoiceDaemon:
 
 
 def main():
+    # 静默后台（VBS 隐藏窗口）时控制台 codepage 非 UTF-8，log 中文/emoji 会崩 —— 统一 UTF-8
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
     args = [a for a in sys.argv[1:] if a]
 
     # 自检直接透传给 stt_google.py
