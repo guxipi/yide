@@ -180,11 +180,7 @@ class StreamSession:
         # 第一条:recognizer + streaming_config;之后每条:一块音频
         streaming_config = self.cs.StreamingRecognitionConfig(
             config=self.config,
-            streaming_features=self.cs.StreamingRecognitionFeatures(
-                interim_results=True,
-                # P1：说完尽快出 final（砍掉 endpointing 收尾等待）；SUPERSHORT 最激进
-                endpointing_sensitivity=self.cs.StreamingRecognitionFeatures.EndpointingSensitivity.ENDPOINTING_SENSITIVITY_SUPERSHORT,
-            ),
+            streaming_features=self.cs.StreamingRecognitionFeatures(interim_results=True),
         )
         yield self.cs.StreamingRecognizeRequest(recognizer=self.recognizer, streaming_config=streaming_config)
         while True:
