@@ -9,7 +9,11 @@
 # 三件事它包了：① 全局热键开关录音；② 复用 stt_google.py 流式转写；③ done 后把最终中文用
 #   SendInput(KEYEVENTF_UNICODE) 打进当前焦点窗口。**不自动回车**（默认），留你审稿。
 #
-# 状态机：idle --热键--> recording --热键/静音自动停--> (done) --键入--> idle
+# 实时反馈（P0）：录音中用一个**置顶无边框小浮窗**边说边滚 interim 预览（生成式模型 interim 会
+#   反复改写前文，放浮窗里抖动无所谓，绝不抖进输入框）；说完 final 才一次性键入输入框，输入框全程干净。
+#   无 tkinter 时自动降级为控制台预览 + 原阻塞模式。
+#
+# 状态机：idle --热键--> recording（浮窗显示）--热键/静音自动停--> (done) --键入+关浮窗--> idle
 #
 # 依赖（都轻量、无 PyTorch）：
 #   pip install pynput                         # 全局热键（不需管理员）
@@ -31,15 +35,21 @@ import os
 import sys
 import json
 import time
+import queue
 import tempfile
 import threading
 import subprocess
+
+try:
+    import tkinter as tk
+except Exception:
+    tk = None
 
 HOTKEY = os.environ.get("YIDE_VOICE_HOTKEY", "<ctrl>+<f9>")
 SUBMIT = os.environ.get("YIDE_VOICE_SUBMIT", "0") == "1"
 KEEP_WAV = os.environ.get("YIDE_VOICE_KEEP_WAV", "0") == "1"
 PYTHON = os.environ.get("YIDE_VOICE_PY", "python")
-PROMPT = "🎙 请说话…"   # 按热键后在输入框显示的占位提示，转写完后退格替换
+PROMPT = "🎙 请说话…"   # 录音中浮窗的初始提示
 
 
 def _default_stt_script():
@@ -103,7 +113,7 @@ def type_unicode(text, backspaces=0):
         ki = KEYBDINPUT(vk, 0, flags, 0, 0)
         return INPUT(INPUT_KEYBOARD, _INPUTunion(ki=ki))
 
-    # 先退格删掉之前键入的占位提示（每个可见字符一次退格）
+    # 先退格删掉之前键入的占位（浮窗方案默认不用；保留参数向后兼容）
     VK_BACK = 0x08
     for _ in range(backspaces):
         _send([_vk_event(VK_BACK, keyup=False)])
@@ -125,6 +135,80 @@ def type_unicode(text, backspaces=0):
         _send([_vk_event(VK_RETURN, keyup=True)])
 
 
+# ── 置顶无边框小浮窗：线程安全（外部线程 put 命令，主线程 mainloop 轮询执行）──
+class Overlay:
+    def __init__(self):
+        self.q = queue.Queue()
+        self.root = None
+        self.label = None
+        self._placed = False
+
+    # 必须在主线程调用：建窗 + 轮询 + 阻塞 mainloop
+    def run(self):
+        self.root = tk.Tk()
+        self.root.overrideredirect(True)         # 无边框
+        self.root.attributes("-topmost", True)   # 置顶
+        try:
+            self.root.attributes("-alpha", 0.93)
+        except Exception:
+            pass
+        self.root.configure(bg="#14171c")
+        self.label = tk.Label(
+            self.root, text="", fg="#eaeaea", bg="#14171c",
+            font=("Microsoft YaHei UI", 14), justify="left",
+            wraplength=460, padx=18, pady=14, anchor="w",
+        )
+        self.label.pack(fill="both", expand=True)
+        self.root.withdraw()                     # 初始隐藏
+        self.root.after(30, self._poll)
+        self.root.mainloop()
+
+    def _poll(self):
+        try:
+            while True:
+                cmd, arg = self.q.get_nowait()
+                if cmd == "show":
+                    self.label.config(text=arg or "")
+                    self.root.deiconify()
+                    self.root.update_idletasks()
+                    self._place()
+                elif cmd == "text":
+                    self.label.config(text=arg)
+                elif cmd == "hide":
+                    self.root.withdraw()
+                elif cmd == "quit":
+                    self.root.destroy()
+                    return
+        except queue.Empty:
+            pass
+        self.root.after(30, self._poll)
+
+    def _place(self):
+        # 屏幕下方居中（固定一次锚点，避免 interim 变长时窗口乱跳）
+        if self._placed:
+            return
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+        w = 496
+        x = (sw - w) // 2
+        y = int(sh * 0.70)
+        self.root.geometry("+%d+%d" % (x, y))
+        self._placed = True
+
+    # —— 线程安全外部接口 ——
+    def show(self, text=""):
+        self.q.put(("show", text))
+
+    def set_text(self, text):
+        self.q.put(("text", text))
+
+    def hide(self):
+        self.q.put(("hide", None))
+
+    def quit(self):
+        self.q.put(("quit", None))
+
+
 class VoiceDaemon:
     def __init__(self):
         self.proc = None
@@ -132,7 +216,7 @@ class VoiceDaemon:
         self.lock = threading.Lock()
         self.cur_wav = None
         self._last_interim = ""
-        self._prompt_len = 0
+        self.overlay = None     # 主线程的 Overlay（无 tkinter 时为 None）
 
     # —— 启动 stt_google.py 常驻服务，等到 __READY__ ——
     def start_stt(self):
@@ -194,7 +278,9 @@ class VoiceDaemon:
                 txt = msg.get("text", "")
                 if txt and txt != self._last_interim:
                     self._last_interim = txt
-                    # 同一行刷新预览（不抢焦点，仅本进程控制台）
+                    if self.overlay:
+                        self.overlay.set_text("🎙  " + txt)
+                    # 同一行刷新控制台预览（无浮窗时的兜底；静默后台看不到也无妨）
                     sys.stdout.write("\r🎙  " + txt[-60:].ljust(62))
                     sys.stdout.flush()
             elif t == "final":
@@ -205,26 +291,24 @@ class VoiceDaemon:
                 log("\n⚠ STT 出错：%s（这次没转成，可直接打字）" % msg.get("error"))
                 with self.lock:
                     self.recording = False
-                if self._prompt_len:
-                    type_unicode("", backspaces=self._prompt_len)
-                    self._prompt_len = 0
+                if self.overlay:
+                    self.overlay.hide()
 
     def _on_done(self, text, auto, wav):
         with self.lock:
             self.recording = False
         self._last_interim = ""
+        if self.overlay:
+            self.overlay.hide()
         sys.stdout.write("\r" + " " * 64 + "\r")
         sys.stdout.flush()
         text = (text or "").strip()
-        bs = self._prompt_len
-        self._prompt_len = 0
         if not text:
-            log("（没听到内容，已撤回提示）" + ("[静音自动停]" if auto else ""))
-            type_unicode("", backspaces=bs)        # 删掉占位提示
+            log("（没听到内容，未键入）" + ("[静音自动停]" if auto else ""))
         else:
             log("✓ 键入：" + text + ("  [静音自动停]" if auto else ""))
             time.sleep(0.18)  # 给焦点一点时间，确保打进 Claude Code 输入框
-            type_unicode(text, backspaces=bs)      # 删占位 + 打转写结果
+            type_unicode(text)
         if wav and not KEEP_WAV:
             try:
                 os.remove(wav)
@@ -251,8 +335,8 @@ class VoiceDaemon:
                     log("⚠ 启动录音失败：%s" % e)
                     return
                 log("● 录音中…（说中文；再按一次热键停，或停顿自动停）")
-                type_unicode(PROMPT)          # 输入框占位提示，转写完退格替换
-                self._prompt_len = len(PROMPT)
+                if self.overlay:
+                    self.overlay.show(PROMPT)          # 浮窗实时预览，转写完才键入输入框
             else:
                 try:
                     self.proc.stdin.write("STOP\n")
@@ -261,6 +345,8 @@ class VoiceDaemon:
                     pass
                 # done 会从 _read_stt 回来；这里只置请求停
                 log("… 收尾转写中")
+                if self.overlay:
+                    self.overlay.set_text("… 收尾转写中")
 
     def quit(self):
         try:
@@ -307,17 +393,34 @@ def main():
     log("  键入后%s自动回车。Ctrl+C 退出。"
         % ("会" if SUBMIT else "不会（默认留你审稿，自己回车）"))
 
-    def on_toggle():
-        daemon.toggle()
+    hk = keyboard.GlobalHotKeys({HOTKEY: daemon.toggle})
 
-    try:
-        with keyboard.GlobalHotKeys({HOTKEY: on_toggle}) as h:
-            h.join()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        daemon.quit()
-        log("\n再见。")
+    if tk is not None:
+        # 浮窗模式：主线程跑 Tk mainloop，热键监听走后台线程
+        overlay = Overlay()
+        daemon.overlay = overlay
+        hk.start()
+        try:
+            overlay.run()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            try:
+                hk.stop()
+            except Exception:
+                pass
+            daemon.quit()
+    else:
+        # 无 tkinter：降级为控制台预览 + 原阻塞模式
+        log("⚠ 无 tkinter，浮窗不可用，回退控制台预览。")
+        try:
+            with hk as h:
+                h.join()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            daemon.quit()
+    log("\n再见。")
 
 
 if __name__ == "__main__":
