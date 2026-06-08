@@ -1,6 +1,6 @@
 ---
 name: yide
-description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/评审/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa"/"yide test", "yide review"/"yide 评审", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、review对抗评审、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan闭环造鸭(几句话→对齐→造→引擎验→交付)、mockup线稿、docs项目文档管理(Confluence→CLAUDE.md)、playtest冻帧标注(Unity按F8冻帧+抓命中元素/上下文→Google Cloud STT实时流式转写→带定位问题清单)。
+description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/评审/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa"/"yide test", "yide review"/"yide 评审", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、review对抗评审、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan闭环造鸭(几句话→对齐→造→引擎验→交付)、mockup线稿、docs项目文档管理(Confluence→CLAUDE.md)、playtest冻帧标注(Unity按F8冻帧+抓命中元素/上下文→Google Cloud STT实时流式转写→带定位问题清单)、voice语音喂prompt(Rider终端全局热键说中文→STT转写→自动键入Claude Code输入框)。
 allowed-tools: Bash
 ---
 
@@ -27,6 +27,7 @@ allowed-tools: Bash
 | `mockup` / `线稿` / `wireframe` / `画个界面` / `画界面` | `actions/mockup.md` | 从描述出可批注的 HTML UI 线稿确认布局(plan 里界面功能会自动调) |
 | `docs` / `项目文档` / `吸收文档` / `更新文档` / `文档管理` | `actions/docs.md` | 项目文档管理:Confluence 导出/增量 → 蒸成精简 CLAUDE.md(每次会话自动读)→ 7 天懒同步 |
 | `playtest` / `冻帧标注` / `标注` / `试玩反馈` | `actions/playtest.md` | playtest 冻帧标注:Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |
+| `voice` / `语音` / `语音输入` / `听写` / `口述` / `speech` | `actions/voice.md` | 语音喂 prompt:Rider 终端全局热键(默认 Ctrl+Alt+V)说中文 → 复用 Google STT 流式转写 → 自动键入当前光标(Claude Code 输入框),审一眼再回车(Windows) |
 | `战绩` / `zhanji` / `stats` / `战绩面板` | `actions/zhanji.md` | (extraction 彩蛋)查连斩/打卡链/三国称号战绩 |
 
 ## 规则

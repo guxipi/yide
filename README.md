@@ -54,6 +54,7 @@
 | `mockup` | 线稿 / wireframe / 画界面 | 出可批注 HTML 线稿确认布局(点区域→弹框→一键「复制反馈给翼德」) |
 | `docs` | 项目文档 / 吸收文档 / 文档管理 | Confluence 导出/增量 → 蒸成精简 `CLAUDE.md`(每次会话自动读)→ 7 天懒同步 |
 | `playtest` | 冻帧标注 / 标注 / 试玩反馈 | Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |
+| `voice` | 语音 / 语音输入 / 听写 / 口述 | Rider 终端全局热键(默认 Ctrl+Alt+V)说中文 → 复用 Google STT 流式转写 → 自动键入当前光标(Claude Code 输入框),审一眼再回车(Windows) |
 | `zhanji` | 战绩 / stats | 看连斩 / 打卡链 / 三国称号(extraction 个人项目彩蛋) |
 
 说"翼德 记一下…/简报/整理/测试/蒸馏/用 maxim/起个计划"等自然语言也能触发。单入口 + 按需加载 = 不占上下文。
@@ -102,7 +103,7 @@ yide/
 ├── scripts/*.js             # 全 Node,无第三方依赖
 ├── templates/brain/         # onboard 时复制到 ~/.yide
 ├── templates/qa/            # bug SOP / 报告模板 / EvidenceCapture.cs
-└── integrations/            # 可选:telegram(随手记)/ unity-mcp(看 Editor)/ android(真机取证)/ confluence(项目文档)/ playtest-capture(冻帧标注+本地转写)
+└── integrations/            # 可选:telegram(随手记)/ unity-mcp(看 Editor)/ android(真机取证)/ confluence(项目文档)/ playtest-capture(冻帧标注+本地转写)/ voice-prompt(语音喂 prompt)
 ```
 
 ## 跨平台 / Windows
@@ -122,10 +123,17 @@ yide/
 - 角色镜头 `use architect` 在真会话能否召唤(需真 Claude Code 会话)
 - 一键回滚"整段撤"(需真闭环跑一次)
 - Playtest 冻帧标注:Unity 按 F8 冻帧+抓命中元素/上下文 → Google Cloud STT(Chirp 3)实时流式转写(已真机验证)→ 带定位 QA 清单(扫 marker→修复回流待真实 session 验)
+- 语音喂 prompt(`voice`):Rider 终端全局热键说中文 → 复用 Google STT 流式转写 → SendInput 自动键入 Claude Code 输入框。**整链需勾哥真 Windows 端到端验**(全局热键捕获 / 麦克风 / 出中文 / Unicode 注入打进终端这四环);代码逻辑就绪,翼德未在真机跑过
 
 > 诚实底线:`node test` 只覆盖"可控的逻辑/文件层";**"模型在真实会话照做 + 勾哥真实环境"这层必须真机验,翼德不冒充已验证。**
 
 ## 更新记录 Changelog
+
+### v0.25.0 — 语音喂 prompt(Rider 终端全局热键说话 → 自动键入 Claude Code 输入框)
+- **加**:`voice` 动作 + `integrations/voice-prompt/`(`yide_voice.py` 常驻守护进程 + `yide-voice.bat` 启动器 + `SETUP.md`)。在 Rider 终端跑 Claude Code 时,光标停在输入框,按全局热键(默认 **Ctrl+Alt+V**)说中文 → **复用 playtest 那套 `stt_google.py`(Chirp 3 流式)**实时转写 → 停录后把最终中文用 **Windows SendInput(KEYEVENTF_UNICODE)** 自动键入当前光标,**默认不自动回车,留你审稿**。停顿 ~6s 也会自动停。
+- **复用不重写**:STT 直接拉起 `stt_google.py` 的常驻流式服务(`START\t<wav>`/`STOP` → emit `done`),只把出口从喂 Unity 改成喂终端光标。
+- **配置**:`YIDE_VOICE_HOTKEY`(热键)· `YIDE_VOICE_SUBMIT=1`(键入后自动回车)· `YIDE_STT_SILENCE_SEC`(静音自动停,默认 6s)· `YIDE_VOICE_KEEP_WAV`。依赖 `pynput`(全局热键,免管理员)+ 复用 `google-cloud-speech sounddevice` + gcloud ADC 认证。
+- **范围/边界**:面向 **Windows**(自动键入用 SendInput)。整链(全局热键捕获 / 麦克风 / Google 出中文 / Unicode 注入打进 Claude Code 输入框)**需勾哥真 Windows 端到端验一次**,翼德不冒充已验证。降级:STT 起不来报原因、照常打字。
 
 ### v0.24.0 — Playtest 冻帧标注反馈(Unity 内按 F8 → 翼德直通代码的问题清单)
 - **加**:`playtest` 动作 + `integrations/playtest-capture/` + `templates/qa/PlaytestMarker.cs`(运行时)+ `templates/qa/Editor/PlaytestMarkerWindow.cs`(编辑器停靠窗口)。勾哥试玩时按 **F8** → **冻帧**(`Time.timeScale=0`)+ 自动截图 + **抓游戏内状态**(命中的 UI/物体**层级路径 + 来源 Prefab** + 场景 + 分辨率/FPS/版本)+ 录一小段语音;**语音为主、可打字补充**;再按 F8 存成一个 marker。说"**翼德 playtest**" → `scripts/playtest.js` **本地 SenseVoice 批量转写** + 合并打字 + 读截图/上下文 → 翼德出**带定位问题清单**(`现象 → BattleHUD/TopBar/PauseBtn ← PauseButton.prefab`)→ 接 v0.22 **联合优化回流**。
