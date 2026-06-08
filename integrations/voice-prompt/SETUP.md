@@ -35,18 +35,18 @@ python integrations\voice-prompt\yide_voice.py --check
 ```
 python integrations\voice-prompt\yide_voice.py
 ```
-看到 `✓ 就绪。热键：<ctrl>+<alt>+v …` 即可。**让这个窗口一直开着**（最小化即可）。
+看到 `✓ 就绪。热键：<ctrl>+<f9> …` 即可。**让这个窗口一直开着**（最小化即可）。
 
 ## 5. 怎么用
 1. 光标停在 **Claude Code 的输入框**（Rider 终端里）。
-2. 按 **Ctrl+Alt+V** → 控制台显示「● 录音中…」→ 说中文（窗口里边说边滚预览）。
-3. 再按 **Ctrl+Alt+V** 停（或停顿 ~6 秒自动停）→ 转写的中文**自动打进输入框**。
+2. 按 **Ctrl+F9** → 控制台显示「● 录音中…」→ 说中文（窗口里边说边滚预览）。
+3. 再按 **Ctrl+F9** 停（或停顿 ~6 秒自动停）→ 转写的中文**自动打进输入框**。
 4. **自己审一眼、按回车**提交（默认不自动回车）。
 
 ## 6. 配置（环境变量，都可不设）
 | 变量 | 默认 | 作用 |
 |---|---|---|
-| `YIDE_VOICE_HOTKEY` | `<ctrl>+<alt>+v` | 全局热键（pynput 写法，如 `<ctrl>+<alt>+<space>`）。同键开/停。 |
+| `YIDE_VOICE_HOTKEY` | `<ctrl>+<f9>` | 全局热键（pynput 写法，如 `<ctrl>+<alt>+v` / `<f10>`）。同键开/停。在 .bat 里改要把 `<` `>` 转义成 `^<` `^>`；设系统环境变量则原样写。 |
 | `YIDE_VOICE_SUBMIT` | `0` | 设 `1` 则键入后自动回车提交；默认 0 留你审稿。 |
 | `YIDE_VOICE_PY` | `python` | 跑 STT 用的 python（venv 填 venv 里的 python.exe）。 |
 | `YIDE_STT_SILENCE_SEC` | `6` | 停顿几秒自动停（语音喂 prompt 默认比 playtest 短）。 |

@@ -16,7 +16,7 @@
    python integrations\voice-prompt\yide_voice.py
    ```
    或双击 `integrations\voice-prompt\yide-voice.bat`。
-3. **用法**一句话讲清:光标停在 Claude Code 输入框 → 按 **Ctrl+Alt+V** 说中文 → 再按一次停(或停顿 ~6s 自动停)→ 中文自动键入 → 自己回车。
+3. **用法**一句话讲清:光标停在 Claude Code 输入框 → 按 **Ctrl+F9** 说中文 → 再按一次停(或停顿 ~6s 自动停)→ 中文自动键入 → 自己回车。
 
 ## 规则
 - **不冒充已验证**:全局热键捕获 / 麦克风 / Google 出中文 / SendInput 打进 Claude Code 这四环要用户真 Windows 端到端验一次(见 SETUP「验证边界」)。翼德报的是"代码就绪",不是"已在你机器上跑通"。

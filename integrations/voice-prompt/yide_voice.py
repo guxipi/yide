@@ -19,7 +19,7 @@
 # 配置（环境变量，都可不设）：
 #   YIDE_STT_SCRIPT       stt_google.py 路径（默认：本文件 ../playtest-capture/stt_google.py）
 #   YIDE_VOICE_PY         跑 stt_google.py 用的 python（默认：python）
-#   YIDE_VOICE_HOTKEY     pynput 组合键（默认 <ctrl>+<alt>+v）；同一组合键按一下开、再按一下停
+#   YIDE_VOICE_HOTKEY     pynput 组合键（默认 <ctrl>+<f9>）；同一组合键按一下开、再按一下停
 #   YIDE_VOICE_SUBMIT     设为 1 则键入后自动回车提交（默认 0：只键入不回车，留你审）
 #   YIDE_VOICE_KEEP_WAV   设为 1 保留每段录音 wav（默认 0：键入后删掉，干净）
 #   其余 STT 变量透传给 stt_google.py：YIDE_GCP_PROJECT / YIDE_GCP_LOCATION / YIDE_STT_LANG /
@@ -35,7 +35,7 @@ import tempfile
 import threading
 import subprocess
 
-HOTKEY = os.environ.get("YIDE_VOICE_HOTKEY", "<ctrl>+<alt>+v")
+HOTKEY = os.environ.get("YIDE_VOICE_HOTKEY", "<ctrl>+<f9>")
 SUBMIT = os.environ.get("YIDE_VOICE_SUBMIT", "0") == "1"
 KEEP_WAV = os.environ.get("YIDE_VOICE_KEEP_WAV", "0") == "1"
 PYTHON = os.environ.get("YIDE_VOICE_PY", "python")

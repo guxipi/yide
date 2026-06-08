@@ -8,7 +8,7 @@ REM 跑 stt_google.py 用的 python（venv 就填 venv 里的 python.exe）
 if "%YIDE_VOICE_PY%"=="" set YIDE_VOICE_PY=python
 
 REM 全局热键（pynput 写法）；按一下开始说，再按一下停
-if "%YIDE_VOICE_HOTKEY%"=="" set YIDE_VOICE_HOTKEY=^<ctrl^>+^<alt^>+v
+if "%YIDE_VOICE_HOTKEY%"=="" set YIDE_VOICE_HOTKEY=^<ctrl^>+^<f9^>
 
 REM 键入后是否自动回车提交：1=自动回车，0=只键入留你审（默认 0）
 if "%YIDE_VOICE_SUBMIT%"=="" set YIDE_VOICE_SUBMIT=0

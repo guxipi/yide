@@ -27,7 +27,7 @@ allowed-tools: Bash
 | `mockup` / `线稿` / `wireframe` / `画个界面` / `画界面` | `actions/mockup.md` | 从描述出可批注的 HTML UI 线稿确认布局(plan 里界面功能会自动调) |
 | `docs` / `项目文档` / `吸收文档` / `更新文档` / `文档管理` | `actions/docs.md` | 项目文档管理:Confluence 导出/增量 → 蒸成精简 CLAUDE.md(每次会话自动读)→ 7 天懒同步 |
 | `playtest` / `冻帧标注` / `标注` / `试玩反馈` | `actions/playtest.md` | playtest 冻帧标注:Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |
-| `voice` / `语音` / `语音输入` / `听写` / `口述` / `speech` | `actions/voice.md` | 语音喂 prompt:Rider 终端全局热键(默认 Ctrl+Alt+V)说中文 → 复用 Google STT 流式转写 → 自动键入当前光标(Claude Code 输入框),审一眼再回车(Windows) |
+| `voice` / `语音` / `语音输入` / `听写` / `口述` / `speech` | `actions/voice.md` | 语音喂 prompt:Rider 终端全局热键(默认 Ctrl+F9)说中文 → 复用 Google STT 流式转写 → 自动键入当前光标(Claude Code 输入框),审一眼再回车(Windows) |
 | `战绩` / `zhanji` / `stats` / `战绩面板` | `actions/zhanji.md` | (extraction 彩蛋)查连斩/打卡链/三国称号战绩 |
 
 ## 规则
