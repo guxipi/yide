@@ -129,6 +129,12 @@ yide/
 
 ## 更新记录 Changelog
 
+### v0.26.0 — `ui` 动作(跨项目摆 uGUI)+ 语音多轮打磨
+- **加**:`ui` 动作(摆UI / 调界面 / 对齐)。在 Unity 里把 uGUI 摆对/对齐/重建的**通用执行纪律**——「截图自检循环 + 锚点纪律 + 事件接线」三件套。项目专属(参考分辨率 / UI 套件 / 安全区组件 / 画布层 / 具名 widget)**一律探测、绝不写死**,从 `~/.yide/projects/<项目>.md` 预设 + 引擎真值读。**不信 Coplay capture**(对 Screen-Space canvas 是瞎的)→ 改用 `ScreenCapture.CaptureScreenshot` 出 PNG 自读,或 LIVE Play 里 `execute_script` 读 worldPos 做「在屏判据」。沉淀 RectTransform 高发坑(stretch rect 不设 localPosition / 面板隐藏出厂 / 一帧布局抖动 / active≠可见)。前提:项目已接 Coplay / Unity MCP;没接就明说只能凭文本猜、没在引擎验过。
+- **加**:`storyboard` 动作扩写 + `templates/storyboard/draw-layer.html` 手绘批注层(俯视分镜上圈画 → 导出 PNG 贴回当反馈);`plan` 接一行,涉及运镜/空间编排时自动走分镜。
+- **改 voice(4 轮)**:① 中英混说——`YIDE_STT_LANG` 支持逗号分隔多语言码;② 开机静默自启(`yide-voice-silent.vbs`)+ 按热键时输入框占位提示;③ 浮窗实时 interim 字幕 + 加速出 final;④ 浮窗独立线程 + 焦点恢复 + modifier 释放 + 翼德纠错 + `--selftest`(中途试过 endpointing 提速,因副作用撤回)。
+- **范围/边界**:`ui`/`storyboard` 的引擎侧验证以 Coplay / Unity MCP 事实为准;voice 整链仍**需勾哥真 Windows 端到端验一次**,翼德不冒充已验证。
+
 ### v0.25.1 — voice 默认热键改 Ctrl+F9
 - **改**:语音喂 prompt 默认热键 `Ctrl+Alt+V` → **`Ctrl+F9`**(单手好按、不劫持打字;F8 已被 playtest 占用故避开)。代码默认值 + `.bat` + SETUP/README/SKILL/action 文档同步。撞键则用 `YIDE_VOICE_HOTKEY` 改(如 `<f10>`)。
 
