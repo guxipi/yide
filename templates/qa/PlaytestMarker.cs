@@ -279,9 +279,22 @@ namespace Yide.Playtest
             sb.Append($"  \"timeInGame\": {timeStr},\n");
             sb.Append($"  \"shot\": \"shot.png\",\n");
             sb.Append($"  \"voice\": {voiceVal},\n");
+            sb.Append($"  \"project\": {J(ProjectId())},\n");
             sb.Append($"  \"typedNote\": {J(note)}\n");
             sb.Append("}\n");
             return sb.ToString();
+        }
+
+        // 来源项目标识(跨项目护栏):工程文件夹名,天然每个 Unity 工程唯一。
+        // playtest.js 读到后校验:同一 QA/playtest 里混入别的项目 = SessionRoot 全局键串了,会告警。
+        static string ProjectId()
+        {
+#if UNITY_EDITOR
+            try { return new DirectoryInfo(Directory.GetParent(Application.dataPath).FullName).Name; }
+            catch { return Application.productName; }
+#else
+            return Application.productName;
+#endif
         }
 
         // session 根目录:编辑器优先读 EditorPrefs(本机已指到 Google Drive),否则工程内 QA/playtest;真机用 persistentDataPath。

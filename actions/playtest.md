@@ -45,6 +45,12 @@
 - 标注产物 → **项目** `QA/playtest/`;**截图/录音不进 git**(让勾哥把 `QA/playtest/` 加进 `.gitignore`)。
 - 产物是项目证据,**不进 ~/.yide**;可复用经验(教训)才进大脑。
 
+## 跨项目隔离(与 ER 区分清楚)
+playtest **天然按当前项目工作**,默认就隔离——`playtest.js` 从「当前项目 `QA/playtest`」读,Unity 默认写「工程根 `QA/playtest`」,每个项目各自一份。**唯一会串的点**:Unity 的 EditorPrefs `Yide.Playtest.SessionRoot` 是**全机全局键**(跨所有 Unity 工程共用一个值)。一旦某个项目(如 **ER**)把它指到了共享目录(如 Google Drive),**所有项目**按 F8 都会写进那里,产物混在一起,过期清理也会误删别项目的 session。
+- **护栏**:每条 marker 落盘时记录「来源项目」(工程文件夹名);`playtest.js` 处理时若发现一场混入多个来源项目,**直接告警 + 给修复路径**,不会让你拿着串了的数据当本项目的。
+- **非 ER 项目的标准动作**:在 Unity「⚙ 转写设置」把 **SessionRoot 留空**(走工程内 `QA/playtest`,自动隔离),或为每个项目各指一个**独立**目录。**别让多个项目共用同一个 SessionRoot。**
+- ER 那套维持原状:它若已指到 Drive,本改动**不动它的路径**,只是新标注会多记一个来源项目名,旧流程零变化。
+
 ## 范围(v1)
 - **做**:F8 冻帧标注(截图+抓状态+语音+打字)· Google STT(Chirp 3)转写 · 翼德出带定位问题清单 · 接回流。
 - **暂不做**:整段屏幕录屏(老代码 `playtest-rec.bat` 留作可选,见 SETUP「可选」段)· 真机非 Editor 下的标注 UI(v1 以 Editor 为主)· 逐词时间戳。

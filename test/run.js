@@ -295,6 +295,31 @@ t('playtest 脚本:--help 正常退出并打印用法(冻帧标注模式)', () =
   const out = execFileSync('node', [path.join(SCRIPTS, 'playtest.js'), '--help'], { encoding: 'utf8' });
   assert(/playtest/.test(out) && /no-asr/.test(out), '--help 应打印用法(含 --no-asr)');
 });
+t('playtest 跨项目护栏:Unity 写来源项目 + 混项目告警 + 单项目显示来源', () => {
+  // Unity 端:context.json 写来源项目 + ProjectId helper(工程文件夹名)
+  const cs = fs.readFileSync(path.join(ROOT, 'templates', 'qa', 'PlaytestMarker.cs'), 'utf8');
+  assert(/\\"project\\"/.test(cs) && /ProjectId\(\)/.test(cs), 'PlaytestMarker.cs 应把来源项目写进 context.json');
+  assert(/Directory\.GetParent\(Application\.dataPath\)/.test(cs), 'ProjectId 应取工程文件夹名(天然每工程唯一)');
+  // 处理端:构造 session 跑 playtest.js,验告警/显示
+  function runPlaytest(projects) {
+    const proj = path.join(TMP, 'ptproj-' + projects.join('_'));
+    const sess = path.join(proj, 'QA', 'playtest', 'session-20260101-000000');
+    fs.mkdirSync(sess, { recursive: true });
+    projects.forEach((p, i) => {
+      const md = path.join(sess, 'marker-' + String(i + 1).padStart(2, '0'));
+      fs.mkdirSync(md, { recursive: true });
+      fs.writeFileSync(path.join(md, 'context.json'), JSON.stringify({ index: i + 1, scene: 'S', project: p, typedNote: 'x' }));
+    });
+    return execFileSync('node', [path.join(SCRIPTS, 'playtest.js'), '--no-asr'], {
+      encoding: 'utf8', env: Object.assign({}, process.env, { CLAUDE_PROJECT_DIR: proj }),
+    });
+  }
+  const mixed = runPlaytest(['ER', 'OtherGame']);
+  assert(/文件串项目/.test(mixed) && /ER/.test(mixed) && /OtherGame/.test(mixed), '混入多项目应告警并列出两者');
+  assert(/SessionRoot/.test(mixed) && /留空/.test(mixed), '告警应给修复路径(SessionRoot 留空)');
+  const single = runPlaytest(['SoloGame']);
+  assert(/来源项目:SoloGame/.test(single) && !/文件串项目/.test(single), '单项目应显示来源且不告警');
+});
 
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}

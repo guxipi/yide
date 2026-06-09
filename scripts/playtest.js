@@ -98,6 +98,18 @@ function main() {
   if (!markers.length) die('这一场没有 marker 文件夹。');
   log(`收集到 ${markers.length} 条标注。`);
 
+  // 跨项目护栏:每条 marker 落盘时记录了来源项目(Unity 工程文件夹名)。一场里混入多个来源项目 =
+  // EditorPrefs "Yide.Playtest.SessionRoot"(全机全局键)被某项目指到了共享目录(如 Google Drive),把别的项目的标注也写进了同一处。
+  const projects = [...new Set(markers.map(m => (m.ctx.project || '').trim()).filter(Boolean))];
+  const here = path.basename(projectDir);
+  if (projects.length > 1) {
+    log(`⚠️ 文件串项目:这一场混入了多个来源项目 [${projects.join(', ')}]。`);
+    log(`   成因:Unity 的 EditorPrefs "Yide.Playtest.SessionRoot" 是全机全局键,某项目把它指到了共享目录,别的项目的标注也写进了同一处。`);
+    log(`   修复:非 ER 项目在 Unity「⚙ 转写设置」把 SessionRoot 留空(走工程内 QA/playtest 自动隔离),或每个项目各指独立目录。`);
+  } else if (projects.length === 1) {
+    log(`来源项目:${projects[0]}` + (projects[0] !== here ? `(当前处理目录 ${here};两者本就不同名可忽略)` : ''));
+  }
+
   // 转写:只补转"录制时没当场确认过文字"的(有 note.txt = 勾哥在 Unity 里已转写+确认,直接用,不重转免重复)
   const wavs = noAsr ? [] : markers.filter(m => m.wav && !m.typed).map(m => m.wav);
   const trans = transcribeAll(wavs, skillDir);
@@ -109,6 +121,7 @@ function main() {
     const note = [said, m.typed].filter(Boolean).join(' / ');
     return {
       marker: m.name,
+      project: m.ctx.project || '',   // 来源项目(跨项目护栏)
       shot: path.relative(projectDir, path.join(m.dir, 'context.json')).replace(/context\.json$/, 'shot.png'),
       scene: m.ctx.scene || '?',
       hitPath: m.ctx.hitPath || '',
@@ -123,7 +136,7 @@ function main() {
     };
   });
 
-  const manifest = { session: path.relative(projectDir, session), count: items.length, items };
+  const manifest = { session: path.relative(projectDir, session), project: projects.length === 1 ? projects[0] : projects, count: items.length, items };
   fs.writeFileSync(path.join(session, 'manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
 
   // 给翼德的速览(它再 Read 每张 shot.png 出问题清单)

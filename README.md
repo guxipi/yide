@@ -132,6 +132,12 @@ yide/
 
 ## 更新记录 Changelog
 
+### v0.28.0 — playtest 跨项目隔离护栏(与 ER 文件存储区分清楚)
+- **背景**:`playtest` 本就按当前项目工作(处理脚本读当前项目 `QA/playtest`、Unity 默认写工程内 `QA/playtest`),非 ER 项目**代码上直接能跑、零改动**。唯一会串的点:Unity EditorPrefs `Yide.Playtest.SessionRoot` 是**全机全局键**,某项目(如 ER)指到共享目录(Google Drive)后,所有项目按 F8 都会写进同一处、混在一起。
+- **加护栏(不碰 ER 现有路径)**:① `PlaytestMarker.cs` 每条 marker 落盘时多记一个「来源项目」(工程文件夹名,`ProjectId()`);② `playtest.js` 处理时若发现一场**混入多个来源项目**→ 醒目告警 + 给修复路径(非 ER 项目把 SessionRoot 留空走工程内隔离),单项目则显示来源。纯增量字段 + 一条校验,**ER 旧流程零变化**。
+- **文档**:`playtest.md` 加「跨项目隔离(与 ER 区分清楚)」段;`SETUP.md` 在转写设置处标明 SessionRoot 全局键行为 + 多项目标准动作(留空或各指独立目录,别共用)。
+- **测试**:回归 + 新增护栏用例(Unity 写来源项目字段 / 混项目告警 / 单项目显示来源)。
+
 ### v0.27.0 — `figma` 动作(从 Figma 逐变体落地 uGUI,专供非 ER 共享仓)
 - **加**:`figma` 动作(变体 / Figma落地 / 照Figma摆)。面向**商业共享仓、UI 在 Figma 交付、只挂官方 Figma remote MCP** 的项目。核心是绕开官方 MCP 对 Component Set 的**三个静默 bug**(丢嵌套子节点/Code Connect、静默返回默认变体、嵌套变体不冒泡):**逐 variant 节点单独 `get_design_context`+`get_screenshot`,绝不对 Component Set 取一次就用**。
 - **只产两类东西**:① 变体→数值对照表(颜色/字号/间距/sprite/文本/显隐,落 `<项目>/QA/`,数字照抄不估);② 状态切换 C#(枚举 + 每状态切 sprite/颜色/文本/SetActive)。**prefab/anchor 由人摆、走 PR**——一个 prefab+状态枚举,不堆 N 个难 merge 的 prefab。
