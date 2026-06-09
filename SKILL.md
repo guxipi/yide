@@ -1,6 +1,6 @@
 ---
 name: yide
-description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/评审/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa"/"yide test", "yide review"/"yide 评审", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、review对抗评审、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan闭环造鸭(几句话→对齐→造→引擎验→交付)、mockup线稿、storyboard分镜(俯视运镜/空间/时序)、ui摆UI(uGUI摆放/对齐/搭建,截图自检+锚点纪律+事件接线,通用)、docs项目文档管理(Confluence→CLAUDE.md)、playtest冻帧标注(Unity按F8冻帧+抓命中元素/上下文→Google Cloud STT实时流式转写→带定位问题清单)、voice语音喂prompt(Rider终端全局热键说中文→STT转写→自动键入Claude Code输入框)。
+description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/评审/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa"/"yide test", "yide review"/"yide 评审", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、review对抗评审、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan闭环造鸭(几句话→对齐→造→引擎验→交付)、mockup线稿、storyboard分镜(俯视运镜/空间/时序)、ui摆UI(uGUI摆放/对齐/搭建,截图自检+锚点纪律+事件接线,通用)、figma从Figma逐变体落地uGUI(共享仓只挂Figma MCP,只产对照表+状态切换C#,人摆prefab走PR)、docs项目文档管理(Confluence→CLAUDE.md)、playtest冻帧标注(Unity按F8冻帧+抓命中元素/上下文→Google Cloud STT实时流式转写→带定位问题清单)、voice语音喂prompt(Rider终端全局热键说中文→STT转写→自动键入Claude Code输入框)。
 allowed-tools: Bash
 ---
 
@@ -26,6 +26,7 @@ allowed-tools: Bash
 | `plan` / `计划` / `闭环造鸭` / `造鸭` / `闭环` / `方案` / `回滚` / `撤销闭环` | `actions/plan.md` | 闭环造鸭:几句话 → 对齐(镜头+线稿)→ 造(占位,先复用 prefab;开造前可建检查点)→ 引擎验到全绿 → 交付可玩切片;失败可一键回滚 |
 | `mockup` / `线稿` / `wireframe` / `画个界面` / `画界面` | `actions/mockup.md` | 从描述出可批注的 HTML UI 线稿确认布局(plan 里界面功能会自动调) |
 | `ui` / `摆UI` / `摆界面` / `调界面` / `改UI` / `弄个面板·弹窗·HUD` / `对齐` | `actions/ui.md` | 在 Unity 里摆 / 对齐 / 搭 uGUI:截图自检循环 + 锚点纪律 + 事件接线(通用,自动读项目约定,不写死) |
+| `figma` / `变体` / `Figma落地` / `照Figma摆` / `Figma变体` | `actions/figma.md` | 从 Figma 逐变体落地 uGUI(商业共享仓,只挂 Figma MCP):逐 variant 单独取数据避开 Component Set 三 bug → 只产「变体→数值对照表」+「状态切换 C#」→ 一个 prefab+状态枚举(人摆走 PR)→ 逐状态视觉核对。**与 ui 区分:ui 在引擎里直接摆(如 ER);figma 不碰引擎只产代码** |
 | `storyboard` / `分镜` / `运镜` / `分镜头` | `actions/storyboard.md` | 从描述出俯视分镜 HTML(逐帧:取景框+运镜箭头+空间元素)确认运镜/空间/时序,可手绘批注导出PNG(plan 里运镜功能会自动调) |
 | `docs` / `项目文档` / `吸收文档` / `更新文档` / `文档管理` | `actions/docs.md` | 项目文档管理:Confluence 导出/增量 → 蒸成精简 CLAUDE.md(每次会话自动读)→ 7 天懒同步 |
 | `playtest` / `冻帧标注` / `标注` / `试玩反馈` | `actions/playtest.md` | playtest 冻帧标注:Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |

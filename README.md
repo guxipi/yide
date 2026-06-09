@@ -52,6 +52,9 @@
 | `prompt` | 提示词 / 存这条 | prompt 库:自动静默存 / 看 / 自动召回 / 升级成命令 |
 | `plan` | 计划 / 闭环造鸭 / 造鸭 / 回滚 | 闭环造鸭:几句话 → 对齐(镜头+线稿)→ 造 → 引擎验到全绿 → 交付可玩切片;失败一键回滚 |
 | `mockup` | 线稿 / wireframe / 画界面 | 出可批注 HTML 线稿确认布局(点区域→弹框→一键「复制反馈给翼德」) |
+| `ui` | 摆UI / 调界面 / 对齐 | 在 Unity 里摆 / 对齐 / 搭 uGUI(已接 Coplay/Unity MCP,引擎里直接摆):截图自检循环 + 锚点纪律 + 事件接线(通用,自动读项目约定) |
+| `storyboard` | 分镜 / 运镜 / 分镜头 | 从描述出俯视分镜 HTML(取景框+运镜箭头+空间元素)确认运镜/空间/时序,可手绘批注导出 PNG |
+| `figma` | 变体 / Figma落地 / 照Figma摆 | 从 Figma 逐变体落地 uGUI(共享仓只挂 Figma MCP):逐 variant 单独取数据避三 bug → 只产对照表+状态切换 C# → 一个 prefab+状态枚举(人摆走 PR)→ 逐状态视觉核对 |
 | `docs` | 项目文档 / 吸收文档 / 文档管理 | Confluence 导出/增量 → 蒸成精简 `CLAUDE.md`(每次会话自动读)→ 7 天懒同步 |
 | `playtest` | 冻帧标注 / 标注 / 试玩反馈 | Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |
 | `voice` | 语音 / 语音输入 / 听写 / 口述 | Rider 终端全局热键(默认 Ctrl+F9)说中文 → 复用 Google STT 流式转写 → 自动键入当前光标(Claude Code 输入框),审一眼再回车(Windows) |
@@ -128,6 +131,14 @@ yide/
 > 诚实底线:`node test` 只覆盖"可控的逻辑/文件层";**"模型在真实会话照做 + 勾哥真实环境"这层必须真机验,翼德不冒充已验证。**
 
 ## 更新记录 Changelog
+
+### v0.27.0 — `figma` 动作(从 Figma 逐变体落地 uGUI,专供非 ER 共享仓)
+- **加**:`figma` 动作(变体 / Figma落地 / 照Figma摆)。面向**商业共享仓、UI 在 Figma 交付、只挂官方 Figma remote MCP** 的项目。核心是绕开官方 MCP 对 Component Set 的**三个静默 bug**(丢嵌套子节点/Code Connect、静默返回默认变体、嵌套变体不冒泡):**逐 variant 节点单独 `get_design_context`+`get_screenshot`,绝不对 Component Set 取一次就用**。
+- **只产两类东西**:① 变体→数值对照表(颜色/字号/间距/sprite/文本/显隐,落 `<项目>/QA/`,数字照抄不估);② 状态切换 C#(枚举 + 每状态切 sprite/颜色/文本/SetActive)。**prefab/anchor 由人摆、走 PR**——一个 prefab+状态枚举,不堆 N 个难 merge 的 prefab。
+- **逐状态视觉核对为强制项**:每状态 Unity 截图对 Figma 变体截图比,Claude 不许声称「都对了」(防那个静默默认变体 bug)。
+- **项目隔离(关键)**:与 `ui` 触发词**零重叠**且 action 开头有「项目适配门」——`ui`=接 Coplay/Unity 写 MCP、引擎里直接摆(如 **ER**,本次零改动);`figma`=只挂 Figma 读 MCP、不碰引擎只产代码。ER 喊「摆UI/对齐」永远走 `ui.md`。
+- **边界**:硬约束「不写 `.unity`/`.prefab`、不挂写 Unity 的 MCP、不引社区 MCP(凭证泄露面)」;Code Connect 对 Unity/C# 非一等公民,此条属**官方文档推断、未在 Unity C# 项目实测**,先拿一个组件试通再铺开。
+- **顺带**:README 顶部动作表补上 `ui`/`storyboard`/`figma` 三行(此前漏列)。
 
 ### v0.26.0 — `ui` 动作(跨项目摆 uGUI)+ 语音多轮打磨
 - **加**:`ui` 动作(摆UI / 调界面 / 对齐)。在 Unity 里把 uGUI 摆对/对齐/重建的**通用执行纪律**——「截图自检循环 + 锚点纪律 + 事件接线」三件套。项目专属(参考分辨率 / UI 套件 / 安全区组件 / 画布层 / 具名 widget)**一律探测、绝不写死**,从 `~/.yide/projects/<项目>.md` 预设 + 引擎真值读。**不信 Coplay capture**(对 Screen-Space canvas 是瞎的)→ 改用 `ScreenCapture.CaptureScreenshot` 出 PNG 自读,或 LIVE Play 里 `execute_script` 读 worldPos 做「在屏判据」。沉淀 RectTransform 高发坑(stretch rect 不设 localPosition / 面板隐藏出厂 / 一帧布局抖动 / active≠可见)。前提:项目已接 Coplay / Unity MCP;没接就明说只能凭文本猜、没在引擎验过。
