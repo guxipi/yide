@@ -155,6 +155,58 @@ def type_unicode(text, backspaces=0):
         _send([_vk_event(VK_RETURN, keyup=True)])
 
 
+# ── 把转写放进剪贴板（CF_UNICODETEXT）：自动键入失败时的兜底，用户可手动 Ctrl+V ──
+def _to_clipboard(text):
+    if os.name != "nt" or not text:
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+        k = ctypes.windll.kernel32
+        u = ctypes.windll.user32
+        k.GlobalAlloc.restype = ctypes.c_void_p
+        k.GlobalAlloc.argtypes = [wintypes.UINT, ctypes.c_size_t]
+        k.GlobalLock.restype = ctypes.c_void_p
+        k.GlobalLock.argtypes = [ctypes.c_void_p]
+        k.GlobalUnlock.argtypes = [ctypes.c_void_p]
+        u.SetClipboardData.argtypes = [wintypes.UINT, ctypes.c_void_p]
+        u.SetClipboardData.restype = ctypes.c_void_p
+        CF_UNICODETEXT = 13
+        GMEM_MOVEABLE = 0x0002
+        data = text.encode("utf-16-le") + b"\x00\x00"
+        if not u.OpenClipboard(None):
+            return False
+        try:
+            u.EmptyClipboard()
+            h = k.GlobalAlloc(GMEM_MOVEABLE, len(data))
+            p = k.GlobalLock(h)
+            ctypes.memmove(p, data, len(data))
+            k.GlobalUnlock(h)
+            u.SetClipboardData(CF_UNICODETEXT, h)
+            return True
+        finally:
+            u.CloseClipboard()
+    except Exception:
+        return False
+
+
+# ── 诊断：记录键入瞬间的前台窗口（定位 final 进不进 Rider terminal 的焦点真相）──
+def _diag_focus(target):
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+        u = ctypes.windll.user32
+        fg = u.GetForegroundWindow()
+        t = ctypes.create_unicode_buffer(256)
+        u.GetWindowTextW(fg, t, 256)
+        c = ctypes.create_unicode_buffer(256)
+        u.GetClassNameW(fg, c, 256)
+        log("【诊断】键入前 前台 hwnd=%s title=%r class=%r | 录音前 target=%s" % (fg, t.value, c.value, target))
+    except Exception as e:
+        log("【诊断】焦点查询失败：%s" % e)
+
+
 # ── 把焦点还给录音前的前台窗口（浮窗可能抢焦点，键入前必须恢复，否则 SendInput 打飞）──
 def _restore_foreground(hwnd):
     if os.name != "nt" or not hwnd:
@@ -370,7 +422,9 @@ class VoiceDaemon:
             log("（没听到内容，未键入）" + ("[静音自动停]" if auto else ""))
         else:
             log("✓ 键入：" + text + ("  [静音自动停]" if auto else ""))
-            _restore_foreground(self._target_hwnd)   # 把焦点抢回 Claude Code 输入框
+            _to_clipboard(text)                       # 兜底：放剪贴板，自动键入失败也能手动 Ctrl+V
+            _diag_focus(self._target_hwnd)            # 诊断：记录键入瞬间前台窗口
+            _restore_foreground(self._target_hwnd)    # 把焦点抢回 Claude Code 输入框
             time.sleep(0.18)  # 给焦点一点时间，确保打进 Claude Code 输入框
             type_unicode(text)
         if wav and not KEEP_WAV:
