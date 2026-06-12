@@ -61,6 +61,24 @@
 ## 8. Juice = 美术,不是生成代码
 gradient / metallic / glow 来自套件的 9-slice 精灵(uGUI 没原生 box-shadow / gradient)。你管:layout、层级、state swap(normal/pressed/disabled)、`DOTween` 动效。效果精灵从项目套件里拿,别想"用代码画出光泽"。
 
+## 9. 视效重做到"成品级"(通用方法论;项目本地若有视效 skill 以它为准)
+> 从 ER 四单实战(Battle Pass / Leaderboard / 签到 / 领奖弹窗)蒸馏的**通用内核**;项目专属数值(kit 路径 / 组件家族 / 字体 / 配色)一律探测或读本地 overlay。
+
+**配方提取法(核心,严禁肉眼猜数值)**:
+1. kit 的 **preview 截图只用来"选方向"**(找同功能参考);
+2. 真正的施工图 = **dump kit 自带的同名 demo prefab**:临时 editor 脚本递归打印每节点 `name / anchoredPosition / sizeDelta / anchors / rotation / Image(sprite, type, #RRGGBBAA) / TMP(text, size, color) / activeSelf` —— kit 作者自己的 tint / sliced·tiled / inset / 字号,照抄;
+3. **素材清单靠 GUID 反查**:grep prefab 里的 `m_Sprite guid` → 反查 `*.png.meta` → 该界面全部 sprite 一张不漏;
+4. **素材定性靠像素采样**(读 PNG 中心 / 边缘像素):中心 A=255 且白 = **可染色实心基底**(状态色全靠 tint 它);中心 A=0 = **描边框**;`.meta` 的 `spriteBorder` 非零才可 Sliced,光效类只能 Simple;
+5. **尺寸换算**:kit demo 基准分辨率 → 项目参考分辨率,几何与字号**等比缩放**(比例 = 两者宽度之比)。
+
+**视觉语言**:状态即 tint(同一张白 sprite 换色表达 已完成/当前/锁定);层叠固定序 `Bg(tint) → 高光/渐变/底纹 → 描边 Border → Glow → 图标 → 文字`(z 序=创建顺序);**复用 kit 既有组件家族**保全游戏一致,新界面先问"哪个家族最近"而不是发明新皮;"当前/可点"项必须**活**(focus 描边 + 特效组 + 呼吸 scale)。
+
+**动效骨架(DOTween)**——揭示三段式:① 光效 ramp `alpha 0.2→1 + scale 0.55→1.1, 0.6s OutQuad`;② 主体 punch `scale 0→1, 0.4s OutBack`;③ 内容 stagger `每项 OutBack 0.38s,间隔 0.12-0.14s`,落位时各自 glow 闪一下转 yoyo 脉冲。持续层:旋转光圈 `DORotate(-360, 8-10s, FastBeyond360, Linear, Loops(-1, Incremental))`、glow/呼吸 `yoyo InOutSine`、星星错频缓旋。纪律:全 `.SetUpdate(true)`;tween 全记账,Hide/OnDestroy 统一 `Kill()` 并复位;列表入场动画只做首屏前 ~10 个。**亮光层之上才建旋转光圈/星星**(否则被亮区吃掉);dim 不够黑光效不炸(≥0.9)。
+
+**工程化**:builder 写进 editor setup 脚本 + `Rebuild` 菜单(可一键重建);prefab 资产**同路径覆盖**保 GUID 引用不断;重建后 grep 日志确认零 "sprite/property not found"。
+
+**验证特技**(在 §1 通道之上):动画"在动"的证明 = 间隔 1-2s 截两帧对比角度;**同帧 `Refresh()`+截图会拍到 deferred-`Destroy` 残影**(压扁双份内容)——新帧重拍干净即伪影,别误修;幽灵元素用**二分法**(逐区 `SetActive(false)` 再截)三轮锁定;交付前**全分辨率裁块终检**(整屏缩略图会骗人);**端到端真点击**(`onClick.Invoke()` 走完真实链路)而非静态摆拍。
+
 ## 循环 & 硬规矩(每次都走)
 1. **Edit Mode 摆放**(Play 里的摆放改动会被丢弃;进 Play 会触发 domain reload 掉 MCP bridge,回 Edit Mode 后重连 / 确认)。
 2. 改 → **截图(§1A)或数值验(§1B)** → 对着项目约定自评(对齐 / 间距 / token 色 / 拇指区 / 单一主 CTA / 安全区 / 文字可读 / 层级)→ 修 → 重拍。

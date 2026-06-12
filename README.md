@@ -132,6 +132,14 @@ yide/
 
 ## 更新记录 Changelog
 
+### v0.29.0 — `ui` 动作新增 §9「视效重做到成品级」通用方法论
+- **来源**:ER 四单实战蒸馏(Battle Pass / Leaderboard / 签到日历 / 通用领奖弹窗,2026-06-12)。ER 本地有完整项目版 skill(`.claude/skills/ui-visual-rework/`,含 SuperCasual 专属配方),**原样保留、优先生效**;本节只收跨项目通用内核。
+- **配方提取法**:kit preview 截图只选方向,数值来自 **dump 同名 demo prefab**(节点级 sprite/type/tint/rect/字号照抄);GUID 反查素材清单;像素采样定性 sprite(可染基底/描边框/能否 Sliced);kit 基准→项目参考分辨率等比换算。
+- **视觉语言**:状态即 tint、层叠固定序(Bg→高光纹理→描边→Glow→图标→文字)、复用 kit 组件家族、"当前/可点"必须活。
+- **动效骨架**:揭示三段式(光效 ramp→主体 punch→内容 stagger)+ 持续层(旋转光圈 Incremental loop / glow 脉冲 / 呼吸);SetUpdate(true) + tween 记账必 kill + 入场动画限量;光效层序与 dim 深度两条踩坑结论。
+- **验证特技**:双帧对比证动画在动、同帧 Refresh+截图的 deferred-Destroy 残影鉴别、二分法锁幽灵元素、全分辨率裁块终检、端到端真点击。
+- **项目隔离**:零项目写死值;开头声明"项目本地若有视效 skill 以它为准"(ER 即如此)。
+
 ### v0.28.0 — playtest 跨项目隔离护栏(与 ER 文件存储区分清楚)
 - **背景**:`playtest` 本就按当前项目工作(处理脚本读当前项目 `QA/playtest`、Unity 默认写工程内 `QA/playtest`),非 ER 项目**代码上直接能跑、零改动**。唯一会串的点:Unity EditorPrefs `Yide.Playtest.SessionRoot` 是**全机全局键**,某项目(如 ER)指到共享目录(Google Drive)后,所有项目按 F8 都会写进同一处、混在一起。
 - **加护栏(不碰 ER 现有路径)**:① `PlaytestMarker.cs` 每条 marker 落盘时多记一个「来源项目」(工程文件夹名,`ProjectId()`);② `playtest.js` 处理时若发现一场**混入多个来源项目**→ 醒目告警 + 给修复路径(非 ER 项目把 SessionRoot 留空走工程内隔离),单项目则显示来源。纯增量字段 + 一条校验,**ER 旧流程零变化**。
