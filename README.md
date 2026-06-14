@@ -101,6 +101,7 @@
 yide/
 ├── .claude-plugin/{plugin.json, marketplace.json}
 ├── SKILL.md                 # 单一 /yide 入口(派发)
+├── skills/                  # 翼德托管的项目层 skill(自动发现,/yide:<名> 命名空间;v0.30.0 起)
 ├── actions/                 # 按需加载:onboard/record/brief/consolidate/update/qa/review/note/distill/experts/prompts/plan/mockup/docs/playtest/zhanji
 ├── hooks/hooks.json         # exec 形式(Windows-safe)
 ├── scripts/*.js             # 全 Node,无第三方依赖
@@ -131,6 +132,12 @@ yide/
 > 诚实底线:`node test` 只覆盖"可控的逻辑/文件层";**"模型在真实会话照做 + 勾哥真实环境"这层必须真机验,翼德不冒充已验证。**
 
 ## 更新记录 Changelog
+
+### v0.30.0 — 翼德开始 ship 项目 skill(插件托管 + 自动分发)
+- **背景**:此前 ER 的项目 skill(playmode-verify-iterate / ui-placement / ui-visual-rework / gaoguang-3d / cloud-code-deploy / feature-development / todo-to-planyway / unstuck-playbook + `server-service-pattern.md`)只活在 **Extraction 仓的 `.claude/skills/`**,跟着那个游戏仓走、别的项目用不到、也不随翼德同步。**它们其实是翼德的"项目层"能力**,该由翼德托管。
+- **做法**:用 Claude Code 插件原生机制——`skills/<名>/SKILL.md` 自动发现、命名空间 `/yide:<名>`、user scope 安装 = **在勾哥所有项目自动可用**。无需任何复制/同步脚本,装了插件即得;`/plugin marketplace update guji-tools` + `/reload-plugins` 拉新。
+- **迁移**:9 个 skill 全数迁入本仓 `skills/`,布局原样保留(`cloud-code-deploy` 的 `../server-service-pattern.md` 相对引用不破);playmode-verify-iterate 带上最新坑表(NUnit 走 CLI / save_scene 路径坑 / 编辑器活地盘——蒸自旧教训 L-0001/07/09)。
+- **隔离**:skill 内容含 ER 专属(SuperCasual / UGS / Extraction 场景),但其 description 仅在对应语境触发,不会在别的项目误触;Extraction 本地副本待插件验证加载后再移除,避免空窗。
 
 ### v0.29.0 — `ui` 动作新增 §9「视效重做到成品级」通用方法论
 - **来源**:ER 四单实战蒸馏(Battle Pass / Leaderboard / 签到日历 / 通用领奖弹窗,2026-06-12)。ER 本地有完整项目版 skill(`.claude/skills/ui-visual-rework/`,含 SuperCasual 专属配方),**原样保留、优先生效**;本节只收跨项目通用内核。
