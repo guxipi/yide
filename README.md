@@ -54,7 +54,6 @@
 | `mockup` | 线稿 / wireframe / 画界面 | 出可批注 HTML 线稿确认布局(点区域→弹框→一键「复制反馈给翼德」) |
 | `ui` | 摆UI / 调界面 / 对齐 | 在 Unity 里摆 / 对齐 / 搭 uGUI(已接 Coplay/Unity MCP,引擎里直接摆):截图自检循环 + 锚点纪律 + 事件接线(通用,自动读项目约定) |
 | `storyboard` | 分镜 / 运镜 / 分镜头 | 从描述出俯视分镜 HTML(取景框+运镜箭头+空间元素)确认运镜/空间/时序,可手绘批注导出 PNG |
-| `figma` | 变体 / Figma落地 / 照Figma摆 | 从 Figma 逐变体落地 uGUI(共享仓只挂 Figma MCP):逐 variant 单独取数据避三 bug → 只产对照表+状态切换 C# → 一个 prefab+状态枚举(人摆走 PR)→ 逐状态视觉核对 |
 | `docs` | 项目文档 / 吸收文档 / 文档管理 | Confluence 导出/增量 → 蒸成精简 `CLAUDE.md`(每次会话自动读)→ 7 天懒同步 |
 | `playtest` | 冻帧标注 / 标注 / 试玩反馈 | Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |
 | `voice` | 语音 / 语音输入 / 听写 / 口述 | Rider 终端全局热键(默认 Ctrl+F9)说中文 → 复用 Google STT 流式转写 → 自动键入当前光标(Claude Code 输入框),审一眼再回车(Windows) |
