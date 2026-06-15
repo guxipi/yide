@@ -1,6 +1,6 @@
 ---
 name: ui-visual-rework
-description: Rework an Extraction UI screen to production quality ("成品级") using the SuperCasual kit — recipe-extraction method, asset selection, state visuals, and DOTween motion language. Trigger on "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "把材质底纹动效用起来" / "按 SuperCasual preview 做" or any request to re-skin/polish a meta screen (panel, popup, calendar, leaderboard, reward reveal...). Battle-tested on Battle Pass, Leaderboard, Daily Login + universal Reward popup. Companion to the ui-placement skill (that one = placement discipline + verification channels; this one = how to reach finished-game visual quality).
+description: Rework an Extraction UI screen to production quality ("成品级") using the SuperCasual kit — recipe-extraction method, asset selection, state visuals, and DOTween motion language. Trigger on "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "把材质底纹动效用起来" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any request to re-skin/polish a meta screen (panel, popup, calendar, leaderboard, reward reveal...). Battle-tested on Battle Pass, Leaderboard, Daily Login + universal Reward popup. Companion to the ui-placement skill (that one = placement discipline + verification channels; this one = how to reach finished-game visual quality).
 ---
 
 # UI Visual Rework (Extraction · SuperCasual kit)
