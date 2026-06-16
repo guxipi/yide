@@ -5,6 +5,7 @@
   "description": "翼德插件的开发/测试脚手架(运行时插件清单是 .claude-plugin/plugin.json,与此无关)。",
   "scripts": {
     "test": "node test/run.js",
-    "audit": "node scripts/audit-injection.js"
+    "audit": "node scripts/audit-injection.js",
+    "validate": "node scripts/validate-skills.js"
   }
 }

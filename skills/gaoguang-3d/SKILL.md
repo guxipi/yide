@@ -1,6 +1,6 @@
 ---
 name: gaoguang-3d
-description: "高光3D" — intake/fix pipeline for AI-generated 3D models (Tripo, Meshy, text-to-3D…) dropped into the Extraction project so they match the game's Archero-style high-saturation toon look. Trigger on "高光3D" / "模型太灰暗" / "模型发灰" / "新模型不好看" / "像 archero 一样饱和" / "把XX替换成这个模型" / 新导入的 FBX 看起来灰、暗、塑料感 / pivot 轴心不在模型中间、转身会甩 / 模型有骨架没动画需要配动画. (Particle / aura / trail / burst / 光环拖尾爆开 VFX → vfx-production; THIS skill is model intake + look-fix only.) Fixes = ToonLit material remap on the ModelImporter + pivot centering + rig/animation wiring + verification under REAL game lighting (LightSet.prefab — preview scenes often have NO light at all). Battle-tested on the mine-point Scientist (tripo FBX in LootCarrier.prefab) and the spherical robot mine workers (rigged-but-no-clips tripo FBX replacing KayKit Engineers in LootGeyserInstallation.prefab).
+description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo, Meshy, text-to-3D…) dropped into the Extraction project so they match the game's Archero-style high-saturation toon look. Trigger on "高光3D" / "模型太灰暗" / "模型发灰" / "新模型不好看" / "像 archero 一样饱和" / "把XX替换成这个模型" / 新导入的 FBX 看起来灰、暗、塑料感 / pivot 轴心不在模型中间、转身会甩 / 模型有骨架没动画需要配动画. (Particle / aura / trail / burst / 光环拖尾爆开 VFX → vfx-production; THIS skill is model intake + look-fix only.) Fixes = ToonLit material remap on the ModelImporter + pivot centering + rig/animation wiring + verification under REAL game lighting (LightSet.prefab — preview scenes often have NO light at all).
 ---
 
 # 高光3D — AI 模型进项目的"去灰提饱和"流水线 (Extraction)

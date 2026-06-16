@@ -1,6 +1,6 @@
 ---
 name: feature-development
-description: End-to-end method for BUILDING or INVESTIGATING/COMPLETING a feature in Extraction at high completion + verified quality. Trigger on "做功能" / "做个新功能" / "补全功能" / "调查这个功能缺什么" / "把XX功能做完整" / "实现XX系统" / "feature 不完整" / "这块没接通" / "refine XX 并补全 implementation" or any non-trivial feature/investigation work. Orchestrates: parallel recon (subagents) → task breakdown → builder-based implementation → close the half-wired "V2" gaps → Play Mode self-verify → memory + 战绩. Companion skills do the specifics — invoke them too: ui-placement / ui-visual-rework (UI), cloud-code-deploy (server), playmode-verify-iterate (the test loop).
+description: End-to-end method for BUILDING or INVESTIGATING/COMPLETING a feature in Extraction at high completion + verified quality. Trigger on "做功能" / "做个新功能" / "补全功能" / "调查这个功能缺什么" / "把XX功能做完整" / "实现XX系统" / "feature 不完整" / "这块没接通" / "refine XX 并补全 implementation" or any non-trivial feature/investigation work. Pipeline — parallel recon (subagents) → task breakdown → builder implementation → close the half-wired "V2" gaps → Play Mode self-verify → memory + 战绩. Companion skills do the specifics, invoke them too — ui-placement / ui-visual-rework (UI), cloud-code-deploy (server), playmode-verify-iterate (the test loop).
 ---
 
 # Feature Development (Extraction · 分块 / 规划 / good practice)
