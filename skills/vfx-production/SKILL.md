@@ -115,6 +115,9 @@ root
 | 上升 icon 截图看不到 | GameScene 是 ScreenSpaceOverlay canvas,截图盲;用 **state dump** 数实例 |
 | play 里调视效老被打断 | 怪/auto-combat/升级面板/失焦坏帧;静态评估挪 **edit mode** |
 | 别人同开编辑器,execute_script 偶发 timeout / play 态被清 | 并发 domain reload;重试 + 关键值 dump 核实,只在别 session 占 Play 时才等 |
+| dump 实例 `GameObject.Find("X")` 得 null 假阴性 | `Instantiate` 出的实例名是 `X(Clone)`;用子串匹配或 reflect 控制器持有的实例字段,别用精确 Find |
+| dump 池化对象数=0 假阴性 | 池化对象秒级归池,`FindObjects(Exclude inactive)` 漏掉曾生成的;用 `Include` inactive(池对象不销毁=曾用过)或生成后即时 dump |
+| 找模型/资产 Glob/Grep/Read 全找不到 + subagent 编造路径 | asset 包常被 `.gitignore` 忽略 → ripgrep 系工具(Glob/Grep/Read)+ Explore agent **全盲**;改用 Unity `AssetDatabase.FindAssets("name t:GameObject")` 经 `execute_script` 查真库,渲染 contact sheet 肉眼挑 |
 
 ---
 
