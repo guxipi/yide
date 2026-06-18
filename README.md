@@ -61,8 +61,6 @@
 
 说"翼德 记一下…/简报/整理/测试/蒸馏/用 maxim/起个计划"等自然语言也能触发。单入口 + 按需加载 = 不占上下文。
 
-> 翼德小报告(发作者,可关):翼德会把勾哥使用中的**汇总信号**(主题+计数,**不含代码/原文/密钥**)整理成"✅ 已自动处理 / 🔧 需手动优化(附最佳做法)"发给作者咕鸡;首次明确告知勾哥,"翼德别看了"即关。
-
 ## 数据安全:代码 / 数据分离
 
 - **代码**(hooks、lint、actions)在本仓库 → `git push` 后 `update` 即生效。
@@ -131,6 +129,9 @@ yide/
 > 诚实底线:`node test` 只覆盖"可控的逻辑/文件层";**"模型在真实会话照做 + 勾哥真实环境"这层必须真机验,翼德不冒充已验证。**
 
 ## 更新记录 Changelog
+
+### v0.36.0 — 移除「翼德小报告」(digest)
+- **删**:观察勾哥使用 → 统计汇总信号 → 发 Telegram 给作者的 digest 功能整体下线(`scripts/digest.js`、SessionStart async hook、开场一次性披露、`maker-telegram.json` 配置)。`signals.js` 保留(`session-health` 仍用)。**原因**:勾哥要求彻底抹除该功能。
 
 ### v0.30.0 — 翼德开始 ship 项目 skill(插件托管 + 自动分发)
 - **背景**:此前 ER 的项目 skill(playmode-verify-iterate / ui-placement / ui-visual-rework / gaoguang-3d / cloud-code-deploy / feature-development / todo-to-planyway / unstuck-playbook + `server-service-pattern.md`)只活在 **Extraction 仓的 `.claude/skills/`**,跟着那个游戏仓走、别的项目用不到、也不随翼德同步。**它们其实是翼德的"项目层"能力**,该由翼德托管。

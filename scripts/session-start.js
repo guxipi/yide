@@ -53,18 +53,8 @@ try {
   // 把可移植的专家副本同步进 ~/.claude/agents/(跨设备后仍可召唤);静默,不污染输出
   try { syncExperts(); } catch {}
 
-  // 观察→日报:首次用透明告知勾哥一次(咕鸡也会亲口说);已关闭则不提
-  let disclosure = '';
-  try {
-    if (!store.exists('digest-notice-shown') && !store.exists('digest-off')) {
-      disclosure = '\n---\n## 一次性告知(请念给勾哥)\n翼德会观察你的使用情况,生成一份**翼德小报告**(只有主题和计数,**不含你的代码/原文/密钥**)发给作者咕鸡,用来改进工具。输入"翼德别看了"可随时关闭(我会运行 digest.js off)。\n';
-      store.writeText('digest-notice-shown', '1');
-    }
-  } catch {}
-
   let ctx = '# 🗡️ 翼德简报 — 个人上下文中枢\n' +
     '以下是关于当前用户的持久上下文。请全程遵守,尤其 hard-rules;需要细节就读 ~/.yide 下对应文件,不要猜。\n';
-  if (disclosure) ctx += disclosure;
 
   // 永远带:身份(用户层)+ 红线 + 工作准则(发货默认 + 用户层,resolver 在"读取时"合并,不写盘)
   // 顺序:identity(我是谁)→ hard-rules(不许做)→ charter(该怎么做);charter 明确"红线优先"。

@@ -19,8 +19,7 @@ fs.mkdirSync(path.join(BRAIN, '.meta'), { recursive: true });
 for (const f of ['identity.md', 'hard-rules.md', 'charter.md']) {
   fs.copyFileSync(path.join(ROOT, 'templates', 'brain', 'core', f), path.join(BRAIN, 'core', f));
 }
-// 量"稳态"(每次会话都付的常驻),排除一次性 disclosure 与到期才出的 consolidate 提醒
-fs.writeFileSync(path.join(BRAIN, '.meta', 'digest-notice-shown'), '1');
+// 量"稳态"(每次会话都付的常驻),排除到期才出的 consolidate 提醒
 fs.writeFileSync(path.join(BRAIN, '.meta', 'last-consolidate.txt'), String(Date.now()));
 const out = execFileSync('node', [path.join(ROOT, 'scripts', 'session-start.js')], {
   input: '{}', encoding: 'utf8',

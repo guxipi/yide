@@ -9,13 +9,6 @@
             "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/session-start.js"],
             "timeout": 10,
             "statusMessage": "翼德正在准备简报…"
-          },
-          {
-            "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/digest.js"],
-            "timeout": 600,
-            "async": true
           }
         ]
       }
