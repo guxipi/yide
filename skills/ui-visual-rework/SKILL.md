@@ -82,19 +82,14 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
 | 编辑器失焦 Play 不走 | 第一件事 `Application.runInBackground = true` |
 | check_compile_errors 偶发说谎 | 再 grep Unity logs `error CS` 交叉验证 |
 
-## Art bible(supercasual_artbible.zip)使用裁定(2026-06 死亡三屏实战评估)
+## 交付前硬规则与自查(本项目)
 
-用户云盘的 `supercasual_artbible.zip` 是一份**通用** SuperCasual 风格规范,不是本项目真源。实测净贡献 ~15%(方向确认 + 动效/语义 token);像素级数值仍以 **kit demo prefab dump(配方提取法)** 和 `UI_Visual_Design_Guidelines.md` 为准。再拿到它时按下表取舍:
+**数值真源** = `UI_Visual_Design_Guidelines.md`(项目内 `Claude Feature Docs/UI Visual Design/`,基于真实代码:RarityConfig.cs / UICurrencyItemWidget 等)+ kit prefab dump(配方提取法)。hex / 尺寸 / 时长以这两者为准,散文描述让位。
 
-**采用**
-- "数值 authority"规则:hex/尺寸/时长以 tokens 文件与 prefab dump 为准,散文描述让位。
-- 交付前 6 条自查:① 无裸 hex(色值可溯源到 Guidelines/kit dump)② 框体策略统一(本项目 = 烘焙 9-slice,永远不用程序化圆角)③ 锚点用预设、无绝对坐标硬编码 ④ 同轴只有一个尺寸权威(LayoutGroup / ContentSizeFitter / 显式,三选一)⑤ 字体规范见下 ⑥ 可点元素挂 `Core.UI.PressScale`。
-- `Core.UI.PressScale`(已入库 `Assets/Scripts/Core/UI/PressScale.cs`):kit 按钮是纯 Image 无按压反馈,新按钮一律挂上;unscaled time,timeScale=0 下照常工作。
+**交付前 6 条自查**:① 无裸 hex(色值可溯源到 Guidelines / kit dump)② 框体策略统一(本项目 = 烘焙 9-slice,永远不用程序化圆角)③ 锚点用预设、无绝对坐标硬编码 ④ 同轴只有一个尺寸权威(LayoutGroup / ContentSizeFitter / 显式,三选一)⑤ 字体规范见下 ⑥ 可点元素挂 `Core.UI.PressScale`。
 
-**弃用(与项目现实冲突,照抄会出错)**
-- Canvas 1080×2340 / Match=0 → 项目实测 **1440×2560 / Match≈0.5**。
-- `ThemePalette.cs` / `UIGradient.cs` / `com.nobi.roundedcorners` → 不在项目里;渐变/圆角/描边全部来自 kit 9-slice 美术资产("juice=art, not code")。
-- `pf_`/`spr_` 命名 → 项目实际按类名命名(`UIXxxPanel.prefab`)。
-- art bible 的稀有度五档色 → 以 `RarityConfig.cs` + UIDeathSummaryPanel 里的 ItemFrame02 实测调色板为准(项目有 Uncommon/Mythic,档位对不上)。
+- **juice = art, not code**:渐变 / 圆角 / 描边一律来自 kit 9-slice 美术资产,不用 `ThemePalette` / `UIGradient` / `com.nobi.roundedcorners` 这类代码方案(它们也不在项目里)。
+- **`Core.UI.PressScale`**(已入库 `Assets/Scripts/Core/UI/PressScale.cs`):kit 按钮是纯 Image 无按压反馈,新按钮一律挂上;unscaled time,timeScale=0 下照常工作。
+- **Canvas 参考**:kit 屏用 kit 自身 CanvasScaler **1080×2340 / Match 0.487**,measured px 1:1(详见 ui-placement 真源 `UI_Placement_Rules.md`,2026-06-14 RATIFIED;旧的 1440×2560 对 kit 屏已废弃)。
 
-**字体拍板(勾哥 2026-06-12):全场回归 CookieRun Black Outline 54 SDF**(Guidelines §3 维持原规定)。已知欠账:死亡三屏(UIRevivePopup / UIDeathSummaryPanel / UIMineDefeatPanel)与 battle_endreward 设计稿当前用 kit 的 Sen/Cairo,后续换成 CookieRun;新屏一律直接 CookieRun,不要再扩大 Sen/Cairo 面积。
+**字体拍板(勾哥 2026-06-12):全场回归 CookieRun Black Outline 54 SDF**(Guidelines §3)。已知欠账:死亡三屏(UIRevivePopup / UIDeathSummaryPanel / UIMineDefeatPanel)与 battle_endreward 设计稿当前用 kit 的 Sen/Cairo,后续换成 CookieRun;新屏一律直接 CookieRun,不要再扩大 Sen/Cairo 面积。

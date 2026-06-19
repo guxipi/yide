@@ -130,6 +130,10 @@ yide/
 
 ## 更新记录 Changelog
 
+### v0.37.0 — ui-visual-rework 删 art bible 章节
+- **删**:`ui-visual-rework` 的「Art bible(supercasual_artbible.zip)使用裁定」整段。那份云盘 zip 是通用 SuperCasual 规范、非项目真源(skill 自承净贡献 ~15%),真值早已由项目内 `UI_Visual_Design_Guidelines.md`(14 节,全部基于 RarityConfig.cs / UICurrencyItemWidget 等真实代码)+ kit prefab dump 接管;且原弃用项里那条 Canvas「改用 1440×2560」与 ui-placement 2026-06-14 RATIFIED 的 1080×2340 互相矛盾、已过时误导。
+- **留**:把与 art bible 无关的真规则脱框架保留为新章节「交付前硬规则与自查」——6 条交付自查、`juice = art, not code`、`Core.UI.PressScale`、字体拍板 CookieRun;Canvas 参考顺手修正为正确的 1080×2340 / Match 0.487 并 cross-ref `UI_Placement_Rules.md`。
+
 ### v0.36.0 — 移除「翼德小报告」(digest)
 - **删**:观察勾哥使用 → 统计汇总信号 → 发 Telegram 给作者的 digest 功能整体下线(`scripts/digest.js`、SessionStart async hook、开场一次性披露、`maker-telegram.json` 配置)。`signals.js` 保留(`session-health` 仍用)。**原因**:勾哥要求彻底抹除该功能。
 
