@@ -130,6 +130,10 @@ yide/
 
 ## 更新记录 Changelog
 
+### v0.38.0 — mockup action 术语解耦:art bible → 真源实名
+- **背景**:「art bible」一词被重载——既指已删的云盘通用 zip(`supercasual_artbible.zip`),又被 `mockup` action / ER 线稿 prompt 拿来指**项目真源** `UI_Visual_Design_Guidelines.md`,含混。
+- **改**:`actions/mockup.md` 5 处「art bible」全部改成「UI 设计规范文档」并点名真源;语义不变(仍是 kit 二手提炼、冲突以 kit 实物为准)。本地 ER 线稿 prompt 与项目记忆同步解耦(记忆库改动不在本仓)。kit 实物仍是数值绝对标准,文档仅作快速索引。
+
 ### v0.37.0 — ui-visual-rework 删 art bible 章节
 - **删**:`ui-visual-rework` 的「Art bible(supercasual_artbible.zip)使用裁定」整段。那份云盘 zip 是通用 SuperCasual 规范、非项目真源(skill 自承净贡献 ~15%),真值早已由项目内 `UI_Visual_Design_Guidelines.md`(14 节,全部基于 RarityConfig.cs / UICurrencyItemWidget 等真实代码)+ kit prefab dump 接管;且原弃用项里那条 Canvas「改用 1440×2560」与 ui-placement 2026-06-14 RATIFIED 的 1080×2340 互相矛盾、已过时误导。
 - **留**:把与 art bible 无关的真规则脱框架保留为新章节「交付前硬规则与自查」——6 条交付自查、`juice = art, not code`、`Core.UI.PressScale`、字体拍板 CookieRun;Canvas 参考顺手修正为正确的 1080×2340 / Match 0.487 并 cross-ref `UI_Placement_Rules.md`。
