@@ -63,6 +63,8 @@ Debug.Log($"YIDE: mode={panel.CurrentMode} alpha={cg.alpha:F2} " +
 
 一轮只修能定位根因的问题,别盲改。修完那个问题,下一轮 Play 专门复验它 + 扫有没有引入新问题。**直到玩家从进入到完成整个 loop 都顺、好看、无报错。**
 
+> **收尾铁律:测完(无论通过还是这一回合先告一段落)立刻停 Play,别把 Editor 晾在 Play 状态。** 退出本身要 ~8s 重编译 + domain reload,留着它挂着 = 勾哥那头一直卡在 Play 里、下次操作还得先等它退。判定「这一轮 MCP 自测做完」的最后一个动作**固定是停 Play**(`EditorApplication.isPlaying = false`,`stop_game` 偶尔说 "not playing" 就用前者),跟「MCP 改完必 SAVE」同级。只有「马上要进下一轮 fix→replay、停了又得重进」时才允许暂时留着——但回话给勾哥前必须已停。
+
 ---
 
 ## 第四步:实战反复踩的具体坑(直接照查)
@@ -92,5 +94,6 @@ Debug.Log($"YIDE: mode={panel.CurrentMode} alpha={cg.alpha:F2} " +
 - [ ] 关键 UI 区域全分辨率裁块 Read,对齐/配色/字体/无瑕疵
 - [ ] 场景已 SaveScene 且回读确认落盘
 - [ ] 多轮迭代后无残留问题、无新引入问题
+- [ ] **Play Mode 已停**(`EditorApplication.isPlaying=false`),没把 Editor 晾在 Play 状态就回话
 
 UI 专属的截图通道/几何数值核实细节见 `ui-placement`;视觉质量标准见 `ui-visual-rework`;服务端验证见 `cloud-code-deploy`。
