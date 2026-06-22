@@ -12,6 +12,17 @@ Planyway 没有公开 API，它只是 Jira 数据的视图。**加 todo = 建 Ji
 - **模式 B — 单条「已完成」上传**：勾哥完成一个小功能 / 修完 bug 后确认上传，建**一条** issue、自动挑 Epic、直接 transition 到「已完成」。见下方「模式 B」。
 - 前置条件、查元数据（issue type id）、ADF 描述、踩坑记录两种模式**共用**。
 
+## 必填字段（两模式共用，建完必补齐再收尾）
+每条 issue 都要写齐 **Assignee / Label / Parent / Due date**，别只建标题。建完用 `getJiraIssue({fields:['assignee','labels','parent','duedate','status']})` 核一遍。
+- **Assignee —— 按机器分（重要，别写死全局默认）**：Planyway 上传的归属看**当前在哪台机器**完成的：
+  - **changhui 的开发机**（本机标志：Unity 项目根 `F:\GitManagedUnityProjects\Extraction`、Google 账号 krystalxch）→ 全算 **Changhui xu** 完成 → assignee accountId `70121:0946dac6-5c4b-4690-8891-b4a4d3355b00`（email krystalxch@gmail.com；查用户按 `changhui` 或 email，**`changhuixu` 查不到**）。
+  - **其他设备** → 算**勾哥**完成 → assignee = duck games，accountId `5ed9bc8f570e860a984e1afb`（email militarypineapple@gmail.com）。
+  - 拿不准在哪台机 → 读**本机 Claude 记忆**里的 planyway 上传约定（per-machine memory，如 `planyway-upload-fields-this-machine`）；没有则默认勾哥。account/盘符按机器私有，别把某台机的 accountId 当全局默认。
+  - 写法：`createJiraIssue` 用 `assignee_account_id`；`editJiraIssue`/`transitionJiraIssue` 用 `fields:{assignee:{accountId:'…'}}`。
+- **Label** = **类型 + 模块各一个**：类型 ∈ bug/feature/polish/tool；模块 ∈ hud/combat/loot/meta/server… 按内容自拟。Jira label 不能带空格。
+- **Parent** = 贴最合适的 Epic（读现有 Epic 自动判断；关卡内/核心战斗循环 → `KAN-69 🎮 core loop`；贴不上才留空）。
+- **Due date**（`fields.duedate` = `YYYY-MM-DD`）：模式 B 已完成的填**上传当天**；模式 A 待排期的可留空（进 Planyway 左侧 Unscheduled 由用户排）。
+
 ## 通道 —— 按优先级，能用上面那条就别用下面（缺了别硬上）
 1. **通道①·官方 Atlassian Rovo MCP（首选）** —— `mcp__claude_ai_Atlassian_Rovo__*` 工具**直读直写 duckgames Jira，不需要浏览器 / Chrome MCP / API token**。先 `getAccessibleAtlassianResources` 拿 duckgames 的 `cloudId`（当前 `5c8b1014-3b9a-4b07-a050-0f9b3980a628`，每次以查到的为准），之后所有 Jira 操作都带这个 cloudId。建卡 / 查 / transition 的工具映射见下方「通道① 操作映射」。**模式 A/B 的逻辑步骤（整理 → 预览 → 确认 → 建 → 验证）一字不变，只是把 `fetch(...)` 换成对应 MCP 工具。**
 2. **通道②·Chrome MCP（退路）** —— 仅当有 Chrome MCP 且有标签页**已登录 `duckgames.atlassian.net`** 时用。所有 Jira REST 靠该标签页 session cookie（`credentials:'same-origin'`），不需要 API token。即模式 A/B 正文里的 `fetch(...)` 写法。
@@ -28,7 +39,8 @@ Planyway 没有公开 API，它只是 Jira 数据的视图。**加 todo = 建 Ji
 - **建时一步置完成**（模式 B 一气呵成）：`createJiraIssue` 直接带 `transition:{id:'DID'}`（DID 先用 `getTransitionsForJiraIssue` 查）。
 - **查现有 Epic（模式 B 挑 Epic）**：`searchJiraIssuesUsingJql({cloudId, jql:"project=KAN AND issuetype=长篇故事 ORDER BY created DESC", fields:['summary'], maxResults:100})`。
 - **transition 到已完成**：`getTransitionsForJiraIssue({cloudId, issueIdOrKey:'KAN-XX'})` 拿「已完成」的 id → `transitionJiraIssue({cloudId, issueIdOrKey:'KAN-XX', transition:{id:'DID'}})`。
-- **验证**：`getJiraIssue({cloudId, issueIdOrKey:'KAN-XX', fields:['summary','status','parent']})`。
+- **验证**：`getJiraIssue({cloudId, issueIdOrKey:'KAN-XX', fields:['summary','status','parent','assignee','labels','duedate']})` —— 必填字段（见上「必填字段」）逐项核齐。
+- **查 assignee accountId**：`lookupJiraAccountId({cloudId, searchString:'changhui' 或 email})`（注意 `changhuixu` 查不到，用 `changhui`/email）。
 
 ## 输入来源（两种）
 - **A. 用户直接贴清单** —— 任意格式文本。
@@ -110,6 +122,7 @@ fetch('/rest/api/3/search/jql?maxResults=100&fields=summary&jql='+encodeURICompo
 翼德读这批 Epic 的 summary（必要时再拉某 Epic 下的 issue 看归类习惯），按这次功能内容**自己判断**挂哪个 Epic。语义不够贴近就**留空不挂**，别硬塞。
 
 ### B-4. 建单条 issue
+**建时把「必填字段」一并带上**（见上方共用「必填字段」section）：`assignee`（按机器分！本机=Changhui xu / 其他机=勾哥）、`labels`（类型+模块各一）、`parent`（Epic）、`duedate`（当天）。通道① 用 `createJiraIssue({assignee_account_id, additional_fields:{labels:[...]}, parent, ...})` + 建后 `editJiraIssue` 补 duedate；通道② fetch 写法如下：
 ```js
 const adf = t => ({type:'doc',version:1,content:[{type:'paragraph',content:[{type:'text',text:t}]}]});
 fetch('/rest/api/3/issue', {
@@ -140,10 +153,10 @@ fetch('/rest/api/3/issue/KAN-XX/transitions',{
 
 ### B-6. 验证（必做）
 ```js
-fetch('/rest/api/3/issue/KAN-XX?fields=summary,status,parent',{headers:{'Accept':'application/json'},credentials:'same-origin'})
-  .then(r=>r.json()).then(j=>JSON.stringify({key:j.key, status:j.fields.status.name, parent:j.fields.parent&&j.fields.parent.key, summary:j.fields.summary}))
+fetch('/rest/api/3/issue/KAN-XX?fields=summary,status,parent,assignee,labels,duedate',{headers:{'Accept':'application/json'},credentials:'same-origin'})
+  .then(r=>r.json()).then(j=>JSON.stringify({key:j.key, status:j.fields.status.name, parent:j.fields.parent&&j.fields.parent.key, assignee:j.fields.assignee&&j.fields.assignee.displayName, labels:j.fields.labels, duedate:j.fields.duedate, summary:j.fields.summary}))
 ```
-确认 `status` 是已完成、`parent` 是预期 Epic（或 null）。把 issue key + 状态报给勾哥。
+确认 `status` 已完成、`parent` 是预期 Epic（或 null）、**`assignee` 按机器对（本机=Changhui xu）、`labels` 类型+模块齐、`duedate` 是当天**。把 issue key + 状态报给勾哥。
 
 ## 踩坑记录（都是实跑遇到的）
 1. Chrome MCP 的 JS 工具**不支持顶层 `await`**，全用 `.then()` 链，最后一个表达式即返回值。（浏览器 DevTools 控制台则支持 await。）
