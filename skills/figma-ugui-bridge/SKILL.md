@@ -14,7 +14,7 @@ A **self-built** pipeline: Figma selection → `layout.json` + sliced PNGs → a
 ## When this vs other UI skills (don't cross the wires)
 - **This skill** = you have a **Figma design** and want a **prefab generated** from it.
 - **ui-placement** = engine-direct uGUI placement/alignment via Coplay/Unity write-MCP (e.g. **Extraction**). ER saying "摆UI/对齐" goes there, **not** here.
-- **gen-uibind** = the **downstream** step: a prefab already exists (whether made by this bridge or by hand) → generate the `XxxPanel.Generated.cs` reference-binding code so you stop hand-dragging refs / hand-writing `transform.Find`. Chain: `Figma → (this) → prefab → (gen-uibind) → Generated.cs`.
+- **Binding codegen** (the **downstream** step — a *separate* concern, `gen-uibind`, **not yet a yide skill**): a prefab already exists (made by this bridge or by hand) → generate the `XxxPanel.Generated.cs` reference-binding code so you stop hand-dragging refs / hand-writing `transform.Find`. Chain: `Figma → (this) → prefab → (binding codegen) → Generated.cs`. Until that tool exists, wire the bindings by hand.
 
 ## Get the tool (per machine, one-time)
 ```bash
@@ -45,8 +45,8 @@ In **Figma desktop** (plugins don't run in the browser):
 
 Anchor inference priority: **markers → non-default Figma constraints → geometric heuristic**.
 > The `Btn_` / `Txt_` **prefix** convention is carried onto the generated GameObject names — keep this
-> in mind when configuring **gen-uibind** downstream (its marker matcher should recognize the `Btn_` prefix
-> so bridge-made prefabs feed straight in).
+> in mind for any downstream **binding codegen** (`gen-uibind`, when built) — its marker matcher should recognize the `Btn_` prefix
+> so bridge-made prefabs feed straight in.
 
 ## End-to-end flow
 1. **Figma**: name layers per the table; select top-level **Frame(s)**; run the plugin → choose **1x/2x** → **Export → zip**. Unzip anywhere (`layout.json` + `images/`).
@@ -81,5 +81,5 @@ The shared algorithm (coordinate y-flip + anchor inference) is implemented **twi
 - **Importer**: verified in **Extraction (Unity 6000.3.5f2)** — install → zero compile errors → sample `layout.json` imported; top/bottom/center/stretch anchors + auto-match scaling + `Button.targetGraphic` + SafeArea + LayoutGroup + CanvasGroup all checked. (Package was then removed from ER and the test prefab deleted — ER restored.)
 
 ## What this skill does NOT do
-- It does not modify the prefab after import beyond the importer's own behavior, and it does not generate your panel's **reference-binding C#** — that's **gen-uibind**'s job (run it on the produced prefab).
+- It does not modify the prefab after import beyond the importer's own behavior, and it does not generate your panel's **reference-binding C#** — that's a separate **binding-codegen** step (`gen-uibind`, **not yet built**; wire refs by hand for now).
 - It does not live inside ER. The bridge is a generic tool, not bound to any one game.

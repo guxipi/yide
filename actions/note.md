@@ -21,6 +21,7 @@
 
 ## B. 整理 inbox(他从手机扔进来的)
 > 手机端怎么进来(Phase 1,零服务器):大脑放在 Google Drive 同步盘时,他用手机的 Google Drive / Obsidian / 记事本往 `~/.yide/notes/inbox/` 丢 `.md`/`.txt`;电脑联网后翼德处理。
+> (若配了 Telegram bot 集成 → 手机直接发消息也会落进这个 inbox,配置见 `integrations/telegram/SETUP.md`。)
 1. 读 `~/.yide/notes/inbox/` 下所有文件。
 2. 每条:判断主题、关联项目、抽 tags、定时间(文件时间或内容里的日期)。
 3. 归档到 `~/.yide/notes/<YYYY>/`,写好 frontmatter;更新 `notes/index.md`(按主题/项目分组)。

@@ -213,8 +213,8 @@ When implementing a new server-integrated service:
 |------|----------|---------|
 | `[Service].cs` | `Assets/Scripts/Core/Services/[Domain]/` | Main service with sync methods |
 | `[Service]OperationQueue.cs` | Same folder | Offline operation queue |
-| `[Domain]Endpoints.cs` | `CloudCode/ExtractionCloudCode/Endpoints/` | Server endpoints |
-| `[Domain]Models.cs` | `CloudCode/ExtractionCloudCode/Models/` | Request/response types |
+| `[Domain]Endpoints.cs` | `CloudCode/src/ExtractionCloudCode/Endpoints/` | Server endpoints |
+| `[Domain]Models.cs` | `CloudCode/src/ExtractionCloudCode/Models/` | Request/response types |
 | `CloudCodeManager.cs` | Modify | Add wrapper methods |
 | `BootSequencer.cs` | Modify | Add sync phase |
 | `GameEvents.cs` | Modify | Add service events |
@@ -225,5 +225,5 @@ When implementing a new server-integrated service:
 Reference implementation:
 - `Assets/Scripts/Core/Services/Items/PersistentInventoryService.cs`
 - `Assets/Scripts/Core/Services/Items/InventoryOperationQueue.cs`
-- `CloudCode/ExtractionCloudCode/Endpoints/InventoryEndpoints.cs`
-- `CloudCode/ExtractionCloudCode/Models/InventoryModels.cs`
+- `CloudCode/src/ExtractionCloudCode/Endpoints/InventoryEndpoints.cs`
+- `CloudCode/src/ExtractionCloudCode/Models/InventoryModels.cs`

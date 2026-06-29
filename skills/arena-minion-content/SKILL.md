@@ -1,6 +1,6 @@
 ---
 name: arena-minion-content
-description: How to ADD a campaign's small enemies (小怪/minions — NOT bosses) in Extraction via the model-injection decoupling system — the repeatable content pipeline on top of the already-built BaseEnemy/EnemyConfig foundation. Trigger on "加小怪" / "做XX关的小怪" / "新关卡小怪" / "换皮敌人" / "把这几个模型做成小怪" / "接小怪到波次" / "做丛林星/雨林星的小怪" / "new arena enemy" / "add minion" / "reskin enemy" / "wire minions to waves" or any task adding/skinning small enemies into a campaign's waves. Covers — model→archetype mapping by silhouette, the 3 animation paths, the injection-surgery that converts archetype prefabs, wave intro-cadence wiring, and the hard-won pitfalls (Tripo Z-up lying-down, inherited DefaultWeapon, pool skin-bleed, don't-touch-boss). Orchestrates gaoguang-3d (model intake) + playmode-verify-iterate (verify). NOT for bosses (→ arena-boss-content) nor for changing the difficulty foundation (content-addition only).
+description: How to ADD a campaign's small enemies (小怪/minions — NOT bosses) in Extraction via the model-injection decoupling system — the repeatable content pipeline on the already-built BaseEnemy/EnemyConfig foundation. Trigger on "加小怪" / "做XX关的小怪" / "换皮敌人" / "把这几个模型做成小怪" / "接小怪到波次" / "new arena enemy" / "add minion" / "reskin enemy" or any task adding/skinning small enemies into a campaign's waves. Covers model→archetype mapping by silhouette, the 3 animation paths, the injection-surgery converting archetype prefabs, wave intro-cadence wiring, and the pitfalls (Tripo Z-up, inherited DefaultWeapon, pool skin-bleed). Orchestrates gaoguang-3d + playmode-verify-iterate. NOT for bosses (→ arena-boss-content) nor the difficulty foundation; content-addition only.
 ---
 
 # 关卡小怪接入（模型注入解耦）· Extraction
@@ -38,7 +38,7 @@ description: How to ADD a campaign's small enemies (小怪/minions — NOT bosse
 5. **别碰 boss**：你是做小怪的——W10、Boss prefab、ArenaDifficultyConfig 一律不动(→ `arena-boss-content`)。误碰了要忠实还原。
 6. **三层别混**(同 boss skill)：难度层(Hub 倍率×) / base 层(EnemyConfig 绝对值) / 内容层(哪些怪)。**数值是难度 session 的活**，你只管"接得上 + 行为对"。
 7. **多 session 协同**：DifficultyModel/EnemyUnit 等是共享文件，另一个 session 可能 commit 把你的改动卷走；动前 pull，commit **只 stage 自己的文件**，**别 `git add -A`** 把别人的脏改动/包 meta 删除一起提交。
-8. **临时脚本写 `Assets/Editor/CoplayTemp/`**（保留作工具，别写 `Temp/`）。
+8. **要保留复用的 builder/工具脚本写 `Assets/Editor/CoplayTemp/`**（如本 skill 的批量注入/接线脚本，留作工具）。一次性探针/dump 脚本才写项目根 `Temp/yide_*.cs`（无 domain reload、跑完删）——按生命周期分，别混。
 
 ## 关键文件
 - 系统：`EnemyUnit.cs`(InjectModel) / `EnemyConfig.cs`(模型字段) / `BaseEnemy.prefab` / `EnemyProceduralMotion.cs`

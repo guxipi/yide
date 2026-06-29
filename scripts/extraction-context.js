@@ -2,7 +2,8 @@
 // 翼德 · extraction 个人项目专属上下文(奖励 + 督促 + 张飞人格 + 彩蛋)。
 // 从 session-start.js 拆出(它是开场注入里最大、最易变、最自成一体的一块)。
 // 仅当项目路径含 "extraction" 且未在 extraction-fun.json 里关闭时,返回一段要追加进开场上下文的文本;否则返回 ''。
-// 副作用:写 game-state.json(开场问候 / 深夜守护各每天一次,state 门控不刷屏)。仅 Node 内置模块。
+// 副作用:写 greet-state.json(开场问候 / 深夜守护各每天一次,state 门控不刷屏)。
+//   独立文件,不与 progress.js 的 game-state.json 共用 —— 二者各写各的,避免两进程整体读改写互相吞 key。仅 Node 内置模块。
 const fs = require('fs');
 const path = require('path');
 const { today } = require(path.join(__dirname, 'lib.js'));
@@ -22,7 +23,7 @@ function extractionContext(BRAIN, PROJECT, PLUGIN_ROOT) {
   // 开场问候 / 深夜守护:确定性、每天/每夜各一次(state 门控,不刷屏)
   const day = today();
   const hour = new Date().getHours();
-  const gsPath = path.join(BRAIN, '.meta', 'game-state.json');
+  const gsPath = path.join(BRAIN, '.meta', 'greet-state.json');
   let gs = {}; try { gs = JSON.parse(fs.readFileSync(gsPath, 'utf8')); } catch {}
   let egg = '', dirty = false;
   if ((!fun.greeting || fun.greeting.enabled !== false) && gs.lastGreetDate !== day) {
