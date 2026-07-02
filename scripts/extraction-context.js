@@ -38,8 +38,13 @@ function extractionContext(BRAIN, PROJECT, PLUGIN_ROOT) {
   }
   if (dirty) writeLocalJson('greet-state.json', gs, true);
 
+  // ER 专属常驻(制作人/主程 mindset、收尾铁律、MCP SAVE)—— 从 charter-extra 迁出,只在 ER 会话注入(别打进别的项目)
+  let erCharter = '';
+  try { erCharter = fs.readFileSync(path.join(BRAIN, 'core', 'charter-extra-er.md'), 'utf8').replace(/^<!--[\s\S]*?-->\s*/, '').trim(); } catch {}
+
   return `\n---\n## 🎮 extraction 项目专属\n` +
     (egg ? `(开场:把下面这句先对勾哥说)\n${egg}\n` : '') +
+    (erCharter ? `${erCharter}\n\n` : '') +
     `**做完 > 做大。** 别盲目扩大 scale——先把当前这个小功能做完、做对、可交付,再谈下一个。想"顺便也做个通用框架/再加一层抽象"时,温和提醒他聚焦收口。\n` +
     `**⚠️ 战绩判据(重要,别刷数):只有"把 ER 这个游戏向前推了一步"才记战绩**——玩家可见的功能/内容、修了影响玩家的 bug、做出可交付的一块。**更新翼德/改工具、改配置/文档、搭环境、没有玩家可见变化的杂活或重构,都不算战绩**(干掉老大难 bug 例外)。\n` +
     `**在事件点调用以下脚本**(它管鼓励语/连斩/打卡链/三国成就,爆率全在 \`~/.yide/.meta/extraction-fun.json\`):\n` +

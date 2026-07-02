@@ -18,8 +18,22 @@ const BRAIN = brainDir();
 const BASE = path.join(BRAIN, '.meta', 'shipped-base');
 const APPLY = process.argv.includes('--apply');
 
-// "发货知识"文件:可被刷新(非用户私有数据)
-const SHIPPED = new Set(['style/unity.md', 'core/charter.md', 'README.md', 'lessons/_TEMPLATE.md', 'projects/_TEMPLATE.md']);
+// "发货知识"文件:可被刷新(非用户私有数据)。core/charter.md 不在此 —— resolve 只读发货模板那份,
+// live 副本是死数据(见 REMOVED),不再往大脑写/刷。
+const SHIPPED = new Set(['style/unity.md', 'README.md', 'lessons/_TEMPLATE.md', 'projects/_TEMPLATE.md']);
+// 已废弃、--apply 时从大脑删除的残留(声明式清单;删除前均已确认无代码再读)。
+//  - core/charter.md:resolve 只读发货模板那份,live 这份是死副本(resolve.js:55)
+//  - .meta/digest-*:digest 功能已移除,纯残留(全仓无引用)
+//  - 4 个会话级状态:已迁本机 ~/.yide-local(Phase 1),共享侧旧副本清掉(readLocal 已做过一次性回退)
+const REMOVED = [
+  'core/charter.md',
+  '.meta/digest-latest.md',
+  '.meta/last-digest.txt',
+  '.meta/session-health.json',
+  '.meta/greet-state.json',
+  '.meta/lint-seen.json',
+  '.meta/prompt-suggest-log.json',
+];
 // 永不自动刷新的用户私有文件(只在缺失时新增)
 function isUserOwned(rel) {
   return rel === 'core/identity.md' || rel === 'core/hard-rules.md' ||
@@ -44,11 +58,12 @@ function walk(dir, base = dir, out = []) {
 }
 const rd = p => { try { return fs.readFileSync(p, 'utf8'); } catch { return null; } };
 
-const report = { added: [], refreshed: [], conflicts: [], rulesToAdd: [], applied: APPLY };
+const report = { added: [], refreshed: [], conflicts: [], rulesToAdd: [], removed: [], applied: APPLY };
 
 // 1) 遍历模板文件
 for (const rel of walk(TEMPLATE)) {
   if (rel.startsWith('.meta/shipped-base/')) continue;
+  if (REMOVED.includes(rel)) continue; // 废弃文件:绝不再往大脑添加/刷新(交给下面的清理清单删)
   const tNew = rd(path.join(TEMPLATE, rel));
   const tUser = rd(path.join(BRAIN, rel));
   const tBase = rd(path.join(BASE, rel));
@@ -84,15 +99,31 @@ for (const rel of walk(TEMPLATE)) {
   }
 })();
 
-// 3) 应用后刷新基线快照 + 版本(只有 --apply 才更新,保证下次比较基于最新发货)
+// 2.5) 清理废弃残留(声明式清单;--apply 才真删)
+for (const rel of REMOVED) {
+  const p = path.join(BRAIN, rel);
+  if (fs.existsSync(p)) {
+    report.removed.push(rel);
+    if (APPLY) { try { fs.rmSync(p, { force: true }); } catch {} }
+  }
+}
+
+// 3) 应用后刷新基线快照 + 版本 —— 仅在"完全干净"(无冲突、无待并红线)时才 stamp。
+//    否则安全部分(added/refreshed)照样已落盘,但基线/版本戳留到"翼德 update"裁决完成后再打,
+//    好让 SessionStart 持续提示、且 3-way 合并的"上游变了"信号不被过早抹平。
+report.stamped = false;
 if (APPLY) {
-  try {
-    fs.rmSync(BASE, { recursive: true, force: true });
-    fs.cpSync(TEMPLATE, BASE, { recursive: true });
-    let ver = '0.0.0';
-    try { ver = JSON.parse(fs.readFileSync(path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version || ver; } catch {}
-    fs.writeFileSync(path.join(BRAIN, '.meta', 'plugin-version.txt'), ver);
-  } catch {}
+  const clean = report.conflicts.length === 0 && report.rulesToAdd.length === 0;
+  if (clean) {
+    try {
+      fs.rmSync(BASE, { recursive: true, force: true });
+      fs.cpSync(TEMPLATE, BASE, { recursive: true });
+      let ver = '0.0.0';
+      try { ver = JSON.parse(fs.readFileSync(path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version || ver; } catch {}
+      fs.writeFileSync(path.join(BRAIN, '.meta', 'plugin-version.txt'), ver);
+      report.stamped = true;
+    } catch {}
+  }
 }
 
 process.stdout.write(JSON.stringify(report, null, 2));

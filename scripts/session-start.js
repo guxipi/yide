@@ -4,6 +4,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const { brainDir, today, locationPointerPath } = require(path.join(__dirname, 'lib.js'));
 const { detect, profileText } = require(path.join(__dirname, 'unity-context.js'));
 const { countActive } = require(path.join(__dirname, 'lessons.js'));
@@ -135,16 +136,41 @@ try {
     }
   }
 
-  // --- 发货默认跟插件走:版本变了给一行提示(无需任何操作——红线/准则等发货默认已由 resolver 自动生效) ---
+  // --- 发货默认跟插件走:版本变了跑一次 migrate,把模板新增/刷新真正落地(以前只打版本戳→快照冻结,模板改进到不了 live) ---
   try {
     const brainVer = String(store.readText('plugin-version.txt', '') || '').trim();
     let pluginVer = '';
     try { pluginVer = JSON.parse(fs.readFileSync(path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version || ''; } catch {}
     if (pluginVer && brainVer !== pluginVer) {
-      if (brainVer && verLt(brainVer, pluginVer)) {
-        ctx += `\n---\n## 🔄 翼德已更新到 v${pluginVer}\n发货默认(红线 / 工作准则等)**已自动生效,无需任何操作**(没碰你的数据)。想看改了啥:README changelog。\n`;
+      const behind = !brainVer || verLt(brainVer, pluginVer);
+      if (!behind) {
+        // 大脑版本领先插件(异常/回退)→ 不迁移(免把 SHIPPED 降级),只打戳消提示
+        store.writeText('plugin-version.txt', pluginVer);
+      } else {
+        // 落后:跑 migrate --apply。安全部分(added/refreshed)立即落盘;有冲突/缺红线则 migrate 不打戳(见 migrate.js)
+        let plan = null;
+        try {
+          const out = execFileSync('node', [path.join(__dirname, 'migrate.js'), '--apply'], {
+            encoding: 'utf8',
+            env: Object.assign({}, process.env, { CLAUDE_PLUGIN_ROOT: PLUGIN_ROOT, YIDE_HOME: BRAIN }),
+          });
+          plan = JSON.parse(out);
+        } catch {}
+        const conflicts = plan ? plan.conflicts.length : 0;
+        const rulesToAdd = plan ? plan.rulesToAdd.length : 0;
+        if (conflicts || rulesToAdd) {
+          // 有需要勾哥裁决的:引导跑"翼德 update";migrate 没打戳,故此提示会持续到裁决完成
+          ctx += `\n---\n## 🔄 翼德 v${pluginVer} 有待你确认的更新\n` +
+            `有 ${conflicts} 处发货文件冲突` + (rulesToAdd ? ` / ${rulesToAdd} 条新默认红线` : '') +
+            ` 待你裁决 —— 跑一次"翼德 update"(读 actions/update.md);裁决前不改你的数据。安全的新增/刷新已自动合并。\n`;
+        } else if (brainVer) {
+          const added = plan ? plan.added.length : 0;
+          const refreshed = plan ? plan.refreshed.length : 0;
+          const note = (added || refreshed) ? `(${added} 新增 / ${refreshed} 刷新已自动合并)` : '';
+          ctx += `\n---\n## 🔄 翼德已更新到 v${pluginVer}\n发货默认${note}**已自动生效**(没碰你的私有数据)。想看改了啥:README changelog。\n`;
+        }
+        // migrate --apply 内部已在"干净"时打好版本戳;若失败没打戳,下次开会话会重试,安全。
       }
-      store.writeText('plugin-version.txt', pluginVer); // 打戳:本版本只提示一次
     }
   } catch {}
 

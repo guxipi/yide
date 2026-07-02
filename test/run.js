@@ -408,6 +408,57 @@ t('1.5 冲突副本巡检:命中英文/中文/数字去重,跳过 archive', () =
   assert(!hits.some(h => /old/.test(h)), 'archive 区应跳过');
 });
 
+// === 8d. 更新闭环 + 注入瘦身(2026-07-02 audit Phase 2)===
+t('2.1/2.2 migrate:干净→stamp true+删废弃;有冲突→stamp false+不打戳', () => {
+  const mb = path.join(TMP, 'migbrain', '.yide');
+  fs.mkdirSync(path.join(mb, 'core'), { recursive: true });
+  fs.mkdirSync(path.join(mb, '.meta'), { recursive: true });
+  fs.copyFileSync(path.join(ROOT, 'templates', 'brain', 'core', 'identity.md'), path.join(mb, 'core', 'identity.md'));
+  fs.copyFileSync(path.join(ROOT, 'templates', 'brain', 'core', 'hard-rules.md'), path.join(mb, 'core', 'hard-rules.md'));
+  fs.writeFileSync(path.join(mb, 'core', 'charter.md'), 'dead dup'); // 废弃残留(REMOVED)
+  const mig = (dir, apply) => JSON.parse(execFileSync('node', apply ? [path.join(SCRIPTS, 'migrate.js'), '--apply'] : [path.join(SCRIPTS, 'migrate.js')], { encoding: 'utf8', env: Object.assign({}, process.env, { YIDE_HOME: dir, CLAUDE_PLUGIN_ROOT: ROOT }) }));
+  let r = mig(mb, false);
+  assert(r.removed.includes('core/charter.md'), 'plan 应报废弃 core/charter.md');
+  assert(fs.existsSync(path.join(mb, 'core', 'charter.md')), 'plan 不删文件');
+  r = mig(mb, true);
+  assert(r.stamped === true, '干净→应打戳');
+  assert(!fs.existsSync(path.join(mb, 'core', 'charter.md')), 'apply 应删废弃 core/charter.md');
+  assert((fs.readFileSync(path.join(mb, '.meta', 'plugin-version.txt'), 'utf8') || '').trim().length > 0, 'apply 干净应写版本戳');
+  // 冲突:SHIPPED 文件被用户改 + 旧 base 与模板不同 → 冲突 → 不打戳
+  const cb = path.join(TMP, 'migconf', '.yide');
+  fs.mkdirSync(path.join(cb, '.meta', 'shipped-base', 'style'), { recursive: true });
+  fs.mkdirSync(path.join(cb, 'style'), { recursive: true });
+  fs.writeFileSync(path.join(cb, 'style', 'unity.md'), 'USER MODIFIED UNITY');
+  fs.writeFileSync(path.join(cb, '.meta', 'shipped-base', 'style', 'unity.md'), 'OLD BASE DIFFERENT');
+  const rc = mig(cb, true);
+  assert(rc.conflicts.some(c => c.file === 'style/unity.md'), 'style/unity.md 应判冲突');
+  assert(rc.stamped === false, '有冲突→不打戳');
+  assert(!fs.existsSync(path.join(cb, '.meta', 'plugin-version.txt')), '有冲突不写版本戳');
+});
+t('2.4 charter-extra 软上限:超 4000 截断+提示;未超原样', () => {
+  const { resolve } = require(path.join(SCRIPTS, 'resolve.js'));
+  const rb = path.join(TMP, 'capbrain', '.yide');
+  fs.mkdirSync(path.join(rb, 'core'), { recursive: true });
+  fs.writeFileSync(path.join(rb, 'core', 'charter-extra.md'), 'x'.repeat(5000));
+  let out = resolve('charter', ROOT, rb);
+  assert(/已截断/.test(out), '超上限应截断并提示');
+  assert(!out.includes('x'.repeat(4500)), '应真的截断到上限');
+  fs.writeFileSync(path.join(rb, 'core', 'charter-extra.md'), 'yideShortRule 保留我');
+  out = resolve('charter', ROOT, rb);
+  assert(/yideShortRule 保留我/.test(out) && !/已截断/.test(out), '未超上限应原样保留');
+});
+t('2.5 ER 专属常驻只在 ER 会话注入(charter-extra-er)', () => {
+  const { extractionContext } = require(path.join(SCRIPTS, 'extraction-context.js'));
+  const eb = path.join(TMP, 'erbrain2', '.yide');
+  fs.mkdirSync(path.join(eb, 'core'), { recursive: true });
+  fs.writeFileSync(path.join(eb, 'core', 'charter-extra-er.md'), '<!-- c -->\n\n**ER 主程 mindset**:ER专属测试标记。');
+  const er = extractionContext(eb, '/x/extraction-raiders', ROOT) || '';
+  assert(/ER专属测试标记/.test(er), 'ER 会话应注入 charter-extra-er');
+  assert(!/<!--/.test(er), '应剥掉文件头注释');
+  const non = extractionContext(eb, '/x/some-other-game', ROOT) || '';
+  assert(!/ER专属测试标记/.test(non), '非 ER 会话不注入 ER 专属');
+});
+
 // === 8. 安全加固(2026-07-02 audit Phase 0)===
 t('0.1 换行分段:多行命令第二行的危险命令不放行', () => {
   assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git status\nrm -rf /tmp/x' } }) === 'defer', 'git status\\nrm -rf 整条应 defer(换行也切段)');

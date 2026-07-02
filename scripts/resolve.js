@@ -51,10 +51,18 @@ function resolveRules(m, pluginRoot, brainDir) {
   return lines.map(l => l.replace(/^\s*\d+\.\s*/, () => `${++n}. `)).join('\n\n');
 }
 
+// 用户补充(charter-extra)软上限:护栏,不是政策刀。2026-07-02 实测真实 charter-extra(拆出 ER 专属后)约 3036 字,
+// 故设 4000 留头:当前有意常驻的规则一字不截,只在"未来继续往常驻堆"越过 4000 时才截断并提示挪去按需加载。
+const APPEND_CAP = 4000;
 function resolveAppend(m, pluginRoot, brainDir) {
   const base = rd(shipped(pluginRoot, m.shipped)).trim();
-  const extra = m.userExtra ? rd(path.join(brainDir, m.userExtra)).trim() : '';
-  return extra ? base + '\n\n---\n## 你的补充\n' + extra : base;
+  let extra = m.userExtra ? rd(path.join(brainDir, m.userExtra)).trim() : '';
+  if (!extra) return base;
+  if (extra.length > APPEND_CAP) {
+    extra = extra.slice(0, APPEND_CAP).trimEnd() +
+      `\n\n…(补充过长已截断到 ${APPEND_CAP} 字;长内容请挪到 lessons/ 或项目文档按需加载,别堆在常驻注入)`;
+  }
+  return base + '\n\n---\n## 你的补充\n' + extra;
 }
 
 function resolve(key, pluginRoot, brainDir) {
