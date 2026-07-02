@@ -1,6 +1,6 @@
 ---
 name: todo-to-planyway
-description: Use to bulk-import a todo list into Jira project KAN so issues show up in Planyway for scheduling — no manual one-by-one pasting. Trigger on "翼德 发 Planyway" / "发到 Planyway" / "导入 todo 到 Planyway" / "把 todo 进 Jira" / "把这些 todo 建成 Jira issue" / "整理 inbox 发 Planyway". ALSO handles single "mark-done" uploads after finishing one feature/bugfix (status → Done, Epic auto-picked) — "上传 Planyway 吗" / "传一下 Planyway" / "标记完成发 Planyway". Planyway has no public API — it's just a view of Jira issues. Preferred channel = the official Atlassian Rovo MCP (claude.ai), no browser/API-token; a Chrome MCP tab on duckgames.atlassian.net is the fallback. Invoke BEFORE creating any KAN issues.
+description: Bulk-import a todo list into Jira project KAN so issues appear in Planyway for scheduling; also single "mark-done" uploads (status→Done, Epic auto-picked). Trigger — "翼德 发 Planyway" / "发到 Planyway" / "导入 todo 到 Planyway" / "把 todo 进 Jira" / "把这些 todo 建成 Jira issue" / "整理 inbox 发 Planyway" / "上传 Planyway 吗" / "传一下 Planyway" / "标记完成发 Planyway". Planyway has no public API — just a Jira view; prefer Atlassian Rovo MCP. Invoke BEFORE creating KAN issues.
 ---
 
 # Todo → Planyway (Jira KAN bulk import)

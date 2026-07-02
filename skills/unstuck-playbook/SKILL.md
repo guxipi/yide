@@ -1,6 +1,6 @@
 ---
 name: unstuck-playbook
-description: A cross-domain methodology + anti-stuck playbook distilled from sessions that went WELL — read it for inspiration and a way forward when you feel stuck, are spinning on repeated failures, don't know how to approach a big/vague task, can't tell if your change actually worked, the tools keep fighting you, or you've lost the thread. Trigger on "卡住了" / "不知道怎么办" / "原地打转" / "试了几次都不行" / "无从下手" / "这个怎么搞" / "给点思路" / "方法论" / "怎么做才好" or any moment of being stuck / needing a method. Not domain-specific — it's the how-to-work layer that points to the concrete skills (feature-development, cloud-code-deploy, playmode-verify-iterate, ui-placement, ui-visual-rework) and project memories.
+description: A cross-domain methodology + anti-stuck playbook for when you’re stuck, spinning on repeated failures, facing a big/vague task, can’t tell if a change worked, or have lost the thread. Not domain-specific — the how-to-work layer pointing to feature-development, cloud-code-deploy, playmode-verify-iterate, ui-placement, ui-visual-rework. Trigger on "卡住了" / "不知道怎么办" / "原地打转" / "试了几次都不行" / "无从下手" / "这个怎么搞" / "给点思路" / "方法论" / "怎么做才好".
 ---
 
 # Unstuck Playbook (Extraction · 工作心法 + 卡住急救)
@@ -54,7 +54,7 @@ description: A cross-domain methodology + anti-stuck playbook distilled from ses
 ## D. 具体动作工具箱(卡住时可直接抄的招)
 
 - **并行侦察**:一条消息发多个 `Agent`(Explore)调用,每个 prompt 具体到"读哪些文件、报什么结构"。
-- **临时探针脚本**:`Temp/yide_*.cs` 经 Coplay `execute_script` 跑,`Debug.Log` 真实状态到 logs 再读;或 dump 到 `Temp/*.txt` 再 Read。用完即删。
+- **临时探针脚本**:一次性探针 `Temp/yide_*.cs` 经 Coplay `execute_script` 跑,`Debug.Log` 真实状态到 logs 再读;或 dump 到 `Temp/*.txt` 再 Read,用完即删。要留作工具的 builder → `Assets/Editor/CoplayTemp/`(别删)。
 - **闭环迭代节奏**(改了 editor 代码):停 Play → 等重编译 → `open_scene` 回目标场景 → 跑 builder → SaveScene → 再进 Play 测。
 - **交叉验证**:任何"成功"用第二通道确认(编译/落盘/行为/数值)。
 - **拆块可见**:`TaskCreate` 分块 + 实时 in_progress/completed,你和勾哥都看得见进度、不漏步。

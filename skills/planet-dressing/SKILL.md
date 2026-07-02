@@ -1,6 +1,6 @@
 ---
 name: planet-dressing
-description: Turn an Extraction Campaign greybox room map into a production-grade ("成品级") planet-themed environment — walls become cliffs/terrain, floors get planet palettes, rooms get props, all with the Whiteout-Survival / Stealth-Master "通透感" (open diorama readability) and a Brawl-Stars saturated toon look. Trigger on "把灰盒换成星球地貌" / "地图穿衣服" / "关卡环境美化" / "星球主题环境" / "dress the map" / "换成品环境" / "把墙换成悬崖/建筑" or any task theming a Campaign greybox map to shippable visual quality. Battle-tested on Map_CampaignDungeon → Verdance (翠垣星) with Synty ScifiWorlds + ToonLit. Gameplay layer is READ-ONLY (walls/RoomVolume/Barrier/navmesh untouched); visuals are one idempotent re-runnable "Dressing" node. Companion to campaign-map-build (builds the greybox this skill dresses) and gaoguang-3d (single-model look-fix; THIS skill is whole-map dressing).
+description: Turn an Extraction Campaign greybox room map into a production-grade ("成品级") planet-themed environment (walls→cliffs/buildings, floor palettes, "通透感" + Brawl-Stars toon look). Gameplay layer READ-ONLY; visuals = one idempotent re-runnable Dressing node. Trigger on "把灰盒换成星球地貌" / "地图穿衣服" / "关卡环境美化" / "星球主题环境" / "dress the map" / "换成品环境" / "把墙换成悬崖/建筑" or theming a Campaign greybox to shippable quality. Companion to campaign-map-build; vs gaoguang-3d (single-model fix), THIS = whole-map dressing.
 ---
 
 # 星球地貌 Dressing · Extraction（灰盒 → 成品级星球环境）

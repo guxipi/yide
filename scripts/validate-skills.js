@@ -17,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 
 const skillsDir = path.join(__dirname, '..', 'skills');
-const PER_SKILL_MAX = 1024; // chars; longer descriptions are budget hogs -> error
+const PER_SKILL_MAX = 512; // chars; longer descriptions are budget hogs -> error (2026-07-02 audit: 全量瘦身到 ≤500)
 
 let errors = 0;
 let totalChars = 0;

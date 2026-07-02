@@ -1,5 +1,7 @@
 # 翼德 · QA / 测试(test)
 
+> **优先级(项目 skill 让位)**:若当前项目已挂专属 `qa-testing` / `playmode-verify-iterate` skill(如 Extraction)→ **以那些 skill 为准**,本 action 仅是没挂 skill 的项目的通用兜底,别两套并行。
+
 解决两个痛点:① 测试乱测边角、不测重点;② bug 散在对话里、纯自然语言、没 repro/日志/截图。
 翼德能纯文件/CLI 做的:**定测试重点、强制 bug SOP、跑测+读结果、整理证据做三查**。
 

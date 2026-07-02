@@ -1,6 +1,6 @@
 ---
 name: arena-minion-content
-description: How to ADD a campaign's small enemies (小怪/minions — NOT bosses) in Extraction via the model-injection decoupling system — the repeatable content pipeline on the already-built BaseEnemy/EnemyConfig foundation. Trigger on "加小怪" / "做XX关的小怪" / "换皮敌人" / "把这几个模型做成小怪" / "接小怪到波次" / "new arena enemy" / "add minion" / "reskin enemy" or any task adding/skinning small enemies into a campaign's waves. Covers model→archetype mapping by silhouette, the 3 animation paths, the injection-surgery converting archetype prefabs, wave intro-cadence wiring, and the pitfalls (Tripo Z-up, inherited DefaultWeapon, pool skin-bleed). Orchestrates gaoguang-3d + playmode-verify-iterate. NOT for bosses (→ arena-boss-content) nor the difficulty foundation; content-addition only.
+description: ADD a campaign’s small enemies (小怪/minions, NOT bosses) in Extraction via the model-injection decoupling system on the BaseEnemy/EnemyConfig foundation. Trigger on "加小怪" / "做XX关的小怪" / "换皮敌人" / "把这几个模型做成小怪" / "接小怪到波次" / "new arena enemy" / "add minion" / "reskin enemy". Orchestrates gaoguang-3d + playmode-verify-iterate. NOT for bosses (→ arena-boss-content) nor the difficulty foundation; content-addition only.
 ---
 
 # 关卡小怪接入（模型注入解耦）· Extraction

@@ -1,6 +1,6 @@
 ---
 name: arena-boss-content
-description: How to ADD a new arena boss in Extraction and wire it into the difficulty pyramid — the repeatable content pipeline on top of the already-built boss/difficulty foundation. Trigger on "加个新 boss" / "新关卡 boss" / "第 N 关 boss" / "做丛林星球的 boss" / "接 boss 到难度系统" / "boss 接难度" / "new arena boss" / "add a boss" / "wire boss to difficulty" or any task adding/placing a boss into a wave + difficulty. Covers the 7-step flow (model → EnemyConfig → prefab → archetype → wave → difficulty wire → verify), how campaignIndex hooks the Difficulty Hub, the three-layer rule (Hub=multiplier / EnemyConfig=base / archetype=which skills), and the pitfalls. Orchestrates gaoguang-3d (model) + playmode-verify-iterate (verify). NOT for changing the difficulty/pyramid foundation itself — that's already built; this is content-addition only.
+description: How to ADD an arena boss in Extraction and wire into the difficulty pyramid — the repeatable content pipeline on built boss/difficulty foundation; orchestrates gaoguang-3d + playmode-verify-iterate. Trigger on "加个新 boss" / "新关卡 boss" / "第 N 关 boss" / "做丛林星球的 boss" / "接 boss 到难度系统" / "boss 接难度" / "new arena boss" / "add a boss" / "wire boss to difficulty" or adding a boss into a wave + difficulty. NOT for changing the difficulty/pyramid foundation itself — that's built; content-addition only.
 ---
 
 # 新 arena boss 接入 + 难度 Hub wire（Extraction）

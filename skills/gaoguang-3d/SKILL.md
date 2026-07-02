@@ -1,6 +1,6 @@
 ---
 name: gaoguang-3d
-description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo, Meshy, text-to-3D…) dropped into the Extraction project so they match the game's Archero-style high-saturation toon look. Trigger on "高光3D" / "模型太灰暗" / "模型发灰" / "新模型不好看" / "像 archero 一样饱和" / "把XX替换成这个模型" / 新导入的 FBX 看起来灰、暗、塑料感 / pivot 轴心不在模型中间、转身会甩 / 模型有骨架没动画需要配动画. (Particle / aura / trail / burst / 光环拖尾爆开 VFX → vfx-production; THIS skill is model intake + look-fix only.) Fixes = ToonLit material remap on the ModelImporter + pivot centering + rig/animation wiring + verification under REAL game lighting (LightSet.prefab — preview scenes often have NO light at all).
+description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo, Meshy, text-to-3D) into Extraction to match its Archero-style saturated toon look (ToonLit remap + pivot centering + rig/animation + real-lighting verify). Trigger — "高光3D" / "模型太灰暗" / "模型发灰" / "新模型不好看" / "像 archero 一样饱和" / "把XX替换成这个模型" / 新导入的 FBX 看起来灰、暗、塑料感 / pivot 轴心不在模型中间、转身会甩 / 模型有骨架没动画需要配动画. NOT particle/aura/trail/burst/光环拖尾爆开 VFX (→ vfx-production); model intake + look-fix only.
 ---
 
 # 高光3D — AI 模型进项目的"去灰提饱和"流水线 (Extraction)
@@ -8,7 +8,7 @@ description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo,
 AI 生成的模型(Tripo 等)直接进项目必灰。原因是固定的三连:**embedded material 是 URP/Lit(PBR)** + **_BaseColor 常为 (0.8,0.8,0.8) 把贴图乘暗 20%**(也有白的,但 PBR 本身就压灰) + **_Smoothness 0.5 塑料高光**。项目的 Archero 风格来自 `Assets/Shaders/ToonLit.shader`(`Custom/ToonLit`:双阶 toon 光 + rim + 描边)——所有角色(Hero/engineer.mat)都用它。修复 = 换材质 + 对轴心 + 配动画 + 真光照验证,全程 Unity 内,不回 DCC。
 
 ## 0. 诊断(动手前必做,别猜)
-用 `execute_script` dump 真值(临时 .cs 放 **项目根 `Temp/`,不进 Assets**,用完删):
+用 `execute_script` dump 真值(一次性探针 .cs 放 **项目根 `Temp/`,不进 Assets**,用完删;要留作工具的 builder → `Assets/Editor/CoplayTemp/`):
 - 加载 FBX,遍历 `GetComponentsInChildren<Renderer>` 打印每个 sharedMaterial 的 shader 名、`_BaseColor`、`_BaseMap`、`_Smoothness`、`AssetDatabase.GetAssetPath(mat)`。assetPath 指向 .fbx 本身 = embedded 自动材质,就是本 skill 的目标场景。
 - **同时 dump rig 与动画**:hierarchy(有无 Armature)、SkinnedMeshRenderer.bones.Length、`LoadAllAssetsAtPath` 里的 AnimationClip 列表。Tripo 模型分两种:带 NLA 动画(科学家:Idle/Walk/Work)和**有骨架但零 clip**(球形机器人:41 bones,无动画)——后者要走第 3 节。
 - 同时 dump 一个项目标杆(Hero.prefab → engineer.mat)做对照。

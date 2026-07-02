@@ -1,6 +1,6 @@
 ---
 name: ui-placement
-description: Use when placing, aligning, restyling, or building Unity uGUI UI in the Extraction project — RectTransform layout, anchors, panels, HUD, popups, tabs, item slots, multi-resolution / safe-area fitting. ALSO trigger on the user's Chinese requests, e.g. "摆一下UI" / "摆UI" / "摆一下界面" / "摆界面" / "调一下界面" / "做个界面" / "改UI" / "弄个面板/弹窗/HUD" / 涉及 UI、界面、面板、暂停界面、掉落/奖励格子、item slot、安全区、对齐 的任何摆放任务. Coplay's capture tools are BLIND to screen-space UI — see results via F8 ScreenCapture PNG + verify geometry numerically. Invoke BEFORE touching any .unity/.prefab UI or writing UI layout code.
+description: Placing, aligning, restyling, or building Unity uGUI UI in Extraction — RectTransform layout, anchors, panels, HUD, popups, tabs, item slots, multi-resolution / safe-area fitting. Trigger — "摆一下UI" / "摆UI" / "摆一下界面" / "摆界面" / "调一下界面" / "做个界面" / "改UI" / "弄个面板/弹窗/HUD" / 涉及 UI、界面、面板、暂停界面、掉落/奖励格子、item slot、安全区、对齐 的任何摆放任务. Coplay capture tools are BLIND to screen-space UI — verify via F8 ScreenCapture PNG + numeric geometry. Invoke BEFORE touching any .unity/.prefab UI or UI layout code.
 ---
 
 # UI Placement (Extraction)
@@ -42,7 +42,7 @@ For anything beyond a one-property tweak, write a C# file and run it with `execu
 - **Resolve a game type**: loop `AppDomain.CurrentDomain.GetAssemblies()` + `asm.GetType("Namespace.Type")` — don't assume `Assembly-CSharp`.
 - **Wire serialized `[SerializeField]` privates**: `var so = new SerializedObject(comp); so.FindProperty("_field").objectReferenceValue = target; so.ApplyModifiedPropertiesWithoutUndo();`.
 - **Prefab edits**: MCP `set_property` + `prefab_path` works for simple props (float/bool). `PrefabUtility.ApplyObjectOverride(comp, prefabPath, InteractionMode.AutomatedAction)` pushes an instance's component values down to the prefab. For structural/multi-property edits the battle-tested pattern is `LoadPrefabContents(path)` → edit → `SaveAsPrefabAsset(root, path)` → `UnloadPrefabContents` in `finally` — safe even when the prefab CONTAINS nested prefab instances (the "Can't save a Prefab instance" throw comes from passing a scene instance, not loaded contents). After saving, re-`Read` the `.prefab` on disk to confirm the write landed ([[tool-output-ghost-text]]).
-- Temp `.cs` go at **project root** (NOT under Assets — avoids a domain reload), run, then delete.
+- One-off probe `.cs` go at **project root** `Temp/` (NOT under Assets — avoids a domain reload), run, then delete; keep-as-tool builders → `Assets/Editor/CoplayTemp/`.
 
 ## RectTransform — the traps that bit us
 - **Never set `localPosition` on a stretch RectTransform.** It corrupts `anchoredPosition` and shoves the whole subtree off-screen (this pushed a pause panel to the top-right corner, CONTINUE button off-screen). To fill a parent: `anchorMin=(0,0); anchorMax=(1,1); pivot=(0.5,0.5); offsetMin=offsetMax=Vector2.zero;` — and leave localPosition alone.

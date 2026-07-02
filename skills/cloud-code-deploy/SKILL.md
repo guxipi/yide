@@ -1,6 +1,6 @@
 ---
 name: cloud-code-deploy
-description: How to CHANGE, BUILD, and DEPLOY Extraction's UGS Cloud Code server module — deploy mechanics + discipline for server code. Trigger on "改服务器" / "服务端代码" / "加个 cloud code 端点" / "部署服务器" / "deploy cloud code" / "服务端要改" / "CloudCode 报错" / "server endpoint" / "服务侧", also on the silent-write SYMPTOMS "存档没保存" / "数据没存上服务器" / "进度/排行榜没更新" / "CloudSave 没写进去" / "云端数据没生效", or ANY change touching the CloudCode/ folder. Guards the silent-fallback trap (endpoints that compile, deploy and return data while writing nothing because IGameApiClient is null), the mandatory IGameApiClient registration, string-vs-JsonElement CloudSave writes, the new-endpoint trinity, ugs deploy + read-back verify. Architecture pattern lives in server-service-pattern.md; THIS skill is the deploy + iteration layer.
+description: Change/build/deploy Extraction's UGS Cloud Code server module — deploy + discipline. Trigger on "改服务器" / "服务端代码" / "加个 cloud code 端点" / "部署服务器" / "deploy cloud code" / "服务端要改" / "CloudCode 报错" / "server endpoint" / "服务侧", also on silent-write symptoms "存档没保存" / "数据没存上服务器" / "进度/排行榜没更新" / "CloudSave 没写进去" / "云端数据没生效", or ANY change touching CloudCode/. Guards silent-fallback trap (endpoints write nothing when IGameApiClient is null). server-service-pattern.md = architecture; THIS = deploy layer.
 ---
 
 # Cloud Code: Change & Deploy (Extraction · UGS C# module)

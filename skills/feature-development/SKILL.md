@@ -1,6 +1,6 @@
 ---
 name: feature-development
-description: End-to-end method for BUILDING or INVESTIGATING/COMPLETING a feature in Extraction at high completion + verified quality. Trigger on "做功能" / "做个新功能" / "补全功能" / "调查这个功能缺什么" / "把XX功能做完整" / "实现XX系统" / "feature 不完整" / "这块没接通" / "refine XX 并补全 implementation" or any non-trivial feature/investigation work. Pipeline — parallel recon (subagents) → task breakdown → builder implementation → close the half-wired "V2" gaps → Play Mode self-verify → memory + 战绩. Companion skills do the specifics, invoke them too — ui-placement / ui-visual-rework (UI), cloud-code-deploy (server), playmode-verify-iterate (the test loop).
+description: End-to-end method for BUILDING or INVESTIGATING/COMPLETING a feature in Extraction at high completion + verified quality. Trigger — "做功能" / "做个新功能" / "补全功能" / "调查这个功能缺什么" / "把XX功能做完整" / "实现XX系统" / "feature 不完整" / "这块没接通" / "refine XX 并补全 implementation" or any non-trivial feature/investigation work. Pipeline — recon → breakdown → build → close half-wired "V2" gaps → Play Mode self-verify. Companions — ui-placement / ui-visual-rework (UI), cloud-code-deploy (server), playmode-verify-iterate.
 ---
 
 # Feature Development (Extraction · 分块 / 规划 / good practice)
@@ -63,7 +63,7 @@ Extraction 里功能常以"骨架齐、神经没接"的形态存在。**专门�
 - **buff/产出没接进消费端**:产出资源/buff 算出来了但没人读。先验证管线接没接(grep 消费方),没接就接上或明说欠债。
 - **客户端/服务端配置不符**:同一个值两边硬编码且不一致(实战:服务端说 HQ 满级 10,客户端配置是 5)。对齐。
 
-dump 真相的方法:写临时 editor 脚本(`Temp/yide_*.cs`)经 `execute_script` 跑,递归打印 serialized 字段值(NULL 与否)、hierarchy、tab 顺序,写到 `Temp/*.txt` 再 Read。
+dump 真相的方法:写临时 editor 脚本经 `execute_script` 跑,递归打印 serialized 字段值(NULL 与否)、hierarchy、tab 顺序,写到 `Temp/*.txt` 再 Read。落点按生命周期分:一次性探针 → 项目根 `Temp/yide_*.cs`(无 domain reload、跑完删);要留作工具的 builder → `Assets/Editor/CoplayTemp/`。
 
 ---
 

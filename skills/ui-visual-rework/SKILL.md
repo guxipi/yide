@@ -1,6 +1,6 @@
 ---
 name: ui-visual-rework
-description: Rework an Extraction UI screen to production quality ("成品级") using the SuperCasual kit — recipe-extraction method, asset selection, state visuals, and DOTween motion language. Trigger on "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "把材质底纹动效用起来" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any request to re-skin/polish a meta screen (panel, popup, calendar, leaderboard, reward reveal...). Battle-tested on Battle Pass, Leaderboard, Daily Login + universal Reward popup. Companion to the ui-placement skill (that one = placement discipline + verification channels; this one = how to reach finished-game visual quality).
+description: Rework an Extraction UI screen to production quality ("成品级") using the SuperCasual kit. Trigger — "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "把材质底纹动效用起来" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any re-skin/polish of a meta screen (panel, popup, calendar, leaderboard, reward reveal). Companion to ui-placement (that = placement + verification; this = reaching finished-game visual quality).
 ---
 
 # UI Visual Rework (Extraction · SuperCasual kit)
@@ -26,7 +26,7 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
    - 中心 A=0、边缘 A>0 → **描边框**(敢放心叠在内容上);
    - `.meta` 里 `spriteBorder` 非零 → 可 Sliced;为零(光效类)→ 只能 Simple,别 sliced 拉伸。
    - 拿不准 sprite 长相就 Read 那张 PNG 看图。
-5. **尺寸换算**:kit demo 基准 1080 宽,本项目 canvas 1440×2560 → 几何与字号一律 **×1.33**(kit 40pt→53、卡 287×420→382×560)。
+5. **尺寸换算**:kit demo 与本项目 kit 屏同基准 **1080×2340 / Match 0.487**,measured px **1:1 照抄**(真源 `UI_Placement_Rules.md`,2026-06-14 RATIFIED)。旧的「canvas 1440×2560 → ×1.33」对 kit 屏**已废弃,别再用**。
 
 ## 第二步:视觉语言(从 kit 提炼的规则,直接套)
 
@@ -67,7 +67,7 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
 - **动画在动的证明**:间隔 1-2s 截两帧,对比旋转光圈角度/光线位置。
 - **伪影鉴别**:同一帧里 `Refresh()`+截图 → 被 `Destroy()`(延迟到帧尾)的旧元素仍渲染,会拍出"压扁乱码双份卡"。**新帧重拍干净 = 伪影,真玩家看不到**;别误修。
 - **找不到的元素用二分**:逐个 `SetActive(false)` 区域再截图,三轮内锁定;比反推坐标快得多。
-- **全分辨率裁块终检**:1440×2560 截图缩略图会骗人(暗色误判、细节糊),交付前 PowerShell 裁 2-3 个关键区域(当前卡/按钮行/奖励格)原尺寸 Read 检查对齐与瑕疵。
+- **全分辨率裁块终检**:全分辨率截图缩略图会骗人(暗色误判、细节糊),交付前 PowerShell 裁 2-3 个关键区域(当前卡/按钮行/奖励格)原尺寸 Read 检查对齐与瑕疵。
 - **端到端真点击**:`button.onClick.Invoke()` 走真实链路(领取→服务端→弹窗→刷新),别只截静态摆拍。涉及签到等一次性状态,用 Debug tab 的 Reset(删 CloudSave key)重置后重启 Play 验自动弹出路径。
 
 ## 已验证的坑速查

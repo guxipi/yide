@@ -1,6 +1,6 @@
 ---
 name: playmode-verify-iterate
-description: Drive the Unity game in Play Mode via Coplay MCP, observe REAL behavior, fix, re-test, and iterate until the player experience is flawless. Trigger after ANY gameplay/UI/data/server change to verify it actually works for the player — "测一下" / "进 play 测" / "验证这个改动" / "确保好用" / "跑起来看看" / "自己测到满意" / "测到满分" — or as the verification step of any feature. Covers runInBackground-first, step-driven capture, real-click driving through the full chain, state-dump-beats-screenshot, the stop→fix→rebuild→save→replay loop, and the recurring Play Mode gotchas (Boot scene on stop, font tofu, button-rename breaks the driver, save_scene path trap, execute_script blocked by a WIP compile error → read asset YAML instead, no run_tests in Coplay MCP).
+description: Drive the Unity game in Play Mode via Coplay MCP, observe REAL behavior, fix, re-test, and iterate until the player experience is flawless — or the verification step of any gameplay/UI/data/server change. Trigger on "测一下" / "进 play 测" / "验证这个改动" / "确保好用" / "跑起来看看" / "自己测到满意" / "测到满分".
 ---
 
 # Play Mode Verify & Iterate (Extraction · Coplay MCP)

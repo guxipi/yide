@@ -408,6 +408,33 @@ t('1.5 冲突副本巡检:命中英文/中文/数字去重,跳过 archive', () =
   assert(!hits.some(h => /old/.test(h)), 'archive 区应跳过');
 });
 
+// === 8e. 文档一致性 + skill 引用体检(2026-07-02 audit Phase 3)===
+t('3.6 动作数一致:actions/*.md == README 动作表行 == 根 SKILL 路由行;路由文件都存在', () => {
+  const actions = fs.readdirSync(path.join(ROOT, 'actions')).filter(n => n.endsWith('.md')).length;
+  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8').split(/\r?\n/).filter(l => /^\|\s*`[a-z]+`\s*\|/.test(l)).length;
+  const skill = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8');
+  const routeFiles = [...skill.matchAll(/\|\s*`[^`]+`.*?actions\/([a-z]+)\.md/g)].map(m => m[1]);
+  assert(actions === readme, `README 动作表 ${readme} 行 ≠ actions/*.md ${actions} 个`);
+  assert(actions === routeFiles.length, `SKILL 路由 ${routeFiles.length} 行 ≠ actions/*.md ${actions} 个`);
+  for (const a of routeFiles) assert(fs.existsSync(path.join(ROOT, 'actions', a + '.md')), `SKILL 路由指向不存在的 actions/${a}.md`);
+  assert(!/figma[^-]/i.test(skill.split('---')[2] || ''), '根 SKILL description 不应再宣传 figma 动作(figma 是 skill)');
+});
+t('3.7 lint-skill-refs:命中悬空引用、跳过占位/无根', () => {
+  const { lintRefs, extractRefs } = require(path.join(SCRIPTS, 'lint-skill-refs.js'));
+  assert(extractRefs('见 Assets/Foo/Real.cs 和 Assets/Name.unity 和 Assets/x/*.cs').length === 1, '应只抽具体非占位路径(Name/通配跳过)');
+  // fixture:一个存在、一个缺失
+  const sk = path.join(TMP, 'lintskills');
+  const pr = path.join(TMP, 'lintproj');
+  fs.mkdirSync(path.join(sk, 's1'), { recursive: true });
+  fs.mkdirSync(path.join(pr, 'Assets', 'Real'), { recursive: true });
+  fs.writeFileSync(path.join(pr, 'Assets', 'Real', 'Exists.cs'), '//');
+  fs.writeFileSync(path.join(sk, 's1', 'SKILL.md'), '引用 Assets/Real/Exists.cs 与 Assets/Gone/Moved.prefab');
+  const r = lintRefs(sk, pr);
+  assert(!r.skipped && r.checked === 2, '应查 2 条');
+  assert(r.missing.length === 1 && /Moved\.prefab/.test(r.missing[0].ref), '应只报缺失的 Moved.prefab');
+  assert(lintRefs(sk, path.join(TMP, 'no-unity-here')).skipped === true, '无 Assets/ 的根应 skip');
+});
+
 // === 8d. 更新闭环 + 注入瘦身(2026-07-02 audit Phase 2)===
 t('2.1/2.2 migrate:干净→stamp true+删废弃;有冲突→stamp false+不打戳', () => {
   const mb = path.join(TMP, 'migbrain', '.yide');

@@ -1,6 +1,6 @@
 ---
 name: campaign-map-build
-description: How to BUILD a Campaign planet/room map for Extraction that LevelManager loads and ExplorationPhaseController drives — a walled greybox dungeon prefab honoring the room-graph contract. Trigger on "建关卡地图" / "做星球地图" / "灰盒地图" / "新关卡场景" / "换张地图" / "build campaign map" / "greybox dungeon" / "room map" or any task authoring/replacing the map a Campaign run plays on. Covers the prefab contract (LevelRoot + spawn + RoomGraphAuthoring + RoomVolume/Barrier + navmesh), the builder recipe, and how it plugs into CampaignConfig — each planet = its own map asset, ZERO code changes. NOT the Campaign gameplay code (already built); map-asset authoring only. Companion to playmode-verify-iterate.
+description: BUILD a Campaign planet/room map for Extraction that LevelManager loads and ExplorationPhaseController drives — a walled greybox dungeon prefab honoring the room-graph contract; each planet = its own map asset, ZERO code changes. Trigger on "建关卡地图" / "做星球地图" / "灰盒地图" / "新关卡场景" / "换张地图" / "build campaign map" / "greybox dungeon" / "room map". NOT the Campaign gameplay code (already built); map-asset authoring only. Companion to playmode-verify-iterate.
 ---
 
 # Campaign 关卡地图搭建 · Extraction
