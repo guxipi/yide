@@ -27,7 +27,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash|Write|Edit|MultiEdit|mcp__.*",
+        "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|mcp__.*",
         "hooks": [
           {
             "type": "command",

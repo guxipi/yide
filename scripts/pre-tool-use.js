@@ -28,6 +28,11 @@ const DEFAULT_ALLOW = {
   mcpDeny: ['manage', 'create', 'delete', 'write', 'update', 'modify', 'remove', 'rename', 'move', 'execute', 'exec', 'install', 'build', 'kill', 'stop', 'restart', 'run_command', 'set_', 'add_', 'apply', 'commit', 'push', 'reset', 'checkout', 'clean'],
 };
 
+// 这些 git 子命令既有只读查询形态、也有写形态 → 需按参数细分(见 isSafeBash)。
+const GIT_WRITE_SUBS = new Set(['config', 'branch', 'tag', 'remote', 'reflog']);
+// 显式写标志(即便没有位置参数也算写):删除/移动/复制/增改配置/改上游/清理等。
+const GIT_WRITE_FLAGS = /^(-d|-D|--delete|-m|-M|--move|-c|-C|--copy|--add|--unset|--unset-all|--replace-all|-e|--edit|--edit-description|-u|--set-upstream-to|--unset-upstream|--create-reflog|--rename-section|--remove-section|-f|--force|--prune|--expire)$/;
+
 function emit(decision, reason) {
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: decision, permissionDecisionReason: reason },
@@ -50,7 +55,7 @@ function isSafeBash(cmd, conf) {
   const safe = new Set(conf.bashSafe || []);
   const gitSafe = new Set(conf.gitSafe || []);
   const adbSafe = new Set(conf.adbSafe || []);
-  const segs = cmd.split(/\||&&|\|\||;|&(?!&)/).map(s => s.trim()).filter(Boolean);
+  const segs = cmd.split(/\r?\n|\||&&|\|\||;|&(?!&)/).map(s => s.trim()).filter(Boolean);
   if (!segs.length) return false;
   for (const seg of segs) {
     const toks = seg.split(/\s+/).filter(Boolean);
@@ -58,11 +63,24 @@ function isSafeBash(cmd, conf) {
     while (i < toks.length && /^\w+=/.test(toks[i])) i++;  // 跳过 VAR=val 前缀赋值
     const verb = toks[i];
     if (!verb || !safe.has(verb)) return false;
+    const rest = toks.slice(i + 1);
+    // find/sort 在白名单里,但它们有写形态:find -delete/-exec/-ok/-fprint*/-fls、sort -o(写文件)→ 回落审批
+    if (verb === 'find' && rest.some(t => /^-delete$|^-exec|^-ok|^-fprint|^-fls$/.test(t))) return false;
+    if (verb === 'sort' && rest.some(t => t === '-o' || /^-o./.test(t) || /^--output/.test(t))) return false;
     if (verb === 'git') {
       let j = i + 1;
       while (j < toks.length && toks[j].startsWith('-')) { if (toks[j] === '-C' || toks[j] === '-c') j++; j++; } // 跳过全局选项(-C/-c 带参)
       const sub = toks[j];
       if (!sub || !gitSafe.has(sub)) return false;
+      // 可写子命令(config/branch/tag/remote/reflog)只在"纯查询"时放行:出现位置参数(分支名/配置值/tag 名/remote 名)
+      // 或显式写标志 → 回落审批(git branch <名> 会建分支,撞红线⑧)。
+      if (GIT_WRITE_SUBS.has(sub)) {
+        for (let k = j + 1; k < toks.length; k++) {
+          const t = toks[k];
+          if (!t.startsWith('-')) return false;      // 位置参数 = 写形态(create/set/rename/delete)
+          if (GIT_WRITE_FLAGS.test(t)) return false; // 显式写标志(-d/-m/--add/--unset…)
+        }
+      }
     }
     if (verb === 'adb') {
       let j = i + 1;
@@ -74,11 +92,14 @@ function isSafeBash(cmd, conf) {
   return true;
 }
 
-// MCP 安全判定:工具名含任一 deny 子串即拒(回落审批);否则含 allow 子串才放行。
+// MCP 安全判定:
+//   deny 用子串匹配(过拦=defer,安全,故保留 set_/add_/run_command 等前缀语义);
+//   allow 必须按 `_` 分词整词命中 —— 否则 'get' 会误命中 forget/budget 把危险工具放行。
 function isSafeMcp(tool, conf) {
   const name = String(tool).toLowerCase();
   if ((conf.mcpDeny || []).some(d => name.includes(d))) return false;
-  return (conf.mcpAllow || []).some(a => name.includes(a));
+  const toks = new Set(name.split('_').filter(Boolean));
+  return (conf.mcpAllow || []).some(a => toks.has(a));
 }
 
 try {

@@ -321,6 +321,48 @@ t('playtest 跨项目护栏:Unity 写来源项目 + 混项目告警 + 单项目�
   assert(/来源项目:SoloGame/.test(single) && !/文件串项目/.test(single), '单项目应显示来源且不告警');
 });
 
+// === 8. 安全加固(2026-07-02 audit Phase 0)===
+t('0.1 换行分段:多行命令第二行的危险命令不放行', () => {
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git status\nrm -rf /tmp/x' } }) === 'defer', 'git status\\nrm -rf 整条应 defer(换行也切段)');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'ls\r\nrm -rf x' } }) === 'defer', 'CRLF 也应切段');
+});
+t('0.2 find/sort 写形态回落审批;只读形态仍放行', () => {
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'find . -name *.tmp -delete' } }) === 'defer', 'find -delete 应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'find . -exec rm {} ;' } }) === 'defer', 'find -exec 应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'sort -o victim.txt in.txt' } }) === 'defer', 'sort -o 应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'sort -ovictim.txt in.txt' } }) === 'defer', 'sort -o<file> 应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'find . -name *.cs' } }) === 'allow', 'find 只读应放行');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'sort in.txt' } }) === 'allow', 'sort 只读应放行');
+});
+t('0.2 git 可写子命令:纯查询放行、创建/改写回落(撞红线⑧)', () => {
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git branch feature-x' } }) === 'defer', 'git branch <名> 建分支应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git branch -d old' } }) === 'defer', 'git branch -d 删分支应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git config user.email x@y.com' } }) === 'defer', 'git config 写值应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git tag v1.0' } }) === 'defer', 'git tag 建标签应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git remote add o http://x' } }) === 'defer', 'git remote add 应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git reflog expire --all' } }) === 'defer', 'git reflog expire 应 defer');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git branch' } }) === 'allow', 'git branch 列表应放行');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git branch -a -v' } }) === 'allow', 'git branch -a 只读应放行');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git config -l' } }) === 'allow', 'git config -l 应放行');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git remote -v' } }) === 'allow', 'git remote -v 应放行');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: 'git tag' } }) === 'allow', 'git tag 列表应放行');
+});
+t('0.3 hooks.json PreToolUse 覆盖 PowerShell;PS 只走 deny 不自动放行', () => {
+  const h = JSON.parse(fs.readFileSync(path.join(ROOT, 'hooks', 'hooks.json'), 'utf8'));
+  assert(/\bPowerShell\b/.test(h.hooks.PreToolUse[0].matcher), 'PreToolUse matcher 应含 PowerShell');
+  const pb = path.join(TMP, 'psbrain', '.yide');
+  fs.mkdirSync(path.join(pb, '.meta'), { recursive: true });
+  fs.writeFileSync(path.join(pb, '.meta', 'hook-rules.json'), JSON.stringify({ rules: [{ pattern: 'Remove-Item.*-Recurse', reason: '危险删除', tools: ['*'] }] }));
+  assert(preToolDecision({ tool_name: 'PowerShell', tool_input: { command: 'Remove-Item -Recurse -Force x' } }, { YIDE_HOME: pb }) === 'deny', 'PS 危险命令应被 deny 层拦(blob 收集不挑字段名)');
+  assert(preToolDecision({ tool_name: 'PowerShell', tool_input: { command: 'Get-ChildItem' } }) === 'defer', 'PS 一律不自动放行,回落审批');
+});
+t('0.4 MCP allow 整词匹配:forget/budget 不因含 get 被误放', () => {
+  assert(preToolDecision({ tool_name: 'mcp__x__forget_cache', tool_input: {} }) === 'defer', 'forget_cache 不该因子串 get 放行');
+  assert(preToolDecision({ tool_name: 'mcp__x__budget_report', tool_input: {} }) === 'defer', 'budget_report 不该因子串 get 放行');
+  assert(preToolDecision({ tool_name: 'mcp__x__get_state', tool_input: {} }) === 'allow', 'get_state 整词命中应放行');
+  assert(preToolDecision({ tool_name: 'mcp__coplay__get_game_object_info', tool_input: {} }) === 'allow', 'get_game_object_info 应放行');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 
