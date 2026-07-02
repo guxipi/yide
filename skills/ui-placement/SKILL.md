@@ -14,6 +14,12 @@ Extraction is **portrait-only** mobile (portrait 9:16; for the exact canvas ref 
 - `Claude Feature Docs/UI Visual Design/Screen_Layout_Specs.md` — per-screen layouts.
 - Kit: `Assets/AssetPacks/UI/Layer Lab/GUI Pro-SuperCasual/`. Font: CookieRun Black Outline 54 SDF. Canvas layers: `Core.UI.UICanvasLayerManager` (Background 0 → SystemPopup 600).
 
+## Diagnose from the YAML first (read-only)
+Hand-EDITING `.prefab`/`.unity` stays banned — but **READING them with Grep/Read is the fastest root-cause channel**: a layout bug is often fully pinned before Unity is even touched (battle-tested: the UIBaseTabTopBar resource-row squish — left-anchored container, non-uniform 0.6 scale, HLG spacing 24 — was diagnosed entirely from the prefab text).
+- Walk the tree by fileID: `m_Children`/`m_Father` on RectTransforms; read anchors/pivot/`m_LocalScale`/`m_SizeDelta` plus the LayoutGroup block (`m_Spacing`, `m_ChildAlignment`, `m_ChildControl*`).
+- Nested prefabs appear as `PrefabInstance` blocks — their `m_Modifications` list is where per-instance size/active overrides hide (e.g. a hidden "+" button = `m_IsActive 0` on a child fileID).
+- **Before editing a prefab, grep the scene for `target: {fileID: <that RT's fileID>, guid: <prefab guid>`** — a scene override on the same property masks your prefab edit ([[ui-prefab-not-scene-copy]]). No hits = the prefab edit will take effect.
+
 ## Seeing the result — Coplay capture is BROKEN; use these two channels (battle-tested)
 `capture_ui_canvas` / `capture_scene_object` render through an offscreen camera/RT and **miss Screen Space (Overlay & Camera) canvases → black/grey images**. Do NOT rely on them for this project's UI. Instead:
 
@@ -28,13 +34,14 @@ Extraction is **portrait-only** mobile (portrait 9:16; for the exact canvas ref 
 - Read ground truth: `Time.timeScale`, widget flags (`IsPaused`), `CanvasGroup.alpha/blocksRaycasts`, and each key element's `RectTransform.position` (world).
 - **On-screen test**: a shown element must satisfy `0 < worldPos.x < 1440` and `0 < worldPos.y < 2560`. An element at x=1744 is off the right edge — the exact class of bug a flow/timeScale test will NOT catch. **Camera-mode canvases use world units ≠ pixels** — convert corners with `RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, corner)` first, then bounds-test against `Screen.width/height`.
 - This is conclusive when you can't screenshot. **Do it before claiming "fixed"** ([[verify-before-handoff]]); a flow test (timeScale toggles) passing does NOT mean the panel renders correctly.
+- For rows/grids: dump each child's `GetWorldCorners` → `WorldToScreenPoint` and assert **equal gaps + the intended edge margin** — a numeric pass/fail beats squinting at a PNG.
 
 ## Make changes via `execute_script` (most reliable), not 20 granular MCP calls
-For anything beyond a one-property tweak, write a C# file (class + `public static string Method()`) and run it with `execute_script` — atomic, reproducible, and it handles what granular calls fumble:
+For anything beyond a one-property tweak, write a C# file and run it with `execute_script` — atomic, reproducible, and it handles what granular calls fumble. **Entry-point contract: a class with a `public static Execute()` method** — Coplay looks for exactly that method name (any other name → "no entry point was found"); pass the file via the `filePath` argument.
 - **Find objects robustly**: `FindObjectOfType(type)` (ACTIVE only) or walk `SceneManager.GetActiveScene().GetRootGameObjects()` (includes INACTIVE roots). `GameObject.Find(path)` fails on inactive objects / wrong path — never trust it for hidden panels.
 - **Resolve a game type**: loop `AppDomain.CurrentDomain.GetAssemblies()` + `asm.GetType("Namespace.Type")` — don't assume `Assembly-CSharp`.
 - **Wire serialized `[SerializeField]` privates**: `var so = new SerializedObject(comp); so.FindProperty("_field").objectReferenceValue = target; so.ApplyModifiedPropertiesWithoutUndo();`.
-- **Prefab edits**: MCP `set_property` + `prefab_path` works for simple props (float/bool). `PrefabUtility.ApplyObjectOverride(comp, prefabPath, InteractionMode.AutomatedAction)` pushes an instance's component values down to the prefab. `LoadPrefabContents`/`SavePrefabAsset` can throw "Can't save a Prefab instance" with nested prefabs — prefer the first two.
+- **Prefab edits**: MCP `set_property` + `prefab_path` works for simple props (float/bool). `PrefabUtility.ApplyObjectOverride(comp, prefabPath, InteractionMode.AutomatedAction)` pushes an instance's component values down to the prefab. For structural/multi-property edits the battle-tested pattern is `LoadPrefabContents(path)` → edit → `SaveAsPrefabAsset(root, path)` → `UnloadPrefabContents` in `finally` — safe even when the prefab CONTAINS nested prefab instances (the "Can't save a Prefab instance" throw comes from passing a scene instance, not loaded contents). After saving, re-`Read` the `.prefab` on disk to confirm the write landed ([[tool-output-ghost-text]]).
 - Temp `.cs` go at **project root** (NOT under Assets — avoids a domain reload), run, then delete.
 
 ## RectTransform — the traps that bit us
@@ -48,6 +55,10 @@ For anything beyond a one-property tweak, write a C# file (class + `public stati
 - **Rows / grids / lists**: `Horizontal/Vertical/GridLayoutGroup` + `ContentSizeFitter`. (Perf §13: Layout Groups rebuild on child change — static layouts prefer fixed RectTransforms; groups for dynamic content.)
 - **One-frame layout jitter** (nested Group/ContentSizeFitter not settled the frame you read/screenshot it, esp. after populating a list or `SetActive(true)`): don't trust "it'll fix itself next frame" — force it deterministically with `LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform)` right after the content change. This is the escape hatch for "looked wrong in the shot but fine on replay" — that's an unsettled rebuild, not a flake.
 - **Anchor each element to its own screen corner/edge** so it sticks across aspect ratios.
+- **"Fine in Edit Mode, re-squishes every runtime"** = someone hand-dragged children INSIDE a LayoutGroup; the dragged positions are serialized lies — the next rebuild (Play always rebuilds) snaps back to the group's config. Fix the GROUP (spacing/alignment/container anchors); never re-drag its children.
+- **Overhanging child visuals break LayoutGroup spacing math.** A widget's icon/button anchored AT its rect edge often pokes OUTSIDE the rect (icon anchored x=0 centered on the edge → ~half its width overhangs left; "+" button anchored x=1 → half overhangs right). Layout Groups only see rect widths, so the real collision line is `spacing ≥ prevRightOverhang + nextLeftOverhang + visible gap` — measure the overhangs from the widget prefab's YAML, don't eyeball. (UICurrencyItemWidget: icon −40 left, "+" +35 right ⇒ spacing 24 meant ~51px of guaranteed overlap; 100 reads clean.)
+- **Edge-hugging row recipe** (e.g. currency row on the screen's right): container `anchorMin=anchorMax=(1, y)`, `pivot.x=1`, `anchoredPosition.x = −margin`, HLG `childAlignment=MiddleRight` — hugs the edge on every aspect ratio, no computed x.
+- **Non-uniform `localScale` on a UI container (e.g. 0.6 / 0.6225) = hand-tweak smell** — subtle distortion; normalize to uniform while you're there.
 - Coplay tools (for simple ops): `set_rect_transform`, `set_ui_layout`, `set_property`, `create_ui_element`, `set_ui_text`, `set_sibling_index`, `add_component`, `parent_game_object`.
 - In-editor hands-on tool: **`DuckGames/UI Designer`** menu (palette / property / preview / templates / undo).
 
@@ -68,11 +79,14 @@ ER already has a consistent decoupling pattern — **UI reflects state via event
 - Pressing Play boots **Boot → menus**, NOT directly into a wave — you can't script your way into gameplay; a scene's widgets are absent/inactive until you're actually in that scene/state.
 - **Save the scene immediately after editing** — unsaved edits get wiped when a Play session loads a different scene.
 - Editing `.cs` triggers a domain reload — do it in Edit Mode. The user may enter Play Mode at any time: check `get_unity_editor_state.playMode` before `open_scene` (it errors in Play).
-- Play Mode is for **look/verify (read-only)**; placement edits made in Play are discarded.
+- Play Mode is for **look/verify (read-only)**; placement edits made in Play are discarded. (Prefab ASSET edits do persist — but do them in Edit Mode anyway, then re-enter Play to verify.)
+- **Split act/measure across separate `execute_script` calls** (e.g. switch tab in call 1, capture+measure in call 2): frames pass between MCP calls so layout settles naturally, and each script stays pure-sync ([[mcp-execute-script-async-hang]]).
+- **Drive the real flow, not SetActive**: reach a home tab via `UITabNavigationManager.SwitchToTab<T>()`; a popup photobombing your capture (Daily Login etc.) → find its real `CloseButton` and `onClick.Invoke()` it.
 
 ## Multi-resolution
 - Project convention (verified): `CanvasScaler` = Scale With Screen Size, **reference 1440×2560** (portrait 9:16), **Match ≈ 0.5** (some canvases use 0 — confirm per-canvas).
 - Pick one base aspect; expand along a single axis; check a few portrait ratios (tall 9:19.5, 9:16, tablet 3:4) via F8 shots.
+- **Canvas unit width SHRINKS on taller phones** (ref 1440×2560, match 0.5): 9:16 → 1440, 19.5:9 → ~1304, 20:9 → ~1288, 21:9 → ~1257 units. Before committing an edge-anchored row, do the arithmetic: row visual span (content + overhangs, × scale) must fit the NARROWEST width without hitting left-side content — a layout that fits 9:16 can collide on 21:9.
 
 ## Safe area (notch / punch-hole / gesture bar)
 - Don't hardcode pixel offsets. Use `Core.UI.SafeArea` (`Assets/Scripts/Core/UI/SafeArea.cs`, `[ExecuteAlways]`, driven by `Screen.safeArea`). Add a full-screen SafeArea child under the canvas, parent screen UI to it; close/back buttons + tab bar inside it. `_conformY` = top notch + bottom gesture bar; `_conformX` = curved/landscape only. Insets to the device's *actual* safe area (guidelines' "44/34" are design paddings, separate). Per-layer wiring: wrap each content layer (HUD/Overlay/Main) in its own SafeArea container; leave Background full-bleed (don't inset it).
