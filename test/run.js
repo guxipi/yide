@@ -435,6 +435,33 @@ t('3.7 lint-skill-refs:命中悬空引用、跳过占位/无根', () => {
   assert(lintRefs(sk, path.join(TMP, 'no-unity-here')).skipped === true, '无 Assets/ 的根应 skip');
 });
 
+// === 8g. brain-git 大脑 git 同步(2026-07-02 audit Phase 5)===
+t('5.3 brain-git:非 git no-op;git 仓 sync 提交+推、无改动不提交、status clean', () => {
+  const bg = require(path.join(SCRIPTS, 'brain-git.js'));
+  const plain = path.join(TMP, 'plainbrain');
+  fs.mkdirSync(plain, { recursive: true });
+  assert(bg.pull(plain).git === false && bg.sync(plain, 'x').git === false && bg.status(plain).git === false, '非 git 大脑一律 no-op');
+  const cp = require('child_process');
+  const raw = (...a) => cp.execFileSync('git', a, { encoding: 'utf8' });
+  const g = (dir, ...a) => cp.execFileSync('git', ['-C', dir, ...a], { encoding: 'utf8' });
+  const origin = path.join(TMP, 'origin.git');
+  const work = path.join(TMP, 'workbrain');
+  raw('init', '--bare', '-b', 'main', origin);
+  fs.mkdirSync(work, { recursive: true });
+  g(work, 'init', '-b', 'main');
+  g(work, 'config', 'user.email', 't@t'); g(work, 'config', 'user.name', 't');
+  fs.writeFileSync(path.join(work, 'a.md'), '1');
+  g(work, 'add', '-A'); g(work, 'commit', '-m', 'init');
+  g(work, 'remote', 'add', 'origin', origin);
+  g(work, 'push', '-u', 'origin', 'main');
+  fs.writeFileSync(path.join(work, 'b.md'), '2');
+  const r = bg.sync(work, 'add b');
+  assert(r.git && r.committed && r.pushed, 'sync 应提交并推送:' + JSON.stringify(r));
+  assert(bg.sync(work, 'noop').committed === false, '无改动不提交');
+  const s = bg.status(work);
+  assert(s.git && !s.dirty && s.ahead === 0 && s.behind === 0 && s.remoteReachable, 'status 应 clean+可达:' + JSON.stringify(s));
+});
+
 // === 8f. guid-find(2026-07-02 audit Phase 4)===
 t('4.3 guid-find:asset→GUID 解析、反查引用者、跳过自身 .meta', () => {
   const { resolveGuid, findReferencers } = require(path.join(SCRIPTS, 'guid-find.js'));

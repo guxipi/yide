@@ -89,11 +89,16 @@ try {
     process.exit(0);
   }
 
+  // 大脑迁 git 后:开场先 ff-only 拉最新(读大脑文件前),失败不阻塞、只留一行提示。非 git 大脑 no-op。
+  let pullWarn = '';
+  try { const pr = require(path.join(__dirname, 'brain-git.js')).pull(BRAIN); if (pr.git && !pr.ok) pullWarn = pr.msg || '未知'; } catch {}
+
   // 把可移植的专家副本同步进 ~/.claude/agents/(跨设备后仍可召唤);静默,不污染输出
   try { syncExperts(); } catch {}
 
   let ctx = '# 🗡️ 翼德简报 — 个人上下文中枢\n' +
     '以下是关于当前用户的持久上下文。请全程遵守,尤其 hard-rules;需要细节就读 ~/.yide 下对应文件,不要猜。\n';
+  if (pullWarn) ctx += `\n---\n## ⚠️ 大脑同步\ngit pull 失败(${pullWarn}),本机大脑可能落后其他机器;联网后手动 \`git -C <大脑目录> pull --ff-only\`。\n`;
 
   // 永远带:身份(用户层)+ 红线 + 工作准则(发货默认 + 用户层,resolver 在"读取时"合并,不写盘)
   // 顺序:identity(我是谁)→ hard-rules(不许做)→ charter(该怎么做);charter 明确"红线优先"。

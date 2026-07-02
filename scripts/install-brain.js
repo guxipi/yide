@@ -5,9 +5,14 @@
 // 已存在则不覆盖(跨设备:同步盘里已有大脑会被直接复用)。
 'use strict';
 const fs = require('fs');
+const os = require('os');
+const cp = require('child_process');
 const path = require('path');
 const { brainDir, locationPointerPath } = require(path.join(__dirname, 'lib.js'));
 const { findSyncedBrain } = require(path.join(__dirname, 'detect-sync.js'));
+
+// 大脑已迁 git → 新设备优先 clone。远端可用 YIDE_BRAIN_REMOTE 覆盖(默认 guxipi/yide-brain)。
+const BRAIN_REMOTE = process.env.YIDE_BRAIN_REMOTE || 'https://github.com/guxipi/yide-brain.git';
 
 const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..');
 const TEMPLATE = path.join(PLUGIN_ROOT, 'templates', 'brain');
@@ -28,8 +33,21 @@ try {
     process.exit(0);
   }
 
-  // 新设备自动认领:本地没大脑、又没指定位置时,扫同步盘找已有大脑(指针不跟着同步,这里补上)
+  // 新设备自动认领:本地没大脑、又没指定位置时。
   if (!target) {
+    // ① 优先 git clone(大脑迁 git 后的标准认领法;.git 不放同步盘,落本机 ~/yide-brain)
+    const cloneTo = path.join(os.homedir(), 'yide-brain');
+    if (!fs.existsSync(cloneTo)) {
+      try {
+        cp.execFileSync('git', ['clone', BRAIN_REMOTE, cloneTo], { stdio: 'pipe', timeout: 120000 });
+        if (fs.existsSync(path.join(cloneTo, 'INDEX.md'))) {
+          fs.writeFileSync(locationPointerPath(), cloneTo);
+          console.log(`CLONED\t${cloneTo}\t从 ${BRAIN_REMOTE} 克隆大脑,已认出你——免重新磨合。`);
+          process.exit(0);
+        }
+      } catch { /* 仓不存在/没 git/没 auth → 回退扫同步盘 */ }
+    }
+    // ② 回退:扫同步盘找已有大脑(旧法,大脑还在 Drive 的机器;指针不跟着同步,这里补上)
     let synced = null; try { synced = findSyncedBrain(); } catch {}
     if (synced) {
       fs.writeFileSync(locationPointerPath(), synced);

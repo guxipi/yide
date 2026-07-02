@@ -53,6 +53,9 @@
 5. **收尾**:告诉用户——以后每开一个 Claude Code 会话,翼德会自动注入这份简报、读你的 Unity 项目档案、写 .cs 时自动把关;发现问题时说"翼德 记一下…";要贴给 Desktop/其他 AI 时说"翼德 简报"(也可打 `/yide:yide record` / `/yide:yide brief`)。
    **跨设备**:大脑位置已记在指针文件 `~/.yide-location`。在另一台电脑上,只要把同一个同步盘文件夹(Google Drive / git 仓库)同步过来,装好翼德跑 onboard 时会"认出"已有大脑、免重新磨合。**不要用 OneDrive。**
 
+## 收尾(建/认领了大脑就同步)
+- 若大脑是 git 仓(新设备 `git clone guxipi/yide-brain` 认领的即是),建完/改完跑 `node "${CLAUDE_SKILL_DIR}/scripts/brain-git.js" sync "onboard: <机器名>"` commit+push;非 git 大脑自动 no-op。
+
 ## 原则
 - 遵守用户已有的 hard-rules(尤其:不编造、不过度工程、只做被要求的事)。
 - 访谈要轻,别让用户一次回答太多。能从默认模板带过的就别重复问。

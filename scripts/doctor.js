@@ -71,6 +71,22 @@ const exists = p => { try { return fs.existsSync(p); } catch { return false; } }
   else add('⚠️', '本机私有状态', `${d} 还没建(首次会话写状态时自动建,正常)。`);
 })();
 
+// ⑤b 大脑 git 同步(迁 git 后才有意义;非 git 大脑只提示"还没迁 git")
+(function () {
+  try {
+    const bg = require(path.join(__dirname, 'brain-git.js'));
+    const s = bg.status(brainDir());
+    if (!s.git) { add('ℹ️', '大脑 git', '大脑还不是 git 仓(仍在同步盘?)—— 迁 git 见报告/迁移脚本。'); return; }
+    const parts = [];
+    if (s.dirty) parts.push('有未提交改动');
+    if (s.noUpstream) parts.push('没配 upstream');
+    else { if (s.behind) parts.push(`落后 ${s.behind}`); if (s.ahead) parts.push(`领先 ${s.ahead}(有没推的)`); }
+    parts.push(s.remoteReachable ? 'remote 可达' : 'remote 不可达');
+    const clean = !s.dirty && !s.behind && !s.noUpstream && s.remoteReachable;
+    add(clean ? '✅' : '⚠️', '大脑 git', parts.join('、') + '。');
+  } catch { add('⚠️', '大脑 git', '检查失败(git 没装?)。'); }
+})();
+
 // ⑥ Unity SmartMerge(.gitconfig 是否配 unityyamlmerge)
 (function () {
   const cfg = rd(path.join(os.homedir(), '.gitconfig')) || '';

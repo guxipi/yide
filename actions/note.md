@@ -20,12 +20,15 @@
 - 在 `notes/index.md` 加一行索引。简短确认。
 
 ## B. 整理 inbox(他从手机扔进来的)
-> 手机端怎么进来(Phase 1,零服务器):大脑放在 Google Drive 同步盘时,他用手机的 Google Drive / Obsidian / 记事本往 `~/.yide/notes/inbox/` 丢 `.md`/`.txt`;电脑联网后翼德处理。
-> (若配了 Telegram bot 集成 → 手机直接发消息也会落进这个 inbox,配置见 `integrations/telegram/SETUP.md`。)
-1. 读 `~/.yide/notes/inbox/` 下所有文件。
-2. 每条:判断主题、关联项目、抽 tags、定时间(文件时间或内容里的日期)。
-3. 归档到 `~/.yide/notes/<YYYY>/`,写好 frontmatter;更新 `notes/index.md`(按主题/项目分组)。
-4. 处理完把原始件移到 `notes/inbox/_done/`(软删,保留),报告"整理了 N 条,涉及主题/项目 …"。
+> 手机端怎么进来:
+> - **大脑已迁 git(默认)**:大脑不在同步盘了,手机笔记走**唯一保留的 Drive 依赖** `yide-inbox`(路径存指针文件 `~/.yide-inbox-location`;Telegram bot 也发到这,见 `integrations/telegram/SETUP.md`)。
+> - **大脑还在同步盘(未迁 git)**:手机用 Google Drive / Obsidian 直接往 `~/.yide/notes/inbox/` 丢 `.md`/`.txt`(旧法)。
+1. **先把 Drive inbox 的新文件搬进大脑**(迁 git 后必做):读 `~/.yide-inbox-location` 拿 Drive inbox 路径 → 把里面 `.md`/`.txt` 搬进 `~/.yide/notes/inbox/`,搬完在 Drive 侧移到 `_pulled/`(避免重复搬)。没指针 / Drive 不可达 → 跳过,只理已在 inbox 的。
+2. 读 `~/.yide/notes/inbox/` 下所有文件。
+3. 每条:判断主题、关联项目、抽 tags、定时间(文件时间或内容里的日期)。
+4. 归档到 `~/.yide/notes/<YYYY>/`,写好 frontmatter;更新 `notes/index.md`(按主题/项目分组)。
+5. 处理完把原始件移到 `notes/inbox/_done/`(软删,保留),报告"整理了 N 条,涉及主题/项目 …"。
+6. **收尾同步**:`node "${CLAUDE_SKILL_DIR}/scripts/brain-git.js" sync "整理笔记:N 条"`(git 仓则 commit+push,受红线⑧定向豁免;非 git no-op)。录入(A)落盘后同样收尾同步一次。
 
 ## C. 查询("问翼德:关于 X 我记过什么")
 - 在 `~/.yide/notes/` 里按关键词/主题/项目/时间检索(grep/读 index),把相关笔记汇总回答,附文件路径方便他翻原文。
