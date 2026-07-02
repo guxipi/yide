@@ -53,6 +53,17 @@
 - 取证用的只读 adb(`devices`/`logcat`/`pull`)已自动放行、不弹审批;`adb shell` 等仍会问。
 - 诚实:手机只在"测 + 取证那会儿"连着(USB 或同 WiFi),平时不用一直连。
 
+## G. 性能 triage(卡顿/掉帧/GC 尖峰)
+> 前提:**接了 Coplay/Unity MCP** 才测得了;没接就明说"没接 MCP,性能只能靠代码静态看,测不了真实帧"。
+1. **取真实热点**(Play 中跑一段代表性玩法后):
+   - `get_worst_cpu_frames` → 最慢的几帧 + 调用栈;
+   - `get_worst_gc_frames` → GC 分配尖峰(掉帧元凶);
+   - `list_objects_with_high_polygon_count` → 面数大户(渲染/合批负担)。
+2. **聚类 top offenders**:把栈/分配归并成少数几个根源(哪个脚本每帧 new、哪个 Update 里 GetComponent/LINQ、哪个 mesh 面数爆),按影响排序,别逐帧念。
+3. **对照 `style/unity.md` 热路径规则给修法**:Update/FixedUpdate 里的分配与查找(§1)、GC(缓存/对象池)、过度 rebuild 的 Canvas(§6)、DOTween 每帧 new(§6)、高面数 → LOD/合批/减面。
+4. **改完复测同一段玩法**,用同样三个工具确认尖峰下去了(数字对比,别只说"应该好了")。
+- 没接 MCP 的降级:只做静态审查(照 unity.md 清单挑热路径嫌疑),并如实标"未在引擎实测"。
+
 ## 文件去哪、怎么跟公司配合(归档口径)
 - **测试计划** → 项目内 `QA/test-plan-<日期>.md`。
 - **bug 报告** → 项目内 `QA/bugs/<日期>-<短标题>.md`;若公司用 Jira/GitHub Issues,改写进对应模板**贴过去**,翼德不擅自建外部工单。

@@ -78,3 +78,5 @@ pip install google-cloud-speech sounddevice
 
 ## 验证边界(诚实)
 冻帧/截图/抓上下文是确定性的 Unity 调用;**麦克风、Google 流式转写**这两环需你这边真环境验一次(尤其 gcloud 登录 + 第一次出中文字)。翼德跑时如实报结果,不冒充。
+
+> **连不上 / 没生效?** 先跑一次 **翼德 体检**(`node scripts/doctor.js`)自查,再深挖。

@@ -63,3 +63,11 @@ AI 常因训练数据混版本而给出过时接口:
 - **关掉用不到的 Raycast Target**:不接收点击的 Text/Image 取消勾选,省 raycast 开销(满屏 UI 时明显)。
 - **慎用嵌套 Layout Group + ContentSizeFitter**:层层嵌套会多次 rebuild,列表多了就卡;长列表用对象池/虚拟列表。
 - **频繁显隐别狂 `SetActive`**:用对象池或 `CanvasGroup.alpha`/移出屏幕替代。
+
+## 8. scene/prefab 合并冲突处置(Git 管 Unity 的头号日常痛)
+- **先上 SmartMerge**:配好 UnityYAMLMerge 后(见 `integrations/unity-smartmerge/SETUP.md`),撞 `.unity`/`.prefab` 冲突先 `git mergetool` —— 它按 YAML 语义自动合大部分,只把真冲突留给你。
+- **剩余冲突按 YAML 块裁决,别按文本行**:Unity YAML 每个对象是一个 `--- !u!<classID> &<fileID>` 块。看冲突落在哪个 fileID / 组件块,按"这个对象两边各改了什么"整块取舍,而不是逐行拼。
+- **绝不手瞎删 `--- !u!` 块**:删一个块 = 删一个 GameObject/Component,还会留下别处对它 `{fileID: ...}` 的悬空引用(打开就丢组件/报错)。宁可保留两份再在 Editor 里删多的。
+- **`.meta` 冲突**:冲突多在 `guid`(两边各自 import 生成)——**保留任一方的 guid 即可,但全项目要一致**;别两个资产撞同一 guid。`.meta` 内其它字段(importer 设置)按需取。
+- **合完必开 Editor 验**:Unity 里打开该场景/prefab,确认无 "missing script"/丢引用/重复对象,再提交;文本合过 ≠ 语义正确。
+- **预防 > 治疗**:大场景拆子场景 / 用 prefab 变体 / 约定"同一 prefab 一次只一人改",从源头少撞。

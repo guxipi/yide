@@ -33,3 +33,5 @@
 ---
 
 **安全**:翼德只会用**只读 adb**(`adb devices` / `adb logcat` / `adb pull`)取证,这些已自动放行、不弹审批;`adb shell` 这类能动手机的命令翼德不碰、真要用也会先问你。
+
+> **连不上 / 没生效?** 先跑一次 **翼德 体检**(`node scripts/doctor.js`)自查(含 adb 是否在 PATH),再深挖。

@@ -435,6 +435,27 @@ t('3.7 lint-skill-refs:命中悬空引用、跳过占位/无根', () => {
   assert(lintRefs(sk, path.join(TMP, 'no-unity-here')).skipped === true, '无 Assets/ 的根应 skip');
 });
 
+// === 8f. guid-find(2026-07-02 audit Phase 4)===
+t('4.3 guid-find:asset→GUID 解析、反查引用者、跳过自身 .meta', () => {
+  const { resolveGuid, findReferencers } = require(path.join(SCRIPTS, 'guid-find.js'));
+  const pr = path.join(TMP, 'guidproj');
+  const A = path.join(pr, 'Assets');
+  fs.mkdirSync(path.join(A, 'Art'), { recursive: true });
+  const GUID = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
+  fs.writeFileSync(path.join(A, 'Art', 'Tex.png'), 'PNGDATA');
+  fs.writeFileSync(path.join(A, 'Art', 'Tex.png.meta'), `fileFormatVersion: 2\nguid: ${GUID}\n`);
+  fs.writeFileSync(path.join(A, 'User.mat'), `Material:\n  m_Texture: {fileID: 2800000, guid: ${GUID}, type: 3}\n`);
+  fs.writeFileSync(path.join(A, 'Unrelated.mat'), `Material:\n  m_Texture: {fileID: 0}\n`);
+  // 解析:路径 → GUID(读 .meta)
+  assert(resolveGuid('Assets/Art/Tex.png', pr) === GUID, '应从 .meta 解析出 GUID');
+  assert(resolveGuid(GUID.toUpperCase(), pr) === GUID, '直接给 GUID 应原样(小写)返回');
+  // 反查:User.mat 引用,Unrelated.mat 不引用,Tex.png.meta(定义)不算引用
+  const refs = findReferencers(GUID, pr).map(p => path.basename(p));
+  assert(refs.includes('User.mat'), '应命中引用者 User.mat');
+  assert(!refs.includes('Unrelated.mat'), '不引用的不该命中');
+  assert(!refs.includes('Tex.png.meta'), 'GUID 自身的 .meta 是定义不算引用');
+});
+
 // === 8d. 更新闭环 + 注入瘦身(2026-07-02 audit Phase 2)===
 t('2.1/2.2 migrate:干净→stamp true+删废弃;有冲突→stamp false+不打戳', () => {
   const mb = path.join(TMP, 'migbrain', '.yide');

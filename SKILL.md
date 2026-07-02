@@ -31,6 +31,7 @@ allowed-tools: Bash
 | `playtest` / `冻帧标注` / `标注` / `试玩反馈` | `actions/playtest.md` | playtest 冻帧标注:Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |
 | `voice` / `语音` / `语音输入` / `听写` / `口述` / `speech` | `actions/voice.md` | 语音喂 prompt:Rider 终端全局热键(默认 Ctrl+F9)说中文 → 复用 Google STT 流式转写 → 自动键入当前光标(Claude Code 输入框),审一眼再回车(Windows) |
 | `战绩` / `zhanji` / `stats` / `战绩面板` | `actions/zhanji.md` | (extraction 彩蛋)查连斩/打卡链/三国称号战绩 |
+| `体检` / `诊断` / `doctor` / `自检` | `actions/doctor.md` | 一屏自诊断(大脑指针/hook/预算/SmartMerge…)+ 每项修复指引 |
 
 ## 规则
 - 路由后,把 `$ARGUMENTS` 里动作词之后的内容当作该动作的输入(如"翼德 记一下 又用了 Debug.Log" → record,内容=后半句;"翼德 笔记 想做个新手引导" → note 录入)。

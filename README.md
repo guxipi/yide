@@ -35,7 +35,7 @@
 
 > 两个 `yide` 是**插件名 : 技能名**(你把插件和技能都叫了 yide)。`/yide:yide` 只在**装了该插件的机器**上有效;裸开发源码(没 `/plugin install`)打它会报 `Unknown command`。
 
-**全部 19 个动作**(`<X>` 就是 `/yide:yide X` 里的那个词):
+**全部 20 个动作**(`<X>` 就是 `/yide:yide X` 里的那个词):
 
 | 动作词 `<X>` | 也可这样喊(自然语言) | 干什么 |
 |---|---|---|
@@ -58,6 +58,7 @@
 | `playtest` | 冻帧标注 / 标注 / 试玩反馈 | Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |
 | `voice` | 语音 / 语音输入 / 听写 / 口述 | Rider 终端全局热键(默认 Ctrl+F9)说中文 → 复用 Google STT 流式转写 → 自动键入当前光标(Claude Code 输入框),审一眼再回车(Windows) |
 | `zhanji` | 战绩 / stats | 看连斩 / 打卡链 / 三国称号(extraction 个人项目彩蛋) |
+| `doctor` | 体检 / 诊断 / 自检 | 一屏自诊断(大脑指针 / hook / skill 预算 / Unity SmartMerge)+ 每项修复指引 |
 
 说"翼德 记一下…/简报/整理/测试/蒸馏/用 maxim/起个计划"等自然语言也能触发。单入口 + 按需加载 = 不占上下文。
 
@@ -99,7 +100,7 @@ yide/
 ├── .claude-plugin/{plugin.json, marketplace.json}
 ├── SKILL.md                 # 单一 /yide 入口(派发)
 ├── skills/                  # 翼德托管的项目层 skill(自动发现,/yide:<名> 命名空间;v0.30.0 起)
-├── actions/                 # 按需加载:onboard/record/brief/consolidate/update/qa/review/note/distill/experts/prompts/plan/mockup/ui/storyboard/docs/playtest/voice/zhanji
+├── actions/                 # 按需加载:onboard/record/brief/consolidate/update/qa/review/note/distill/experts/prompts/plan/mockup/ui/storyboard/docs/playtest/voice/zhanji/doctor
 ├── hooks/hooks.json         # exec 形式(Windows-safe)
 ├── scripts/*.js             # 全 Node,无第三方依赖
 ├── templates/brain/         # onboard 时复制到 ~/.yide

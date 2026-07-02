@@ -58,3 +58,5 @@ claude mcp add --scope user --transport stdio coplay-mcp --env MCP_TOOL_TIMEOUT=
 - **安全**:这套能在编辑器里执行代码/改工程 → 只对**版本控制下**的工程用,提交前看 diff。
 - **版本**:CoplayDev 还在快速迭代,`@latest` 可能和 Unity 包版本漂移;真出问题就在 Package Manager 里更新包、或 pin 一个版本。
 - 不想用了:`/mcp` 里禁用,或 `claude mcp remove coplay-mcp`。翼德自动退回静态把关。
+
+> **连不上 / 没生效?** 先跑一次 **翼德 体检**(`node scripts/doctor.js`)自查,再深挖。

@@ -64,7 +64,7 @@ gradient / metallic / glow 来自套件的 9-slice 精灵(uGUI 没原生 box-sha
 
 ## 9. 视效重做到"成品级"(指针)
 > 项目挂了 `ui-visual-rework` skill(如 Extraction)→ **以它为准**,本节不重复(双源必漂移)。未挂 skill 的项目用下面 5 行通用要点兜底:
-- **配方来自 dump,不肉眼猜**:kit preview 只选方向;真施工图 = dump 同名 demo prefab 每节点的 sprite/type/tint/rect/字号照抄;素材靠 GUID 反查 + 像素采样定性(可染基底 / 描边框 / 能否 Sliced)。
+- **配方来自 dump,不肉眼猜**:kit preview 只选方向;真施工图 = dump 同名 demo prefab 每节点的 sprite/type/tint/rect/字号照抄;素材靠 GUID 反查(`node scripts/guid-find.js <asset路径|GUID> <项目根>` 列出谁引用它)+ 像素采样定性(可染基底 / 描边框 / 能否 Sliced)。
 - **视觉语言**:状态即 tint;层叠固定序 `Bg → 高光/底纹 → 描边 → Glow → 图标 → 文字`;复用 kit 组件家族;"当前/可点"必须活。
 - **动效三段式(DOTween)**:光效 ramp → 主体 punch(OutBack)→ 内容 stagger;持续层旋转光圈/glow 呼吸;全 `.SetUpdate(true)`、tween 记账必 `Kill()`、入场动画限量。
 - **工程化**:builder 进 editor setup + `Rebuild` 菜单;prefab 同路径覆盖保 GUID;重建后 grep 日志零 "not found"。

@@ -69,3 +69,5 @@ python integrations\voice-prompt\yide_voice.py
 
 ## 10. 验证边界（诚实，未替你跑过）
 确定性部分（拉起子进程、解析 JSON、SendInput 调用）是代码逻辑；但 **① 全局热键在你机器上能捕获、② 麦克风、③ Google 流式出中文、④ SendInput 把中文打进 Rider 终端的 Claude Code 输入框** 这四环必须在你真 Windows + 真环境端到端验一次。尤其第 ④ 环：个别终端/输入法对 Unicode 注入处理不同，第一次务必亲测一句。翼德没在你机器上跑过，不冒充已验证。
+
+> **连不上 / 没生效?** 先跑一次 **翼德 体检**(`node scripts/doctor.js`)自查,再深挖。

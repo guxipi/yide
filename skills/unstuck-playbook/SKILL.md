@@ -55,6 +55,7 @@ description: A cross-domain methodology + anti-stuck playbook for when you’re 
 
 - **并行侦察**:一条消息发多个 `Agent`(Explore)调用,每个 prompt 具体到"读哪些文件、报什么结构"。
 - **临时探针脚本**:一次性探针 `Temp/yide_*.cs` 经 Coplay `execute_script` 跑,`Debug.Log` 真实状态到 logs 再读;或 dump 到 `Temp/*.txt` 再 Read,用完即删。要留作工具的 builder → `Assets/Editor/CoplayTemp/`(别删)。
+- **换/删资产前先查引用面**:`node scripts/guid-find.js <asset路径|GUID> <项目根>` 列出谁引用它,免删了留一堆 missing 引用。
 - **闭环迭代节奏**(改了 editor 代码):停 Play → 等重编译 → `open_scene` 回目标场景 → 跑 builder → SaveScene → 再进 Play 测。
 - **交叉验证**:任何"成功"用第二通道确认(编译/落盘/行为/数值)。
 - **拆块可见**:`TaskCreate` 分块 + 实时 in_progress/completed,你和勾哥都看得见进度、不漏步。
