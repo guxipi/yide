@@ -51,7 +51,14 @@ description: Turn an Extraction Campaign greybox room map into a production-grad
 - 巡场拍图别裸传送:战斗房传进去几秒就被打死。**warp+清怪+回血+`Time.timeScale=0` 一次调用做完**,拍完 timeScale=1;分两次调用必有竞态
 - editor 卡死时 stop_game 会排队,连发后用 get_unity_editor_state 轻探,等它消化;测完必 stop(铁律)
 
-## 6. 收尾
+## 6. 光影底座(扁平感的最大单一来源,配一次全项目受益)
+Gemini 对照 Brawl Stars 拆出的差距里,光影 > 贴图 > 面数。Extraction 已配好(工具 `LightingUpgrade.cs`,幂等),新项目照抄:
+- **SSAO**:URP renderer feature,Depth 模式(不用 DepthNormals pass)+ InterleavedGradient + Downsample + Samples Medium(手游友好);Intensity≈1.6/Radius≈0.4/Falloff≈60。**自定义 toon shader 必须自己采样**:`multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION` + `SampleAmbientOcclusion(GetNormalizedScreenSpaceUV(positionCS.xy))`(Lighting.hlsl 已带 include),乘进 finalColor——不加这步 SSAO 对 ToonLit 物体完全无效
+- **软阴影**:RP asset `m_SoftShadowsSupported=1` + shadowmap 2048 + Light 组件 `LightShadows.Soft` 三处都要;toon shader 里投影 re-band 放宽(smoothstep 0.15-0.9)边缘才羽化
+- **后处理**:场景相机 `renderPostProcessing=true` + 全局 Volume(Bloom 0.35/threshold 0.95 只给 emission、Saturation +8、Contrast +6、Vignette 0.18)
+- **地面纹理过渡**:ToonLit 的 world-space 双八度 value noise 变化(_VariationColor/Scale/Strength),地面材质开 0.5-0.6 强度——零贴图内存把"纯色块"变"有质感的色块"
+
+## 7. 收尾
 - 改动面只应有:地图 prefab、PlanetKits 材质、(首次)ToonLit shader 的 emission 三处、CoplayTemp 工具;字体 SDF .asset 是 Play 动态图集自动 dirty,不算
 - 不 commit 不 push(红线);向勾哥交付截图(scene-view 全图 + 游戏相机逐房)
 

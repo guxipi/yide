@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node test/run.js",
     "audit": "node scripts/audit-injection.js",
+    "audit:real": "node scripts/audit-injection.js --real",
     "validate": "node scripts/validate-skills.js"
   }
 }
