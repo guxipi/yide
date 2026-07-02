@@ -2,10 +2,10 @@
 // 翼德 · 会话健康度:在 UserPromptSubmit 时按会话累计"纠正次数 / 提问数",
 // 命中阈值就**一次性**温和提醒勾哥重开会话(治"一个 bug 修 6 遍 / 长对话上下文污染")。
 // 关键:提醒里带"重开前我把要点记进教训库,新会话自动带上"——破"重开就忘"的顾虑。
-// 非阻断;每会话每种提醒只发一次;状态走 store(.meta/session-health.json)。仅 Node 内置模块。
+// 非阻断;每会话每种提醒只发一次;状态走本机私有 store(~/.yide-local/session-health.json,不进同步盘)。仅 Node 内置模块。
 const path = require('path');
 const { CORRECT } = require(path.join(__dirname, 'signals.js'));
-const { readJson, writeJson } = require(path.join(__dirname, 'store.js'));
+const { readLocalJson, writeLocalJson } = require(path.join(__dirname, 'store.js'));
 
 const FILE = 'session-health.json';
 const CLEAR_AT = 3;  // 同会话纠正达到此数 → 提醒重开
@@ -17,7 +17,7 @@ function sessionNudge(input) {
   const sid = (input && input.session_id) || 'nosid';
   if (!prompt) return '';
 
-  let db = readJson(FILE, {}) || {};
+  let db = readLocalJson(FILE, {}) || {};
   if (Object.keys(db).length > 60 && !db[sid]) db = {}; // 防无限增长:会话太多就只留当前
 
   const s = db[sid] || { prompts: 0, corrections: 0, nudgedClear: false, nudgedLong: false };
@@ -34,7 +34,7 @@ function sessionNudge(input) {
   }
 
   db[sid] = s;
-  writeJson(FILE, db);
+  writeLocalJson(FILE, db);
   return msg;
 }
 

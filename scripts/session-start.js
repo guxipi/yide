@@ -4,7 +4,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { brainDir, today } = require(path.join(__dirname, 'lib.js'));
+const { brainDir, today, locationPointerPath } = require(path.join(__dirname, 'lib.js'));
 const { detect, profileText } = require(path.join(__dirname, 'unity-context.js'));
 const { countActive } = require(path.join(__dirname, 'lessons.js'));
 const { syncExperts } = require(path.join(__dirname, 'sync-experts.js'));
@@ -32,10 +32,31 @@ function emit(ctx, title) {
 function read(rel, base) {
   try { return fs.readFileSync(path.join(base, rel), 'utf8'); } catch { return null; }
 }
+function pointerTarget() {
+  try { const s = String(fs.readFileSync(locationPointerPath(), 'utf8')).trim(); if (s) return s; } catch {}
+  return process.env.YIDE_HOME || '';
+}
 
 try {
-  if (!fs.existsSync(BRAIN)) {
-    // 首次见面:自我介绍 + 引导 onboard(由模型把这段话讲给用户)
+  const brainExists = fs.existsSync(BRAIN);
+  // 之前是否认领过大脑(有指针文件或 YIDE_HOME)。认领过 = 老用户,绝不能当新人重新 onboard(那正是幽灵大脑的成因)。
+  const claimed = !!pointerTarget();
+
+  // 大脑离线:认领过、但目标目录当前不在(同步盘没挂载 / 盘符没起)→ 提示离线,绝不重新 onboarding。
+  if (!brainExists && claimed) {
+    emit(
+      '⚠️ 【翼德:大脑离线 —— 不要当新用户处理】\n' +
+      '你的大脑指针指向的目录当前不存在,多半是 **Google Drive / 同步盘还没挂载**(或盘符没起)。\n' +
+      `- 指针指向:${pointerTarget()}\n` +
+      '- 请勾哥确认同步盘挂载后**重开会话**;在此之前**不要重新 onboarding、不要新建大脑**(会和真身分裂成幽灵大脑)。\n' +
+      '- 应急加载红线:待盘挂上后读该目录下 core/hard-rules.md。',
+      '🗡️ 翼德 · 大脑离线'
+    );
+    process.exit(0);
+  }
+
+  if (!brainExists) {
+    // 真·首次见面(既没大脑也没指针):自我介绍 + 引导 onboard(由模型把这段话讲给用户)
     emit(
       '【翼德首次启动 · 请把下面这段自我介绍讲给用户,然后引导他说"翼德,磨合一下"来开始 onboarding】\n\n' +
       '你好,勾哥!我是咕鸡为你打造的专属秘书,叫翼德——**直接喊我就行**:跟我说"翼德,…"(如"翼德,磨合一下""翼德 记一下…")。\n\n' +
@@ -46,6 +67,23 @@ try {
       '我的大脑是一堆纯文本(在 ~/.yide,随时能翻):core=你是谁+红线、lessons=redflag、style=代码与沟通风格、projects=项目背景。\n\n' +
       '只要花 2–3 分钟、答几道选择题(Unity 版本/风格/红线)跟我磨合,就能正式上岗。准备好就说一句"翼德,磨合一下"(或打命令 /yide:yide onboard)!',
       '🗡️ 翼德 · 初次见面'
+    );
+    process.exit(0);
+  }
+
+  // 大脑完整性哨兵:目录存在但缺关键文件(INDEX.md / core/identity.md)= 指针指错一层 / 幽灵大脑。
+  // 绝不当正常大脑用、绝不 onboarding —— 只醒目报警,让勾哥修指针。
+  const hasIndex = fs.existsSync(path.join(BRAIN, 'INDEX.md'));
+  const hasIdentity = fs.existsSync(path.join(BRAIN, 'core', 'identity.md'));
+  if (!hasIndex || !hasIdentity) {
+    const missing = [!hasIndex ? 'INDEX.md' : null, !hasIdentity ? 'core/identity.md' : null].filter(Boolean).join(' + ');
+    emit(
+      '⚠️ 【翼德:大脑不完整 —— 极可能指针指错目录,别当正常大脑用】\n' +
+      `当前大脑目录存在,但缺少关键文件(${missing}),你的身份 / 红线 / 教训都加载不到。\n` +
+      `- 当前指向:${BRAIN}\n` +
+      '- **最常见原因:指针多写了一层目录**(如 …/My Drive/yide/yide-brain,正确应为 …/My Drive/yide-brain)。健康大脑的根目录**直接含** INDEX.md 与 core/identity.md。\n' +
+      '- 请勾哥把 ~/.yide-location 指回正确的大脑根目录后**重开会话**;修好前**不要 onboarding、不要新建大脑**。可跑"翼德 体检"定位。',
+      '🗡️ 翼德 · 大脑不完整'
     );
     process.exit(0);
   }
@@ -112,5 +150,15 @@ try {
 
   emit(ctx, '🗡️ 翼德已就位 · ' + today());
 } catch (e) {
+  // 别静默失联:出错也给一条最小降级简报,至少让新会话知道翼德在、红线去哪读,而不是整段消失(H: 盘没挂/超时都会走到这)。
+  try {
+    emit(
+      '🗡️ 翼德简报加载失败(降级模式)\n' +
+      `简报生成时出错(${(e && e.message) || '未知错误'}),这轮只给最小提示:\n` +
+      '- 我(翼德)仍在;需要身份/红线/风格时,请读 ~/.yide/core/hard-rules.md 与 core/identity.md。\n' +
+      '- 若反复出现,多半是大脑目录 / 同步盘异常 —— 让勾哥跑一次"翼德 体检"。',
+      '🗡️ 翼德 · 降级简报'
+    );
+  } catch {}
   process.exit(0);
 }

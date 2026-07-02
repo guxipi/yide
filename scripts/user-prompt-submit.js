@@ -6,7 +6,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { readJson, writeJson } = require(path.join(__dirname, 'store.js'));
+const { readLocalJson, writeLocalJson } = require(path.join(__dirname, 'store.js'));
 const { matchByText } = require(path.join(__dirname, 'prompts-lib.js'));
 const { sessionNudge } = require(path.join(__dirname, 'session-health.js'));
 
@@ -22,12 +22,12 @@ function recallSuggestion(prompt, sid) {
   if (!m || m.score < THRESHOLD) return null;
   const slug = m.entry.slug;
 
-  let log = readJson('prompt-suggest-log.json', {}) || {};
+  let log = readLocalJson('prompt-suggest-log.json', {}) || {};
   const seen = log[sid] || [];
   if (seen.includes(slug)) return null; // 同会话不重复推荐(防 nagging)
   seen.push(slug); log[sid] = seen;
   if (Object.keys(log).length > 80) log = { [sid]: seen }; // 防无限增长
-  writeJson('prompt-suggest-log.json', log);
+  writeLocalJson('prompt-suggest-log.json', log);
 
   const uses = m.entry.uses || 0;
   return `📌 翼德(prompt 库提示,不强求):你存过一条也许适合这次的——「${m.entry.name}」` +

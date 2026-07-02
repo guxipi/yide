@@ -6,6 +6,10 @@
 
 1. **盘点**:读取 `~/.yide/INDEX.md`、`lessons/` 下所有 `L-*.md`、以及 `.meta/inbox/`(待整理的原始提炼,若有)。
 
+   同时用 Bash 跑一次同步盘冲突副本巡检(大脑在 Google Drive/Dropbox,多机同天写会留冲突副本):
+   `node "${CLAUDE_SKILL_DIR}/scripts/conflict-scan.js"`
+   有输出 `CONFLICTS` 就把清单**念给勾哥裁决**(留哪份/删哪份),别自作主张删。
+
 2. **两阶段对账**(借鉴 mem0 的 ADD/UPDATE/DELETE/NOOP)。对每条候选/已有记忆判定:
    - **ADD**:新的、不重复 → 保留/新建。
    - **UPDATE**:与已有同主题但更新更准 → 合并,旧的标 `status: superseded`(软删除,保留历史)。

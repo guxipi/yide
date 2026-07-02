@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { brainDir } = require(path.join(__dirname, 'lib.js'));
+const { readLocalJson, writeLocalJson } = require(path.join(__dirname, 'store.js'));
 const { lint } = require(path.join(__dirname, 'lint-unity.js'));
 const { matchByPath, globToRe } = require(path.join(__dirname, 'lessons.js'));
 
@@ -62,15 +63,14 @@ try {
 
   // 去重:同文件、同一组(findings + lesson ids)只提醒一次
   const sig = findings.map(f => f.line + f.msg).join('|') + '#' + lessons.map(l => l.id).join(',');
-  const seenFile = path.join(brainDir(), '.meta', 'lint-seen.json');
-  let seen = {};
-  try { seen = JSON.parse(fs.readFileSync(seenFile, 'utf8')); } catch {}
+  const SEEN = 'lint-seen.json';                          // 本机私有(会话去重状态,不进同步盘)
+  let seen = readLocalJson(SEEN, {}) || {};
   const hash = crypto.createHash('sha1').update(sig).digest('hex');
   if (seen[fp] === hash) process.exit(0);
   delete seen[fp]; seen[fp] = hash;                       // 移到最新(LRU)
   const seenKeys = Object.keys(seen);                     // 防无界增长:只留最近 200 个文件(对象保插入序,裁最旧)
   if (seenKeys.length > 200) for (const k of seenKeys.slice(0, seenKeys.length - 200)) delete seen[k];
-  try { fs.mkdirSync(path.dirname(seenFile), { recursive: true }); fs.writeFileSync(seenFile, JSON.stringify(seen)); } catch {}
+  writeLocalJson(SEEN, seen);
 
   let msg = '';
   if (lessons.length) {

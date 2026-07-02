@@ -2,11 +2,12 @@
 // 翼德 · extraction 个人项目专属上下文(奖励 + 督促 + 张飞人格 + 彩蛋)。
 // 从 session-start.js 拆出(它是开场注入里最大、最易变、最自成一体的一块)。
 // 仅当项目路径含 "extraction" 且未在 extraction-fun.json 里关闭时,返回一段要追加进开场上下文的文本;否则返回 ''。
-// 副作用:写 greet-state.json(开场问候 / 深夜守护各每天一次,state 门控不刷屏)。
-//   独立文件,不与 progress.js 的 game-state.json 共用 —— 二者各写各的,避免两进程整体读改写互相吞 key。仅 Node 内置模块。
+// 副作用:写本机私有 greet-state.json(~/.yide-local,开场问候 / 深夜守护各每天一次,state 门控不刷屏)。
+//   本机私有 → 不进同步盘(否则多机同天各写各的会 conflicted copy);与 progress.js 的 game-state.json(耐久战绩,留共享)也各写各的。仅 Node 内置模块。
 const fs = require('fs');
 const path = require('path');
 const { today } = require(path.join(__dirname, 'lib.js'));
+const { readLocalJson, writeLocalJson } = require(path.join(__dirname, 'store.js'));
 
 function extractionContext(BRAIN, PROJECT, PLUGIN_ROOT) {
   let fun = {};
@@ -23,8 +24,7 @@ function extractionContext(BRAIN, PROJECT, PLUGIN_ROOT) {
   // 开场问候 / 深夜守护:确定性、每天/每夜各一次(state 门控,不刷屏)
   const day = today();
   const hour = new Date().getHours();
-  const gsPath = path.join(BRAIN, '.meta', 'greet-state.json');
-  let gs = {}; try { gs = JSON.parse(fs.readFileSync(gsPath, 'utf8')); } catch {}
+  let gs = readLocalJson('greet-state.json', {}) || {};  // 本机私有:开场/守护每天一次的门控,不进同步盘
   let egg = '', dirty = false;
   if ((!fun.greeting || fun.greeting.enabled !== false) && gs.lastGreetDate !== day) {
     const g = hour < 6 ? '夜深了,勾哥还在肝?' : hour < 12 ? '早,勾哥!' : hour < 18 ? '勾哥,下午好!' : '勾哥,晚上好!';
@@ -36,7 +36,7 @@ function extractionContext(BRAIN, PROJECT, PLUGIN_ROOT) {
     egg += `🌙 勾哥,身体是革命的本钱,张飞劝你早些收兵歇息。\n`;
     gs.lastNightGuard = day; dirty = true;
   }
-  if (dirty) { try { fs.mkdirSync(path.dirname(gsPath), { recursive: true }); fs.writeFileSync(gsPath, JSON.stringify(gs, null, 2)); } catch {} }
+  if (dirty) writeLocalJson('greet-state.json', gs, true);
 
   return `\n---\n## 🎮 extraction 项目专属\n` +
     (egg ? `(开场:把下面这句先对勾哥说)\n${egg}\n` : '') +

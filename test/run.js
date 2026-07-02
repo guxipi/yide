@@ -17,6 +17,7 @@ const BRAIN = path.join(TMP, '.yide');
 fs.mkdirSync(path.join(BRAIN, '.meta'), { recursive: true });
 fs.mkdirSync(path.join(BRAIN, 'core'), { recursive: true });
 process.env.YIDE_HOME = BRAIN; // 给本进程内 require 的模块用
+process.env.YIDE_LOCAL = path.join(TMP, '.yide-local'); // 本机私有状态隔离到临时目录(别碰真实 ~/.yide-local)
 
 let pass = 0, fail = 0;
 const fails = [];
@@ -109,6 +110,7 @@ t('SessionStart 注入 charter + 红线', () => {
   for (const f of ['identity.md', 'hard-rules.md', 'charter.md']) {
     fs.copyFileSync(path.join(ROOT, 'templates', 'brain', 'core', f), path.join(sb, 'core', f));
   }
+  fs.writeFileSync(path.join(sb, 'INDEX.md'), '# index'); // 健康大脑要过完整性哨兵
   const out = execFileSync('node', [path.join(SCRIPTS, 'session-start.js')], {
     input: '{}', encoding: 'utf8',
     env: Object.assign({}, process.env, { YIDE_HOME: sb, CLAUDE_PLUGIN_ROOT: ROOT, CLAUDE_PROJECT_DIR: TMP }),
@@ -124,6 +126,7 @@ function startCtx(brainVerOrNull) {
   fs.mkdirSync(path.join(vb, 'core'), { recursive: true });
   fs.mkdirSync(path.join(vb, '.meta'), { recursive: true });
   for (const f of ['identity.md', 'hard-rules.md', 'charter.md']) fs.copyFileSync(path.join(ROOT, 'templates', 'brain', 'core', f), path.join(vb, 'core', f));
+  fs.writeFileSync(path.join(vb, 'INDEX.md'), '# index'); // 健康大脑要过完整性哨兵
   if (brainVerOrNull) fs.writeFileSync(path.join(vb, '.meta', 'plugin-version.txt'), brainVerOrNull);
   const out = execFileSync('node', [path.join(SCRIPTS, 'session-start.js')], {
     input: '{}', encoding: 'utf8',
@@ -319,6 +322,90 @@ t('playtest 跨项目护栏:Unity 写来源项目 + 混项目告警 + 单项目�
   assert(/SessionRoot/.test(mixed) && /留空/.test(mixed), '告警应给修复路径(SessionRoot 留空)');
   const single = runPlaytest(['SoloGame']);
   assert(/来源项目:SoloGame/.test(single) && !/文件串项目/.test(single), '单项目应显示来源且不告警');
+});
+
+// === 8b. store 本机私有状态 + 原子写(2026-07-02 audit Phase 1)===
+t('1.1 writeLocal 落 localDir 而非 .meta;readLocal 本机无值时回退共享(平滑迁移)', () => {
+  const sbrain = path.join(TMP, 'storebrain', '.yide');
+  const slocal = path.join(TMP, 'storelocal');
+  fs.mkdirSync(path.join(sbrain, '.meta'), { recursive: true });
+  fs.mkdirSync(slocal, { recursive: true });
+  // 用独立 env 加载一份 store(隔离,不污染全局 process.env)
+  delete require.cache[require.resolve(path.join(SCRIPTS, 'store.js'))];
+  delete require.cache[require.resolve(path.join(SCRIPTS, 'lib.js'))];
+  const savedHome = process.env.YIDE_HOME, savedLocal = process.env.YIDE_LOCAL;
+  process.env.YIDE_HOME = sbrain; process.env.YIDE_LOCAL = slocal;
+  const store = require(path.join(SCRIPTS, 'store.js'));
+  // 旧共享副本存在、本机还没有 → readLocal 应回退取到旧值
+  fs.writeFileSync(path.join(sbrain, '.meta', 'greet-state.json'), JSON.stringify({ lastGreetDate: '2020-01-01' }));
+  assert(store.readLocalJson('greet-state.json', {}).lastGreetDate === '2020-01-01', '本机无值应回退读共享旧副本');
+  // 写:落 localDir,不再碰共享
+  store.writeLocalJson('greet-state.json', { lastGreetDate: '2026-07-02' });
+  assert(fs.existsSync(path.join(slocal, 'greet-state.json')), '应写到 localDir');
+  assert(store.readLocalJson('greet-state.json', {}).lastGreetDate === '2026-07-02', '之后应优先读本机值');
+  assert(JSON.parse(fs.readFileSync(path.join(sbrain, '.meta', 'greet-state.json'), 'utf8')).lastGreetDate === '2020-01-01', 'writeLocal 不该改共享旧副本(留 migrate 清理)');
+  // 恢复
+  process.env.YIDE_HOME = savedHome; process.env.YIDE_LOCAL = savedLocal;
+  delete require.cache[require.resolve(path.join(SCRIPTS, 'store.js'))];
+  delete require.cache[require.resolve(path.join(SCRIPTS, 'lib.js'))];
+});
+t('1.2 原子写:写后无残留 .tmp;并发覆盖不产生半截文件', () => {
+  const abrain = path.join(TMP, 'atomicbrain', '.yide');
+  fs.mkdirSync(path.join(abrain, '.meta'), { recursive: true });
+  delete require.cache[require.resolve(path.join(SCRIPTS, 'store.js'))];
+  delete require.cache[require.resolve(path.join(SCRIPTS, 'lib.js'))];
+  const savedHome = process.env.YIDE_HOME;
+  process.env.YIDE_HOME = abrain;
+  const store = require(path.join(SCRIPTS, 'store.js'));
+  store.writeJson('game-state.json', { streak: 3 }, true);
+  assert(!fs.existsSync(path.join(abrain, '.meta', 'game-state.json.tmp')), '不该留 .tmp 残留');
+  assert(store.readJson('game-state.json', {}).streak === 3, '原子写内容应正确');
+  process.env.YIDE_HOME = savedHome;
+  delete require.cache[require.resolve(path.join(SCRIPTS, 'store.js'))];
+  delete require.cache[require.resolve(path.join(SCRIPTS, 'lib.js'))];
+});
+
+// === 8c. 大脑完整性哨兵 + 降级简报(2026-07-02 audit Phase 1.3/1.4)===
+function runStart(env) {
+  const out = execFileSync('node', [path.join(SCRIPTS, 'session-start.js')], {
+    input: '{}', encoding: 'utf8', env: Object.assign({}, process.env, env),
+  });
+  return JSON.parse(out).hookSpecificOutput;
+}
+t('1.3 大脑不完整(缺 INDEX.md)→ 报警、不当正常大脑、不 onboard', () => {
+  const ib = path.join(TMP, 'incompletebrain', '.yide');
+  fs.mkdirSync(path.join(ib, 'core'), { recursive: true });
+  fs.copyFileSync(path.join(ROOT, 'templates', 'brain', 'core', 'identity.md'), path.join(ib, 'core', 'identity.md'));
+  const o = runStart({ YIDE_HOME: ib, CLAUDE_PLUGIN_ROOT: ROOT, CLAUDE_PROJECT_DIR: TMP });
+  assert(/大脑不完整/.test(o.additionalContext), '应报"大脑不完整"');
+  assert(!/工作准则/.test(o.additionalContext), '不该继续输出正常简报');
+  assert(!/磨合|初次启动/.test(o.additionalContext), '不该走 onboarding');
+});
+t('1.3 大脑离线(目录不存在但认领过)→ 报离线、绝不重新 onboard', () => {
+  const o = runStart({ YIDE_HOME: path.join(TMP, 'no-such-brain-xyz'), CLAUDE_PLUGIN_ROOT: ROOT, CLAUDE_PROJECT_DIR: TMP });
+  assert(/大脑离线/.test(o.additionalContext), '应报"大脑离线"');
+  assert(!/磨合|初次启动/.test(o.additionalContext), '认领过就绝不重新 onboarding');
+});
+t('1.4 顶层 catch 给降级简报而非静默 exit;SessionStart timeout ≥15s', () => {
+  const src = fs.readFileSync(path.join(SCRIPTS, 'session-start.js'), 'utf8');
+  assert(/降级模式/.test(src) && /catch\s*\(e\)/.test(src), 'catch 分支应 emit 降级简报');
+  const h = JSON.parse(fs.readFileSync(path.join(ROOT, 'hooks', 'hooks.json'), 'utf8'));
+  assert(h.hooks.SessionStart[0].hooks[0].timeout >= 15, 'SessionStart timeout 应 ≥15s');
+});
+t('1.5 冲突副本巡检:命中英文/中文/数字去重,跳过 archive', () => {
+  const { findConflicts, isConflictName } = require(path.join(SCRIPTS, 'conflict-scan.js'));
+  assert(isConflictName('identity (conflicted copy 2026-07-02).md'), '英文冲突副本');
+  assert(isConflictName('教训的冲突副本.md'), '中文冲突副本');
+  assert(isConflictName('note (1).md'), '数字去重副本');
+  assert(!isConflictName('normal.md'), '正常文件不命中');
+  const cb = path.join(TMP, 'conflictbrain');
+  fs.mkdirSync(path.join(cb, 'lessons', 'archive'), { recursive: true });
+  fs.writeFileSync(path.join(cb, 'lessons', 'L-x (1).md'), 'x');
+  fs.writeFileSync(path.join(cb, 'lessons', 'L-y.md'), 'y');
+  fs.writeFileSync(path.join(cb, 'lessons', 'archive', 'old (conflicted copy).md'), 'z');
+  const hits = findConflicts(cb).map(p => path.basename(p));
+  assert(hits.includes('L-x (1).md'), '应命中活跃区冲突副本');
+  assert(!hits.some(h => /old/.test(h)), 'archive 区应跳过');
 });
 
 // === 8. 安全加固(2026-07-02 audit Phase 0)===
