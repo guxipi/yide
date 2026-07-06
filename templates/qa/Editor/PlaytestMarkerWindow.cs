@@ -147,7 +147,7 @@ namespace Yide.Playtest
             catch { }
         }
 
-        // 与 PlaytestMarker.SessionRoot 同源(同一个 EditorPrefs 键)
+        // 与 PlaytestMarker.SessionRoot 同源(同一个 EditorPrefs 键);规范落工程内 "QA/playtest"(消费端 playtest.js / .gitignore 同此)。
         static string SessionRoot()
         {
             var custom = EditorPrefs.GetString("Yide.Playtest.SessionRoot", "");
@@ -160,7 +160,16 @@ namespace Yide.Playtest
     {
         Texture2D _thumb;
         bool _showSettings;
-        GUIStyle _noteStyle;   // 打字框样式:自动换行
+        GUIStyle _noteStyle, _stepOn, _stepOff;   // 缓存:每帧 new GUIStyle 会爆 GC,IMGUI 规范是建一次复用
+
+        void EnsureStyles()
+        {
+            if (_noteStyle != null) return;
+            _noteStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
+            _stepOff   = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleCenter };
+            _stepOn    = new GUIStyle(_stepOff) { fontStyle = FontStyle.Bold };
+            _stepOn.normal.textColor = new Color(0.30f, 0.85f, 0.55f);
+        }
 
         public static void Open()
         {
@@ -176,62 +185,153 @@ namespace Yide.Playtest
 
         void OnGUI()
         {
+            EnsureStyles();
+
             if (!PlaytestMarkerBridge.Active || PlaytestMarkerBridge.Pending == null)
             {
-                EditorGUILayout.Space(8);
-                EditorGUILayout.HelpBox("没有进行中的标注。\n在 Play 模式按 F8 冻帧并开始录音。", MessageType.Info);
-                DrawSettings();
+                DrawIdle();
                 return;
             }
+
             var m = PlaytestMarkerBridge.Pending;
             var phase = PlaytestMarkerBridge.Phase;
 
-            EditorGUILayout.Space(6);
-            EditorGUILayout.LabelField($"◆ 本场第 {m.index} 条 · 场景 {m.scene}", EditorStyles.boldLabel);
+            HandleKeys();
 
-            // 截图大图(按窗口高度自适应放大;点一下弹出全尺寸放大窗)
+            EditorGUILayout.Space(8);
+            DrawHeader(m, phase);
+            EditorGUILayout.Space(8);
+            DrawShot(m);
+            EditorGUILayout.Space(6);
+            DrawContext(m);
+            EditorGUILayout.Space(6);
+            DrawNote(phase);
+            EditorGUILayout.Space(10);
+            DrawActions(phase);
+
+            DrawSettings();
+        }
+
+        // ── 空闲态:三种新建入口(配置项收进 ⚙ 设置,这里只留动作)──
+        void DrawIdle()
+        {
+            EditorGUILayout.Space(8);
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("没有进行中的标注", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("按 F8 截当前 Unity 窗口(Play 模式则冻帧并录音)。", EditorStyles.wordWrappedMiniLabel);
+                EditorGUILayout.LabelField("网页 / 任意图:系统截图进剪贴板后点下方粘贴,或把图片拖进来。", EditorStyles.wordWrappedMiniLabel);
+            }
+
+            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("新建标注", EditorStyles.miniBoldLabel);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("📋 粘贴剪贴板", GUILayout.Height(34))) PlaytestEditorCapture.IngestFromClipboard();
+                if (GUILayout.Button("📸 截图", GUILayout.Width(84), GUILayout.Height(34))) PlaytestEditorCapture.LaunchSnip();
+            }
+            DrawDropArea();
+
+            EditorGUILayout.Space(6);
+            EditorGUILayout.LabelField("测完回 Claude Code 说「翼德看下截图」,按这批截图汇总 todo。", EditorStyles.centeredGreyMiniLabel);
+
+            DrawSettings();
+        }
+
+        // Del/Backspace 删图、Esc 取消(打字框聚焦时不抢键,交给文本编辑)。
+        // 键盘只发给聚焦中的窗口 → 没反应时先点本窗口,或用下方按钮(不依赖焦点)。
+        void HandleKeys()
+        {
+            var ev = Event.current;
+            if (ev.type != EventType.KeyDown || EditorGUIUtility.editingTextField) return;
+            if (ev.keyCode == KeyCode.Delete || ev.keyCode == KeyCode.Backspace)
+            {
+                PlaytestEditorCapture.DeleteShot();
+                ev.Use();
+            }
+            else if (ev.keyCode == KeyCode.Escape)
+            {
+                PlaytestMarkerBridge.RequestCancel?.Invoke();
+                ev.Use();
+            }
+        }
+
+        // 顶部:第几条 + 三段流程进度条(当前步高亮)
+        void DrawHeader(PendingMarker m, MarkPhase phase)
+        {
+            EditorGUILayout.LabelField($"◆ 第 {m.index} 条 · 场景 {m.scene}", EditorStyles.boldLabel);
+            int step = phase == MarkPhase.Recording ? 0 : 1;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                DrawStep("① 录音", step == 0);
+                DrawArrow();
+                DrawStep("② 转写", step == 1);
+                DrawArrow();
+                DrawStep("③ 保存", false);
+            }
+        }
+
+        void DrawStep(string label, bool active) =>
+            GUILayout.Label(label, active ? _stepOn : _stepOff, GUILayout.Height(16));
+        void DrawArrow() =>
+            GUILayout.Label("▸", _stepOff, GUILayout.Width(14), GUILayout.Height(16));
+
+        // 截图大图(按窗口高度自适应;点一下弹出全尺寸放大窗)+ 粘贴/删除
+        void DrawShot(PendingMarker m)
+        {
             if (_thumb == null && File.Exists(m.shotPath))
             {
-                var bytes = File.ReadAllBytes(m.shotPath);
                 _thumb = new Texture2D(2, 2);
-                _thumb.LoadImage(bytes);
+                _thumb.LoadImage(File.ReadAllBytes(m.shotPath));
             }
             if (_thumb != null)
             {
                 float w = EditorGUIUtility.currentViewWidth - 24f;
-                // 给截图留窗口约一半高度,竖屏也能看清(原来死封 220 → 竖屏被压成细条)
-                float maxH = Mathf.Clamp(position.height * 0.5f, 260f, 1000f);
+                float maxH = Mathf.Clamp(position.height * 0.45f, 220f, 1000f);   // 竖屏长图也看得清
                 float h = Mathf.Min(maxH, w * _thumb.height / Mathf.Max(1, _thumb.width));
                 var r = GUILayoutUtility.GetRect(w, h);
                 GUI.DrawTexture(r, _thumb, ScaleMode.ScaleToFit);
                 if (GUI.Button(r, GUIContent.none, GUIStyle.none)) PlaytestShotZoom.Show(m.shotPath);
-                EditorGUILayout.LabelField("(点击截图可放大查看)", EditorStyles.centeredGreyMiniLabel);
+                EditorGUILayout.LabelField("点击放大", EditorStyles.centeredGreyMiniLabel);
             }
             else
             {
-                EditorGUILayout.HelpBox("截图生成中…(冻帧后下一帧落盘)", MessageType.None);
+                EditorGUILayout.HelpBox("当前没有截图(已删除 / 生成中)。点下方「粘贴截图」把剪贴板的图贴进来。", MessageType.None);
             }
 
-            // 自动抓到的上下文
-            EditorGUILayout.Space(4);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("📋 粘贴截图", GUILayout.Height(24))) PlaytestEditorCapture.PasteShotFromClipboard();
+                using (new EditorGUI.DisabledScope(!File.Exists(m.shotPath)))
+                    if (GUILayout.Button("🗑 删除 (Del)", GUILayout.Width(110), GUILayout.Height(24))) PlaytestEditorCapture.DeleteShot();
+            }
+        }
+
+        // 自动抓到的上下文(fps / t 仅运行时有意义,为 0 不显示)
+        void DrawContext(PendingMarker m)
+        {
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("▶ 命中元素(自动)", EditorStyles.miniBoldLabel);
-                EditorGUILayout.SelectableLabel(m.hitPath, EditorStyles.wordWrappedLabel, GUILayout.Height(34));
+                EditorGUILayout.LabelField("▶ 上下文(自动)", EditorStyles.miniBoldLabel);
+                EditorGUILayout.SelectableLabel(m.hitPath, EditorStyles.wordWrappedLabel, GUILayout.Height(32));
                 if (!string.IsNullOrEmpty(m.hitSource))
                     EditorGUILayout.LabelField("来源 " + m.hitSource, EditorStyles.miniLabel);
-                EditorGUILayout.LabelField($"分辨率 {m.screenW}×{m.screenH} · FPS {m.fps} · 版本 {m.version} · t {m.timeInGame:0.0}s", EditorStyles.miniLabel);
+                string meta = $"{m.screenW}×{m.screenH} · v{m.version}";
+                if (m.fps > 0 || m.timeInGame > 0f) meta += $" · {m.fps}fps · {m.timeInGame:0.0}s";
+                EditorGUILayout.LabelField(meta, EditorStyles.miniLabel);
             }
+        }
 
-            // 语音 / 转写状态
-            EditorGUILayout.Space(4);
+        // 阶段状态横幅 + 备注打字框(转写自动回填,可改)
+        void DrawNote(MarkPhase phase)
+        {
             if (phase == MarkPhase.Recording)
             {
                 var status = PlaytestAsrServer.Status;
                 bool ready = status == PlaytestAsrServer.State.Ready;
-                string msg = ready ? "🎙 正在听…说出这里的问题(边说边出字,说完按 F8 停录)"
-                           : status == PlaytestAsrServer.State.Starting ? "🎙 转写服务启动中…(可先说,稍后回填;或直接打字)"
-                           : "🎙 转写未就绪:可直接打字,按 F8 继续";
+                string msg = ready ? "🎙 正在听…说出问题,说完按 F8 停录"
+                           : status == PlaytestAsrServer.State.Starting ? "🎙 转写启动中…可先说或直接打字"
+                           : "🎙 转写未就绪,可直接打字,按 F8 继续";
                 EditorGUILayout.LabelField(msg, ready ? EditorStyles.boldLabel : EditorStyles.miniLabel);
             }
             else // Reviewing
@@ -240,15 +340,14 @@ namespace Yide.Playtest
                 EditorGUILayout.LabelField("📝 " + st, EditorStyles.boldLabel);
             }
 
-            // 打字框(转写自动回填,可改)
-            EditorGUILayout.Space(2);
-            EditorGUILayout.LabelField("⌨ 语音转写 / 打字补充(确认无误后按 F8 保存)", EditorStyles.miniLabel);
-            if (_noteStyle == null) _noteStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
+            EditorGUILayout.LabelField("⌨ 备注(语音自动回填,可改)", EditorStyles.miniLabel);
             PlaytestMarkerBridge.TypedNote = EditorGUILayout.TextArea(
                 PlaytestMarkerBridge.TypedNote ?? "", _noteStyle, GUILayout.Height(84));
+        }
 
-            // 按钮(标签随阶段变)
-            EditorGUILayout.Space(8);
+        // 主操作:取消 / 推进(标签随阶段变)
+        void DrawActions(MarkPhase phase)
+        {
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUI.backgroundColor = new Color(0.95f, 0.4f, 0.4f);
@@ -258,24 +357,52 @@ namespace Yide.Playtest
                 if (GUILayout.Button(advLabel, GUILayout.Height(34))) PlaytestMarkerBridge.RequestAdvance?.Invoke();
                 GUI.backgroundColor = Color.white;
             }
-            EditorGUILayout.LabelField("F8 开始录音 → 停录转写 → 保存 · Esc 取消 · 面板不挡游戏", EditorStyles.centeredGreyMiniLabel);
-
-            DrawSettings();
         }
 
-        // 一次性配置:Python / stt_google.py / Google 凭证(EditorPrefs 永久记住,默认从环境变量种子)
+        // 拖入图片文件 → 新建标注(来源不限:网页另存、参考图、外部截图工具存的文件)
+        void DrawDropArea()
+        {
+            var r = GUILayoutUtility.GetRect(0, 44, GUILayout.ExpandWidth(true));
+            GUI.Box(r, "🖱 把截图文件拖到这里新建标注", EditorStyles.helpBox);
+            var e = Event.current;
+            if ((e.type == EventType.DragUpdated || e.type == EventType.DragPerform) && r.Contains(e.mousePosition))
+            {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                if (e.type == EventType.DragPerform)
+                {
+                    DragAndDrop.AcceptDrag();
+                    foreach (var p in DragAndDrop.paths)
+                        if (IsImage(p)) { PlaytestEditorCapture.IngestFromFile(p); break; }
+                }
+                e.Use();
+            }
+        }
+
+        static bool IsImage(string p)
+        {
+            var ext = Path.GetExtension(p ?? "").ToLowerInvariant();
+            return ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".gif";
+        }
+
+        // 一次性配置:截图入口(本机)+ Python / stt_google.py / Google 凭证(EditorPrefs 永久记住)
         void DrawSettings()
         {
-            EditorGUILayout.Space(6);
+            EditorGUILayout.Space(8);
             bool needScript = string.IsNullOrEmpty(PlaytestAsrServer.ScriptPath) || !File.Exists(PlaytestAsrServer.ScriptPath);
             if (needScript)
-                EditorGUILayout.HelpBox("Google 转写还没配好 → 录音不会自动出字(可照常打字,事后再补转)。\n展开下方「⚙ 转写设置」:指向 stt_google.py,设一次即可。\n认证默认走 gcloud ADC(先 gcloud auth application-default login);用 service account 才需填 JSON。", MessageType.Warning);
+                EditorGUILayout.HelpBox("Google 转写未配置 → 录音不会自动出字(可照常打字,事后补转)。展开「⚙ 设置」指向 stt_google.py,设一次即可。", MessageType.Warning);
 
-            _showSettings = EditorGUILayout.Foldout(_showSettings || needScript, "⚙ 转写设置(Google STT · 设一次)", true);
+            _showSettings = EditorGUILayout.Foldout(_showSettings || needScript, "⚙ 设置(截图入口 + Google STT · 设一次)", true);
             if (!(_showSettings || needScript)) return;
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
+                EditorGUILayout.LabelField("截图入口(本机)", EditorStyles.miniBoldLabel);
+                PlaytestEditorCapture.ScreenshotHint = EditorGUILayout.TextField("截图键(备忘)", PlaytestEditorCapture.ScreenshotHint);
+                PlaytestEditorCapture.SnipCommand    = EditorGUILayout.TextField("📸 拉起命令", PlaytestEditorCapture.SnipCommand);
+
+                EditorGUILayout.Space(6);
+                EditorGUILayout.LabelField("语音转写(Google STT)", EditorStyles.miniBoldLabel);
                 PlaytestAsrServer.PythonPath = EditorGUILayout.TextField("Python", PlaytestAsrServer.PythonPath);
                 using (new EditorGUILayout.HorizontalScope())
                 {

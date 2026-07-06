@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { brainDir } = require(path.join(__dirname, 'lib.js'));
+const host = require(path.join(__dirname, 'host.js'));
 const { readLocalJson, writeLocalJson } = require(path.join(__dirname, 'store.js'));
 const { lint } = require(path.join(__dirname, 'lint-unity.js'));
 const { matchByPath, globToRe } = require(path.join(__dirname, 'lessons.js'));
@@ -17,7 +18,8 @@ function out(ctx) {
 }
 
 try {
-  const input = JSON.parse(fs.readFileSync(0, 'utf8') || '{}');
+  // 归一 host 差异:Claude Code 的 Write/Edit 原样;Codex 的 apply_patch 解析出 file_path + 新增文本。
+  const input = host.normalizeToolEvent(JSON.parse(fs.readFileSync(0, 'utf8') || '{}'));
   const fp = input.tool_input && input.tool_input.file_path;
   if (!fp) process.exit(0);
 
@@ -30,7 +32,7 @@ try {
   if (/\.cs$/i.test(fp)) {
     let unityVersion = null, source = '';
     try {
-      const proj = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+      const proj = host.projectDir(input);
       const m = fs.readFileSync(path.join(proj, 'ProjectSettings', 'ProjectVersion.txt'), 'utf8').match(/m_EditorVersion:\s*(.+)/);
       if (m) unityVersion = m[1].trim();
     } catch {}

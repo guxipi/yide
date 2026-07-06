@@ -12,6 +12,7 @@ const { syncExperts } = require(path.join(__dirname, 'sync-experts.js'));
 const { extractionContext } = require(path.join(__dirname, 'extraction-context.js'));
 const store = require(path.join(__dirname, 'store.js'));
 const { resolve } = require(path.join(__dirname, 'resolve.js'));
+const host = require(path.join(__dirname, 'host.js'));
 
 // a < b ?(semver,缺位按 0)
 function verLt(a, b) {
@@ -22,8 +23,8 @@ function verLt(a, b) {
 }
 
 const BRAIN = brainDir();
-const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, '..');
-const PROJECT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+const PLUGIN_ROOT = host.pluginRoot();  // Claude Code / Codex / 裸跑,统一收口在 host.js
+const PROJECT = host.projectDir();
 
 function emit(ctx, title) {
   process.stdout.write(JSON.stringify({
