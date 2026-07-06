@@ -51,6 +51,32 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/stop-audit.js"],
+            "timeout": 15,
+            "statusMessage": "翼德收尾审计中…"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/stop-audit.js"],
+            "timeout": 15,
+            "statusMessage": "翼德收尾审计中…"
+          }
+        ]
+      }
     ]
   }
 }

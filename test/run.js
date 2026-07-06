@@ -576,6 +576,106 @@ t('0.4 MCP allow 整词匹配:forget/budget 不因含 get 被误放', () => {
   assert(preToolDecision({ tool_name: 'mcp__coplay__get_game_object_info', tool_input: {} }) === 'allow', 'get_game_object_info 应放行');
 });
 
+// === 9. Stop/SubagentStop 收尾审计(完成声明 vs 验证证据)===
+// 跑 stop-audit.js:构造临时 transcript + hook 输入,返回 'block'|'pass'(pass=空输出放行)。
+function stopAudit(hookInput) {
+  const out = execFileSync('node', [path.join(SCRIPTS, 'stop-audit.js')], {
+    input: JSON.stringify(hookInput), encoding: 'utf8',
+  }).trim();
+  if (!out) return 'pass';
+  try { return JSON.parse(out).decision === 'block' ? 'block' : 'pass'; } catch { return 'pass'; }
+}
+// 把 entry 数组写成 JSONL transcript,返回路径。
+function writeTranscript(name, entries) {
+  const fp = path.join(TMP, 'transcript-' + name + '.jsonl');
+  fs.writeFileSync(fp, entries.map(e => JSON.stringify(e)).join('\n') + '\n');
+  return fp;
+}
+function asstText(text) { return { type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text }] } }; }
+function asstTool(name, input) { return { type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', name, input: input || {} }] } }; }
+
+t('9.1 完成声明 + 无验证 → block', () => {
+  const tp = writeTranscript('claim-noverify', [
+    { type: 'user', message: { role: 'user', content: '把这个修一下' } },
+    asstTool('Edit', { file_path: '/x.cs', new_string: 'y' }),
+    asstText('已修复并验证,一切正常。'),
+  ]);
+  assert(stopAudit({ transcript_path: tp, stop_hook_active: false, hook_event_name: 'Stop' }) === 'block', '声明+无验证应 block');
+});
+t('9.2 完成声明 + coplay tool_use → 放行', () => {
+  const tp = writeTranscript('claim-coplay', [
+    asstTool('mcp__coplay-mcp__play_game', {}),
+    asstText('测试通过,功能正常。'),
+  ]);
+  assert(stopAudit({ transcript_path: tp, stop_hook_active: false }) === 'pass', '有 coplay 验证应放行');
+});
+t('9.2b 完成声明 + Bash npm test → 放行', () => {
+  const tp = writeTranscript('claim-npmtest', [
+    asstTool('Bash', { command: 'npm test' }),
+    asstText('all tests passed.'),
+  ]);
+  assert(stopAudit({ transcript_path: tp, stop_hook_active: false }) === 'pass', 'npm test 应算验证放行');
+});
+t('9.3 无完成声明 → 放行', () => {
+  const tp = writeTranscript('noclaim', [
+    asstText('我改了几个文件,你自己再看看对不对,我没跑过。'),
+  ]);
+  assert(stopAudit({ transcript_path: tp, stop_hook_active: false }) === 'pass', '无声明应放行');
+});
+t('9.4 stop_hook_active=true → 放行(防死循环)', () => {
+  const tp = writeTranscript('active', [asstText('测试通过。')]);
+  assert(stopAudit({ transcript_path: tp, stop_hook_active: true }) === 'pass', '续跑必须放行');
+});
+t('9.5 transcript 不存在 → 放行不抛错', () => {
+  assert(stopAudit({ transcript_path: path.join(TMP, 'no-such-transcript.jsonl'), stop_hook_active: false }) === 'pass', '读不到应静默放行');
+  assert(stopAudit({}) === 'pass', '缺 transcript_path 也应放行');
+});
+t('9.6 标 UNVERIFIED 是合规出口 → 放行', () => {
+  const tp = writeTranscript('unverified', [
+    asstTool('Edit', { file_path: '/x.cs', new_string: 'y' }),
+    asstText('改动完成,但编译验证做不了,标 UNVERIFIED:Coplay MCP 不可用。'),
+  ]);
+  assert(stopAudit({ transcript_path: tp, stop_hook_active: false }) === 'pass', 'UNVERIFIED 标注不该被当成完成声明 block');
+});
+
+// === 10. honesty(诚实性)lint 规则:欺骗指纹当场点破,不受 expertLevel 过滤,Mock 路径跳过 ===
+const { lint } = require(path.join(SCRIPTS, 'lint-unity.js'));
+const hasRule = (fs2, rule) => fs2.some(f => f.rule === rule);
+t('honesty-fake-comment:命中欺骗性注释', () => {
+  const src = 'void Load(){\n    // simulate server call for now\n    var x = 1;\n}';
+  assert(hasRule(lint(src, {}), 'honesty-fake-comment'), '应命中 simulate/for now 注释');
+  assert(hasRule(lint('/* placeholder — stub for now */\nint N=0;', {}), 'honesty-fake-comment'), '块注释也应命中');
+});
+t('honesty-fake-comment:正常注释不误报、同名代码标识符不误报', () => {
+  assert(!hasRule(lint('// increment the retry counter and clamp\nint c = c + 1;', {}), 'honesty-fake-comment'), '正常注释不该报');
+  assert(!hasRule(lint('var placeholder = GetSlot();\nfake(x);', {}), 'honesty-fake-comment'), '代码里的标识符(非注释)不该报');
+});
+t('honesty-swallowed-catch:空 catch / 只 return 默认值命中', () => {
+  assert(hasRule(lint('try { Do(); } catch { }', {}), 'honesty-swallowed-catch'), '空 catch 应命中');
+  assert(hasRule(lint('try { Do(); } catch (Exception e) {\n    // ignore\n}', {}), 'honesty-swallowed-catch'), '只含注释的 catch 应命中');
+  assert(hasRule(lint('try { Save(); } catch (Exception e) {\n    return null;\n}', {}), 'honesty-swallowed-catch'), 'catch 里只 return null 应命中');
+  assert(hasRule(lint('try { Save(); } catch { return false; }', {}), 'honesty-swallowed-catch'), 'catch 里只 return false 应命中');
+});
+t('honesty-swallowed-catch:有日志/有 rethrow 的 catch 不误报', () => {
+  assert(!hasRule(lint('try { Do(); } catch (Exception e) {\n    Debug.Log(e);\n}', {}), 'honesty-swallowed-catch'), '有 Debug.Log 不该报');
+  assert(!hasRule(lint('try { Do(); } catch (Exception e) {\n    GameLogger.Error(e);\n}', {}), 'honesty-swallowed-catch'), '有 Logger 调用不该报');
+  assert(!hasRule(lint('try { Do(); } catch (Exception e) {\n    Cleanup();\n    throw;\n}', {}), 'honesty-swallowed-catch'), '有实质语句/rethrow 不该报');
+});
+t('honesty:Mock/测试/CoplayTemp 路径跳过(fake/stub 正当)', () => {
+  const src = '// fake server for now\ntry { Do(); } catch { }';
+  assert(hasRule(lint(src, { filePath: 'Assets/Scripts/Net/Client.cs' }), 'honesty-fake-comment'), '普通路径应报');
+  for (const fp of ['Assets/Tests/ClientTests.cs', 'Assets/Mock/FakeApi.cs', 'Assets/mocks/x.cs', 'Assets/Editor/CoplayTemp/Probe.cs']) {
+    const f = lint(src, { filePath: fp });
+    assert(!hasRule(f, 'honesty-fake-comment') && !hasRule(f, 'honesty-swallowed-catch'), '路径含 test/mock/coplaytemp 应跳过 honesty:' + fp);
+  }
+});
+t('honesty:expertLevel=expert 仍报(不受档过滤)', () => {
+  const src = '// pretend we saved it\ntry { Save(); } catch { return; }';
+  const f = lint(src, { expertLevel: 'expert' });
+  assert(hasRule(f, 'honesty-fake-comment'), 'expert 档 fake-comment 仍应报');
+  assert(hasRule(f, 'honesty-swallowed-catch'), 'expert 档 swallowed-catch 仍应报');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 

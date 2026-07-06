@@ -2,6 +2,13 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.54.0 — 2026-07-06 反 AI 撒谎三件套(诚实性机制化)
+- **背景**:Opus 执行时假装接通服务端、写欺骗性注释、catch 吞错伪装成功;prompt 红线拦不住训练出的完成压力,把验收信道从"模型自述"切到"运行时证据"。
+- **① executor 证据契约**:交付固定四段 + 诚实契约(UNVERIFIED/BLOCKED 是合格出口,伪造成功是最高违规),模板+大脑副本同步。
+- **② honesty lint**(PostToolUse):`honesty-fake-comment` + `honesty-swallowed-catch` 两条欺骗指纹规则,`always:true` 不受 expertLevel 过滤,test/mock/CoplayTemp 跳过。
+- **③ Stop/SubagentStop 收尾审计**(`stop-audit.js` 新建):完成声明 + 通篇零验证工具调用 → block 一次质询;`(?<!un)verified` 放过合规 UNVERIFIED 标注,`stop_hook_active` 防死循环。
+- 测试 50→63 全绿。配套(Extraction 仓):CloudCodeManager 静默失败/假成功路径全量补日志,`[FALLBACK]` 前缀一 grep 现形。
+
 ### v0.46.0–v0.49.0 — 2026-07-02 全系统 audit 修复(5 Phase)
 - **v0.46.0 安全**:PreToolUse 自动放行层堵 4 处绕过 —— 命令切分补 `\r?\n`(多行命令第二行不再漏检)、`find -delete`/`-exec`+`sort -o` 等写形态回落审批、`git config/branch/tag/remote/reflog` 仅纯查询放行(`git branch <名>` 撞红线⑧,回落)、hooks.json 加 `PowerShell`(走 deny 层)、MCP allow 改按 `_` 分词整词匹配(`get` 不再误命中 `forget`/`budget`)。先写回归用例证明当前绕得过再修。
 - **v0.47.0 多机健壮性**:会话级易变状态(session-health/greet/lint-seen/prompt-suggest-log)迁本机 `~/.yide-local`,不进同步盘(治 Drive lost update / conflicted copy);store 全改原子写;SessionStart **大脑完整性哨兵**(缺 INDEX.md/identity → 报警"指针多写一层",绝不当正常大脑/不 onboarding)+ 离线兜底 + 顶层 catch 降级简报 + timeout 15s;新增 `conflict-scan.js` + consolidate 冲突副本巡检。

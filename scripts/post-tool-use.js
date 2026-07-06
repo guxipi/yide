@@ -36,7 +36,7 @@ try {
       const m = fs.readFileSync(path.join(proj, 'ProjectSettings', 'ProjectVersion.txt'), 'utf8').match(/m_EditorVersion:\s*(.+)/);
       if (m) unityVersion = m[1].trim();
     } catch {}
-    try { source = fs.readFileSync(fp, 'utf8'); findings = lint(source, { unityVersion, expertLevel: gate.expertLevel }); } catch {}
+    try { source = fs.readFileSync(fp, 'utf8'); findings = lint(source, { unityVersion, expertLevel: gate.expertLevel, filePath: fp }); } catch {}
 
     // clean-as-you-code:只报"本次改动/新增的行",不翻旧账
     const ti = input.tool_input || {};
