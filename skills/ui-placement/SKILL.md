@@ -12,7 +12,7 @@ Extraction is **portrait-only** mobile (portrait 9:16; for the exact canvas ref 
 - `Claude Feature Docs/UI Visual Design/UI_Visual_Design_Guidelines.md` — 8px grid + tokens, colors, type scale, safe-area, portrait zones, animation timings (§7), feedback/juice (§8), layer manager, performance.
 - `Claude Feature Docs/UI Visual Design/Component_Selection_Matrix.md` — which SuperCasual prefab for which job.
 - `Claude Feature Docs/UI Visual Design/Screen_Layout_Specs.md` — per-screen layouts.
-- Kit: `Assets/AssetPacks/UI/Layer Lab/GUI Pro-SuperCasual/`. Font: CookieRun Black Outline 54 SDF. Canvas layers: `Core.UI.UICanvasLayerManager` (Background 0 → SystemPopup 600).
+- Kit: `Assets/AssetPacks/UI/Layer Lab/GUI Pro-SuperCasual/`. Font(2026-07-07 修订为二分制): Title/大数字 = CookieRun Black Outline 54 SDF;其余一切 = `Cairo_Line_Black SDF`(kit ResourcesData/Fonts),均挂 CJK fallback。Canvas layers: `Core.UI.UICanvasLayerManager` (Background 0 → SystemPopup 600).
 - **Universal 件唯一注册表** = repo `Claude Feature Docs/UI Visual Design/Universal_Widgets_Registry.md`(2026-07-07 起唯一权威,已自 Claude 记忆迁入 repo)。做任何 UI **先查它复用**;新建 universal 件必回填该表。别再指向 Claude memory 的 `universal-ui-widgets`(已废弃)。
 
 ## 真源模型 + 交互底线(2026-07-07 拍板)
