@@ -7,6 +7,17 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
 
 把一个"代码生成的平面色块界面"重做成成品级,流程与判断全部实跑验证过(Battle Pass / Leaderboard / Daily Login / Reward Reveal 四单)。**先读 `ui-placement` skill**(执行纪律、截图通道、RectTransform 坑)——本 skill 不重复它,只讲它之上的"做到好看"。
 
+## Refine 工单六步(缺省流程,2026-07-07 契约 §8 原文)
+任何 UI refine 任务的缺省框架;硬契约全文见 `Claude Feature Docs/UI Visual Design/Visual_Refine_Contract.md`,范式库见同目录 `Pattern_Catalog/`。下面的第〇~五步是这六步在本 skill 里的展开。
+1. 读 `Pattern_Catalog/` 声明本次套哪条范式(套不上 = 先扩范式库问勾哥,**禁 freestyle**);
+2. F8 `ScreenCapture.CaptureScreenshot` 截基线;
+3. 只经 UITheme token / ApplyStyle 改(M1 后;当前:值必须引用金标准屏实测值并注明出处);
+4. 跑风格体检红项清零(M1 后 UI Hub;当前:人工过契约 §1-§6 逐条);
+5. 截图对比基线 + `QA/golden/` 金标准;
+6. 真流程 Play(真切 tab 真点按钮),含 Android 返回键路径。
+
+**范式库引用义务(硬规)**:开工必先在 `Pattern_Catalog/` 声明套哪条范式;套不上的区域 = 先扩范式库并问勾哥,禁 freestyle 自由发挥。refine 完在 `Pattern_Catalog/` 记一行出处留痕(套了哪条范式、用了哪些 token),供下个接手者先读意图不逆向猜。
+
 ## 第〇步:侦察永远先行,别急着写代码
 
 1. 读目标界面的 **runtime 脚本**(serialized 字段 = 你必须保留的 wiring 接口;public API = 调用方依赖)。
@@ -33,7 +44,7 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
 - **状态即 tint**:同一张白 sprite,状态只换颜色。日历卡:已领 `#A8BBD1` 灰蓝+绿勾+内容降透明、当前 `#24E715` 绿、未来 `#0787FF` 蓝。Pass 双列:免费蓝/付费金 `#FFD233`。
 - **层叠配方(z 序=创建顺序)**:`Bg(tint, sliced, inset≈2-4)` → 内容层(`Light`高光 / `Gradient` / `Pattern` tiled α≈0.05-0.25 底纹) → `Border`(黑描边, sliced, 全尺寸) → `Glow`(图标后光斑) → 图标 → 文字。逐层都来自 kit 同名 sprite 家族。
 - **复用既有家族保持全游戏一致**:ticket 弹窗家族(`Popup_Ticket_Bg/Gradient/Border/BottomPattern`+撕票线)、卡片 `CardFrame04_*`、奖励格 `ItemFrame00~03_*`、气泡格 `BubbleFrame05_*`、ribbon `Title_Ribbon01/02_*`。新界面先问"哪个家族最近",别每次发明新皮。
-- **文字**:全部 CookieRun SDF **白色**(自带深描边,任何底色可读;勾哥明确不要黑字)。一律 `enableAutoSizing(min≈26, max=设计值)` + `textWrappingMode = NoWrap` 防溢出换行。深色字只许出现在明确浅底(如 BP 行内 navy)。
+- **文字**(2026-07-07 修订,对齐字体二分制):**Title / 大数字 = CookieRun Black Outline SDF**,**其余一切非 title 文字(正文/按钮/标签/描述)= `Cairo_Line_Black SDF`**;两者都白色 + 自带深描边(任何底色可读;勾哥明确不要黑字),都必挂 CJK fallback 链(NotoSansCJKsc→ZCOOLKuaiLe)。一律 `enableAutoSizing(min≈26, max=设计值)` + `textWrappingMode = NoWrap` 防溢出换行。深色字只许出现在明确浅底(如 BP 行内 navy)。
 - **"当前/可点"必须活**:focus 双层(`FocusGlow` 青色外扩 + `FocusBorder` 白描边)+ 特效组(`Image_Effect_Rotate` 旋转光线 + `Image_Effect_Star01/Square` 星星方块)+ 呼吸 scale。kit 的 TODAY 卡就是这么做的,照抄。
 - **炫目领奖配方**(`9_PopupFullScreen_RewardItems` 提炼):深黑 dim(≥0.9,越黑光越炸)→ 放射光芒 `Image_Effect_Light01_Yellow` → **旋转光圈 `Image_Effect_Rotate` 必须建在光芒之后**(否则被亮区吃掉看不见)→ `Glow_Circle01` 光晕 → 彩带 `Image_Papers` → ribbon → 奖励卡行。
 - 装饰图 `raycastTarget=false` 一律关;通用图标在 `IconMisc/`、物品图标 `Icon_ItemIcons/256/`、demo 大图标 `Demo/Demo_ItemIcon/`。
@@ -82,6 +93,16 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
 | 编辑器失焦 Play 不走 | 第一件事 `Application.runInBackground = true` |
 | check_compile_errors 偶发说谎 | 再 grep Unity logs `error CS` 交叉验证 |
 
+## 视觉/交互契约要点(2026-07-07,全文见 Visual_Refine_Contract.md)
+碰 UI 全员硬约束,以下要点立即生效:
+- **文字**:默认白色 + 描边(项目字体自带描边保可读);**黑色正文 = 缺陷,见到就修**;彩色仅用于确有功能语义处(增益绿/危险红/稀有度/货币色)。
+- **颜色 = 功能 + 重要度层次**:先判元素在本屏的功能重要度层级,再取对应视觉权重,不是"选个好看的色";禁顺色(前景背景趋同不可读)、禁无视觉重点。
+- **Title 禁用"banner 一条"asset**(黑名单,具体 sprite 名见 `Pattern_Catalog/` 采收确认)。
+- **popup 壳统一**:dim 层 + panel 底 + 底纹阴影按标准 popup shell 规格(`Pattern_Catalog/`),不各弹窗自配。
+- **主动修破损,不等勾哥提**:遮挡 / 出框 / 出父容器裁剪 / 字太小 / 九宫格拉变形 / 四边不合拢——碰 UI 时见到就修;修不了必须上报,沉默路过 = 违规。
+- **动效基准 = 排行榜 / Friends**:各层级 UI 都要有动效但**有重点**;**开 / 关必有 subtle 过渡**(质感关键);层级越深越轻;StagedReveal/Shine 只给重点元素。
+- **state vs variant**:运行时会切换 = 同 prefab + state(脚本驱动,默认选择:稀有度/空满/锁定/可用禁用/分段);作者期定型风味 = variant(公司主题皮、场景装饰,深度 ≤1);**运行时要变的绝不用 variant**;variant 里一半节点要删改时 → 改为两 prefab 共享脚本 + token。
+
 ## 交付前硬规则与自查(本项目)
 
 **数值真源** = `UI_Visual_Design_Guidelines.md`(项目内 `Claude Feature Docs/UI Visual Design/`,基于真实代码:RarityConfig.cs / UICurrencyItemWidget 等)+ kit prefab dump(配方提取法)。hex / 尺寸 / 时长以这两者为准,散文描述让位。
@@ -92,4 +113,4 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
 - **`Core.UI.PressScale`**(已入库 `Assets/Scripts/Core/UI/PressScale.cs`):kit 按钮是纯 Image 无按压反馈,新按钮一律挂上;unscaled time,timeScale=0 下照常工作。
 - **Canvas 参考**:kit 屏用 kit 自身 CanvasScaler **1080×2340 / Match 0.487**,measured px 1:1(详见 ui-placement 真源 `UI_Placement_Rules.md`,2026-06-14 RATIFIED;旧的 1440×2560 对 kit 屏已废弃)。
 
-**字体拍板(勾哥 2026-06-12):全场回归 CookieRun Black Outline 54 SDF**(Guidelines §3)。已知欠账:死亡三屏(UIRevivePopup / UIDeathSummaryPanel / UIMineDefeatPanel)与 battle_endreward 设计稿当前用 kit 的 Sen/Cairo,后续换成 CookieRun;新屏一律直接 CookieRun,不要再扩大 Sen/Cairo 面积。
+**字体拍板(2026-07-06 修订二分制,取代旧的"全场 CookieRun")**:**Title/大数字 = CookieRun Black Outline 54 SDF**;**其余一切非 title 文字 = `Cairo_Line_Black SDF`**(`GUI Pro-SuperCasual/ResourcesData/Fonts/`);两者都必挂 CJK fallback 链,UI 文案一律英文,字号下限对齐 HomeScreen 基线(见 CLAUDE.md「UI 字体铁规」)。已知欠账:死亡三屏(UIRevivePopup / UIDeathSummaryPanel / UIMineDefeatPanel)与 battle_endreward 设计稿字体口径待按二分制核一遍;新屏一律照二分制,别再手搓 Sen。

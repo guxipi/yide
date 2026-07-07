@@ -2,6 +2,14 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.55.0 — 2026-07-07 UI 真源 prefab 化制度接入三 UI skill + mockup sidecar
+- **背景**:2026-07-07 勾哥拍板「UI 真源 prefab 化 + 模型 refine 赋能」总纲 + Visual Refine 契约(存档 ER 仓 `Claude Feature Docs/UI Architecture Refactor/` + `UI Visual Design/`)。把新制度外科手术式增补进 UI 相关 skill,不重写、不破既有内容。
+- **① `ui-placement`**:新增「真源模型 + 交互底线(2026-07-07)」节 —— UI 真源=prefab 目标态、过渡期双轨(已 prefab 化屏直接改 prefab / builder 退役禁重跑;未迁移旧屏仍改 builder+重跑)、判轨方法(总纲 M3 进度 + 菜单 "(retired)" 前缀)、新面板一律 prefab 禁场景内联;交互底线(SafeArea 必须 / 每 UI 必有关闭·后退按钮接 Android 返回键栈 / 新面板注册 AppNavigator 路由);universal 件注册表指针改指 repo `Universal_Widgets_Registry.md`(不再指 Claude memory)。
+- **② `ui-visual-rework`**:新增「Refine 工单六步」(契约 §8:声明范式→F8 截基线→token 改→体检→对比 golden→真流程 Play)为缺省流程 + 范式库引用义务(开工必声明套 `Pattern_Catalog/` 哪条,禁 freestyle,refine 完出处留痕);新增「视觉/交互契约要点」(文字默认白+描边·黑字=缺陷、颜色=功能+重要度层次、title 禁 banner 条、popup 壳标准化、主动修破损、动效基准=排行榜/Friends、state vs variant 判据);字体口径就地修正为二分制(Title=CookieRun / 其余=Cairo,取代旧「全场 CookieRun」)。
+- **③ `ui-design-match`**(ER 仓项目本地 skill,非本插件托管——见下欠账):新增「Mockup spec sidecar + 实施解读门」节(无 sidecar 不得作实施依据 / 开工前交实施解读勾哥批准 / parity 流水线消费 sidecar / 交互契约纳入验收);universal 件注册表三处指针改指 repo `Universal_Widgets_Registry.md`。
+- **④ `mockup` action**:生成 mockup 时 `yd-region` 埋 `data-*`(区域/功能/交互目标/复用件/范式)+ 同步产出同名 spec sidecar(§1B),无 sidecar 不交付;既有 UI 设计规范文档引用与纯净成品图风格不动。
+- 测试 63 全绿;`lint-skill-refs` / `validate-skills` 通过。**欠账**:`ui-design-match` 不在本插件仓(活在 Extraction 仓 `.claude/skills/`,非 `yide:` 命名空间),该文件改动落在 ER 仓工作区、未随本插件 commit。
+
 ### v0.54.0 — 2026-07-06 反 AI 撒谎三件套(诚实性机制化)
 - **背景**:Opus 执行时假装接通服务端、写欺骗性注释、catch 吞错伪装成功;prompt 红线拦不住训练出的完成压力,把验收信道从"模型自述"切到"运行时证据"。
 - **① executor 证据契约**:交付固定四段 + 诚实契约(UNVERIFIED/BLOCKED 是合格出口,伪造成功是最高违规),模板+大脑副本同步。

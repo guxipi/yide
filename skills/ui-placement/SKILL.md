@@ -13,6 +13,19 @@ Extraction is **portrait-only** mobile (portrait 9:16; for the exact canvas ref 
 - `Claude Feature Docs/UI Visual Design/Component_Selection_Matrix.md` — which SuperCasual prefab for which job.
 - `Claude Feature Docs/UI Visual Design/Screen_Layout_Specs.md` — per-screen layouts.
 - Kit: `Assets/AssetPacks/UI/Layer Lab/GUI Pro-SuperCasual/`. Font: CookieRun Black Outline 54 SDF. Canvas layers: `Core.UI.UICanvasLayerManager` (Background 0 → SystemPopup 600).
+- **Universal 件唯一注册表** = repo `Claude Feature Docs/UI Visual Design/Universal_Widgets_Registry.md`(2026-07-07 起唯一权威,已自 Claude 记忆迁入 repo)。做任何 UI **先查它复用**;新建 universal 件必回填该表。别再指向 Claude memory 的 `universal-ui-widgets`(已废弃)。
+
+## 真源模型 + 交互底线(2026-07-07 拍板)
+总纲:`Claude Feature Docs/UI Architecture Refactor/HANDOVER_UI真源prefab化_总纲.md`;硬契约:`Claude Feature Docs/UI Visual Design/Visual_Refine_Contract.md`。
+- **UI 真源 = prefab(目标态)**。过渡期双轨,动手前先判目标屏在哪条轨:
+  - **已 prefab 化的屏**:直接改 prefab(Prefab Mode / `LoadPrefabContents`),对应 **builder 已退役——禁止重跑 Rebuild** 冲掉手工 refine。
+  - **未迁移的旧屏(现状大多数)**:仍是"改 builder + 重跑菜单",不手摆场景(手摆的下次 Rebuild 被冲掉)。
+- **判轨方法**:查总纲 M3 进度表该屏是否已迁 + 菜单项是否带 **"(retired)"** 前缀(退役 builder 加此前缀不删代码);拿不准就 grep builder 的 `Tools/Setup` 菜单名。
+- **新面板一律 prefab**(进 `Prefabs/UI/Meta/` 或 `Prefabs/UI/Gameplay/`),**禁止新增场景内联 UI 子树**。
+- **交互底线(立即生效)**:
+  - 含文字/可交互元素的 UI 必须整体在安全区内(`Core.UI.SafeArea`);可点矩形出安全区 = 缺陷。
+  - **每个 UI 必有可达的关闭/后退按钮**,并接系统返回键栈(Android:Escape→`UIPopupsManager` 栈顶 GoBack→`AppNavigator` 兜底;iOS 无系统返回键,等价保证 = 必有关闭钮)。
+  - **新面板必须注册 `AppNavigator` deeplink 路由**;末端 UI 跳转复用 navigator,返回键/deeplink/popup 栈共享同一条栈逻辑。
 
 ## Diagnose from the YAML first (read-only)
 Hand-EDITING `.prefab`/`.unity` stays banned — but **READING them with Grep/Read is the fastest root-cause channel**: a layout bug is often fully pinned before Unity is even touched (battle-tested: the UIBaseTabTopBar resource-row squish — left-anchored container, non-uniform 0.6 scale, HLG spacing 24 — was diagnosed entirely from the prefab text).
