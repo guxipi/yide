@@ -40,8 +40,8 @@ function preToolDecision(input, env) {
 
 console.log('翼德自检:');
 
-// === 1. globToRe(教训 scope 匹配)===
-const { globToRe } = require(path.join(SCRIPTS, 'lessons.js'));
+// === 1. globToRe(把关器 suppressed 规则的路径匹配;原属教训 scope,2026-07-25 迁入 lib)===
+const { globToRe } = require(path.join(SCRIPTS, 'lib.js'));
 t('glob **/*.cs 命中嵌套与根', () => {
   const re = globToRe('**/*.cs');
   assert(re.test('Assets/A/B.cs'), '应命中嵌套');

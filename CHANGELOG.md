@@ -2,6 +2,16 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.57.0 — 2026-07-25 精简:砍掉模型原生已覆盖的那半层 harness
+- **背景**:翼德的约束层是三年前(按 AI 迭代速度算)那种"模型什么都不会,全靠外面兜"的假设堆起来的。现在 Opus 5 的 system prompt 原生覆盖了"贴合周围风格 / 用最简方案 / 只做被要求的事 / 不编 API / 先查证再下结论",这些还留在常驻注入里就是纯重复。**判据:一条规则如果换成任何一个通用 AI 助手都该遵守,它就该删;只有这台机器 / 这个项目 / 这个人才成立的,才留。**
+- **① 常驻注入去重(4592 → 3437 tokens,-25%)**:发货默认红线 6→4 条(合并"加屎山 / 过度工程 / 加没要求的东西"三条为一,原文逐条对应现代模型的 delivering-work 对齐);charter 5→4 条(删"宁问勿错"——它和用户自己后加的"低风险可逆直接做完"互相打架,原生也倾向少问);用户层 charter-extra 删"结论先行"(已由 output style 覆盖,那才是真正改 system prompt 的层)、"低风险直接做""大任务不中途请示"(原生覆盖);ER 专属删两顶帽子的说理段和"别和红线打架"的自辩段,只留判据、交易/PvP 技术契约、Play Mode 收尾、MCP SAVE。
+- **② 教训自动浮现退役**:`lessons/` 靠 PostToolUse 按 scope glob 浮现的机制实测几乎从不命中(L-0012 自己记着"11 条从未触发过";活跃 3 条里 2 条带 glob),为它维持 `lessons.js` + 编译索引 + `build-index.js` + 注入计数不划算。删 `scripts/lessons.js`、`scripts/build-index.js`,`globToRe` 迁进 `lib.js`(把关器的 suppressed 规则还在用);PostToolUse 只剩 lint;SessionStart 不再报教训数。
+  - **知识不丢**:L-0013(LayoutGroup 压缩致"叠字" + `ForceRebuildLayoutImmediate` 对无 ILayoutController 的 root 是 no-op + 动态 grid 要 ScrollRect 配方)迁进 `skills/ui-placement`;L-0014(服务端零信任 / 交易幂等 / PvP 防重放 checklist)迁进 `skills/cloud-code-deploy` 新增"第一步半";L-0012 内化进 record 动作。三条归档。
+  - **`record` 动作重写成分流**:先判"下次这条该在什么时刻出现在上下文里",按答案落进 hard-rules / charter-extra / 项目 CLAUDE.md / skill / hook-rules,五层都不属于才进 `lessons/` 当档案(那层没有任何自动加载机制,明写在文件里)。
+- **③ 与原生能力消歧义**:`actions/review.md` 头部标明 `/code-review` 已覆盖大部分,本动作只留"指定 base / 分批评审 / 评审员调 MCP 真跑"三种情况;`actions/plan.md` 标明只想要计划就用原生 plan mode,本动作是"造"不是"计划";根 `SKILL.md` 的 description 从 ~700 字压到 ~200(它吃全局 slash-command description 预算)。
+- **没砍的(社区在砍、但对翼德不成立)**:Stop 三闸门与 honesty lint 不是"外挂安全过滤",它们检测的是**模型自评不了**的东西(把没验证的说成已验证);PreToolUse 也不是审批门控,它做的是**自动放行只读操作**、本来就在减审批。这两层留着。
+- 测试 75 过 / 0 败。
+
 ### v0.56.0 — 2026-07-25 scope 契约:治"任务不做完就收工"(覆盖度闸门)
 - **背景**:留尾巴是两个正交病根混在一起 —— **覆盖度**(该做的没做完)和**诚实度**(没做完却说做完)。v0.54.0 的 Stop 审计只治后者,而且只治了一半:它扫验证证据是扫**全会话** transcript,会话早期跑过一次 Play,后面每回合都白嫖那次证据放行;`CLAIM_RE` 又只匹配强完成声明,而留尾最典型的措辞是"A 和 B 改好了,C 要不要继续"——不含声明、态度还很坦诚,一律放行。根因在训练层(Anthropic reward tampering 研究里模型会改 checklist 让未完成看起来完成),所以 TodoWrite 的勾选状态本身不可信,治法只能是把 checklist 移到进程外。
 - **① `scope.js` 新建**:scope 契约 = **条目由 AI 登记(此时没有完成压力),状态由验收命令的退出码写**。状态机 open/pass/fail/attested/waived;`pass` 只能由 `check` 跑出退出码 0 得到;没命令可跑的走 `attest --evidence`(强制留具体证据串,空话拒绝);真不做了走 `waive --reason`。落 `~/.yide-local`(会话级易变状态,不进同步盘)。

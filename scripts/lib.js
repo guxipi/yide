@@ -45,4 +45,21 @@ function today() {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-module.exports = { brainDir, openUrl, today, locationPointerPath };
+// glob → 正则(逐字符解析)。支持 **/(任意层目录) ** (任意) *(单层) ?(单字符)。
+// 原属 lessons.js(教训 scope 匹配);2026-07-25 教训自动浮现退役后,只剩把关器的 suppressed 规则在用,故迁到公共层。
+function globToRe(glob) {
+  const g = String(glob).replace(/\\/g, '/');
+  let re = '';
+  for (let i = 0; i < g.length; i++) {
+    const c = g[i];
+    if (c === '*') {
+      if (g[i + 1] === '*') { i++; if (g[i + 1] === '/') { i++; re += '(?:.*/)?'; } else re += '.*'; }
+      else re += '[^/]*';
+    } else if (c === '?') re += '.';
+    else if ('.+^${}()|[]\\'.includes(c)) re += '\\' + c;
+    else re += c;
+  }
+  try { return new RegExp('(^|/)' + re + '$'); } catch { return null; }
+}
+
+module.exports = { brainDir, openUrl, today, locationPointerPath, globToRe };

@@ -1,6 +1,6 @@
 ---
 name: yide
-description: 翼德(yide)——勾哥的专属秘书/Unity 把关助手。当用户对"翼德/yide"发起一个具体动作时触发,中英文皆可。中文如:"翼德 简报/磨合/记一下…/整理/测一下/评审/笔记…/蒸馏/专家/战绩/起个计划";English e.g.: "yide brief", "yide record this", "yide onboard", "yide consolidate", "yide update", "yide qa"/"yide test", "yide review"/"yide 评审", "yide note …", "yide distill <person>", "yide experts" / "use maxim", "yide save this prompt", "yide stats", "yide plan this"。也可打命令 `/yide:yide <动作>`。涵盖动作:onboard磨合、record记教训、brief简报、consolidate整理、update更新、qa测试、review对抗评审、note笔记、gaotapi蒸馏、experts专家、prompt、stats战绩、plan闭环造鸭(几句话→对齐→造→引擎验→交付)、mockup线稿、storyboard分镜(俯视运镜/空间/时序)、ui摆UI(uGUI摆放/对齐/搭建,截图自检+锚点纪律+事件接线,通用)、docs项目文档管理(Confluence→CLAUDE.md)、playtest冻帧标注(Unity按F8冻帧+抓命中元素/上下文→Google Cloud STT实时流式转写→带定位问题清单)、voice语音喂prompt(Rider终端全局热键说中文→STT转写→自动键入Claude Code输入框)。
+description: 翼德(yide)——勾哥的专属秘书 / Unity 把关助手。用户对"翼德 / yide"发起一个具体动作时触发(中英文皆可,也可打 `/yide:yide <动作>`)。动作:磨合 onboard、记教训 record、简报 brief、整理 consolidate、更新 update、测试 qa/test、评审 review、笔记 note、蒸馏 distill、专家 experts、prompt 库、战绩 stats、闭环造鸭 plan、线稿 mockup、分镜 storyboard、摆UI ui、项目文档 docs、冻帧标注 playtest、语音输入 voice、体检 doctor。
 allowed-tools: Bash
 ---
 

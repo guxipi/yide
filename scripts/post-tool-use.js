@@ -1,17 +1,16 @@
 #!/usr/bin/env node
-// 翼德 PostToolUse hook(把关 + scope 教训注入):写/改文件后,
+// 翼德 PostToolUse hook(把关):写/改文件后,
 //   ① 若是 .cs:按 Unity best practice lint;
-//   ② 任意文件:浮现 scope/glob 命中该文件的 lessons;
+//   ②(已退役 2026-07-25)按 scope 浮现 lessons —— 实测几乎从不命中,见 CHANGELOG v0.57.0;
 // 都作为 advisory 喂给模型(非阻断)。带去重,避免刷屏。仅用 Node 内置模块。
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { brainDir } = require(path.join(__dirname, 'lib.js'));
+const { brainDir, globToRe } = require(path.join(__dirname, 'lib.js'));
 const host = require(path.join(__dirname, 'host.js'));
 const { readLocalJson, writeLocalJson } = require(path.join(__dirname, 'store.js'));
 const { lint } = require(path.join(__dirname, 'lint-unity.js'));
-const { matchByPath, globToRe } = require(path.join(__dirname, 'lessons.js'));
 
 function out(ctx) {
   process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: ctx } }));
@@ -57,14 +56,10 @@ try {
       findings = findings.filter(f => !gate.suppressed.some(s => s.rule === f.rule && (!s.glob || (globToRe(s.glob) || { test: () => true }).test(fpn))));
     }
   }
-  // ② scope 命中的 lessons
-  let lessons = [];
-  try { lessons = matchByPath(fp); } catch {}
+  if (!findings.length) process.exit(0);
 
-  if (!findings.length && !lessons.length) process.exit(0);
-
-  // 去重:同文件、同一组(findings + lesson ids)只提醒一次
-  const sig = findings.map(f => f.line + f.msg).join('|') + '#' + lessons.map(l => l.id).join(',');
+  // 去重:同文件、同一组 findings 只提醒一次
+  const sig = findings.map(f => f.line + f.msg).join('|');
   const SEEN = 'lint-seen.json';                          // 本机私有(会话去重状态,不进同步盘)
   let seen = readLocalJson(SEEN, {}) || {};
   const hash = crypto.createHash('sha1').update(sig).digest('hex');
@@ -74,22 +69,11 @@ try {
   if (seenKeys.length > 200) for (const k of seenKeys.slice(0, seenKeys.length - 200)) delete seen[k];
   writeLocalJson(SEEN, seen);
 
-  let msg = '';
-  if (lessons.length) {
-    // 上下文保险:命中再多也只列高优先级前 5 条(按 severity 降序),其余只报数
-    const sorted = lessons.slice().sort((a, b) => (b.severity || 0) - (a.severity || 0));
-    const showL = sorted.slice(0, 5);
-    msg += `📌 翼德:这个文件命中 ${lessons.length} 条你定过的教训(务必遵守):\n`;
-    for (const l of showL) msg += `- [${l.id}][sev:${l.severity}] ${l.ruleText}\n`;
-    if (lessons.length > showL.length) msg += `- …还有 ${lessons.length - showL.length} 条(按 severity 取前 5;全量见 ~/.yide/lessons)\n`;
-  }
-  if (findings.length) {
-    const top = findings.slice(0, 8);
-    msg += `🗡️ 翼德把关 — \`${path.basename(fp)}\` 有 ${findings.length} 处可优化(Unity best practice,建议非强制):\n`;
-    for (const f of top) msg += `- L${f.line} [${f.rule}] ${f.msg}\n`;
-    if (findings.length > top.length) msg += `- …还有 ${findings.length - top.length} 处\n`;
-  }
-  msg += '请向用户简要说明并给修法建议;教训类必须遵守,把关类若用户有意为之则尊重,不擅自大改。';
+  const top = findings.slice(0, 8);
+  let msg = `🗡️ 翼德把关 — \`${path.basename(fp)}\` 有 ${findings.length} 处可优化(Unity best practice,建议非强制):\n`;
+  for (const f of top) msg += `- L${f.line} [${f.rule}] ${f.msg}\n`;
+  if (findings.length > top.length) msg += `- …还有 ${findings.length - top.length} 处\n`;
+  msg += '请向用户简要说明并给修法建议;若用户有意为之则尊重,不擅自大改。';
   out(msg);
   process.exit(0);
 } catch (e) { process.exit(0); }

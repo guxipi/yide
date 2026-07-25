@@ -7,8 +7,9 @@
 - [identity.md](core/identity.md) — 我是谁:角色 / 技术栈 / 语言偏好
 - [hard-rules.md](core/hard-rules.md) — 绝对红线(≤15 条)
 
-## 🟠 lessons(教训库)
-<!-- @翼德 记录后在这里加一行:- [L-XXXX](lessons/L-XXXX.md) [sev:N] — 一句话 -->
+## 🟠 lessons(历史档案 · 不自动加载)
+> 教训按 `record` 动作**分流**进 core/hard-rules · core/charter-extra · 项目 CLAUDE.md · skill · .meta/hook-rules.json —— 那几层才会在该用到时出现在上下文里。
+> 这里只放"哪层都不属于"的一次性历史。
 （暂无)
 
 ## 🟡 style(场景带)

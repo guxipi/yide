@@ -7,7 +7,6 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 const { brainDir, today, locationPointerPath } = require(path.join(__dirname, 'lib.js'));
 const { detect, profileText } = require(path.join(__dirname, 'unity-context.js'));
-const { countActive } = require(path.join(__dirname, 'lessons.js'));
 const { syncExperts } = require(path.join(__dirname, 'sync-experts.js'));
 const { extractionContext } = require(path.join(__dirname, 'extraction-context.js'));
 const store = require(path.join(__dirname, 'store.js'));
@@ -111,9 +110,8 @@ try {
   if (idBody) ctx += `\n---\n## 来自 core/identity.md\n${idBody}\n`;
   try { const rl = resolve('hard-rules', PLUGIN_ROOT, BRAIN); if (rl) ctx += `\n---\n## 绝对红线(默认 + 你的自定义;全程遵守)\n${rl}\n`; } catch {}
   try { const ch = resolve('charter', PLUGIN_ROOT, BRAIN); if (ch) ctx += `\n---\n## 工作准则\n${ch}\n`; } catch {}
-  // 教训只报数量,按文件自动浮现(PostToolUse),不在开场全列
-  let nLessons = 0; try { nLessons = countActive(); } catch {}
-  if (nLessons) ctx += `\n---\n## 教训库\n已积累 ${nLessons} 条教训(按文件自动浮现;全部见 ~/.yide/INDEX.md)。\n`;
+  // 教训库:2026-07-25 起不再报数、不再按文件自动浮现(退役理由见 CHANGELOG v0.57.0)。
+  // 新教训按 record 动作分流进红线 / charter / 项目 CLAUDE.md / skill —— 那几层才 always-on 或按场景加载。
 
   // prompt 库:自动静默捕获(不打断)。召回由 UserPromptSubmit hook 负责,无需在此提示。
   ctx += `\n---\n## prompt 库\n某条 prompt 明显好用(≥2:几轮搞定/说"对了"/没返工/常重复)且库里没近似 → 静默存入 ~/.yide/prompts 跑 prompts.js index,回一行即可;拿不准别存。\n`;

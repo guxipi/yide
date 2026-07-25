@@ -86,6 +86,22 @@ public async Task<CompleteRaidResult> CompleteRaid(IExecutionContext context, st
 
 ---
 
+## 第一步半:写端点前过一遍零信任 checklist(原教训 L-0014,2026-07-25 由 lessons 迁入)
+
+服务端 / 交易经济 / 异步 PvP 结算是**强一致 + 防作弊红线区**,AI 写这类逻辑时最容易默认"信客户端、走 happy path",埋下刷钱/越权/重放/封不掉外挂的坑。按场景过:
+
+**通用(所有端点)**:客户端只是展现层,**所有**传入参数都要校验(ID 存在吗、属于这个玩家吗、数值在范围内吗);要用的余额/战力/状态**重新从 DB 拉最新**,绝不信客户端传来的值;操作前校验前置条件(等级/资源/归属)防越权;字符串参数(昵称/留言)落库或回显前 sanitize;可被脚本刷的接口加 rate limit;失败必记 audit log(who/what/来源去向枚举)并返回明确错误码,方便查账回档。
+
+**交易 / 拍卖行 / 商城扣费**:扣 A 的钱 + 给 B 发货必须原子(要么全成要么全败,不能半成功);校验数量与总价**非负**且不超类型上限(防负数刷钱、溢出绕过);执行前重拉双方最新余额;用唯一 **TradeID/RequestId 判重**,重复请求只生效一次(网络重发是常态)。
+
+**异步 PvP 结算**:校验本局 **BattleToken** 合法且未被用过,用过即拒(防重放);做合理性校验(1 秒内打赢 10 万战力对手这种 → 拒绝/标记/封禁),别照单全收;结算用**服务端存的防守方快照**,不信客户端回传的防守方数据。
+
+**客户端协议 Handler(C2S RPC/API)**:套用通用四条。典型如 `C2S_UpgradeEquipment`——校验 `EquipmentID` 存在且属于该玩家、满足升级前置、清理字符串参数。
+
+详细镜头见 `experts/architect.md` 的「数据纪律 / 安全」段。
+
+---
+
 ## 第二步:两个会咬人的硬坑(实战踩过)
 
 1. **客户端缺 wrapper 方法 → 卡死整个 Unity 编译**。客户端别处(如 ClanService)调了 `cloudCode.FooAsync()` 但 CloudCodeManager 没这方法 → CS1061 → 整个项目编译红 → Play 进不去。**改服务端前先 `check_compile_errors`**,有这种残留先补齐 wrapper(可先写本地 fallback 占位)。

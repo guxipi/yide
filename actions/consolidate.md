@@ -20,12 +20,14 @@
 
 4. **升级反复犯的**:同类错误出现 ≥2 次 → 提升 severity,必要时并入 `core/hard-rules.md`,能硬拦截的加进 `.meta/hook-rules.json`(保守:正则要能精确命中)。
 
+   顺带做**分流体检**:活跃 lessons 里凡是"该在某类活里自动生效"的,按 record 动作的分流表挪到对的层(通用行为 → charter / hard-rules;某项目的规矩 → 该项目 `CLAUDE.md`;某类活的技术知识 → 对应 skill)。留在 `lessons/` 的只应是历史档案——那层没有任何自动加载机制。
+
 5. **冲突不自作主张**:新信息与旧记忆矛盾、又拿不准时,**不要擅自改**,写进 `~/.yide/.meta/conflicts.md` 等用户裁决。
 
 6. **修订索引**:更新 `INDEX.md` 使其与现状一致;确认它仍在 ≤200 行的预算内。
 
-7. **归档与重建索引**:把 `status: archived/superseded` 的 lesson 移到 `~/.yide/lessons/archive/`(运行时不再扫,保持活跃集精简);然后运行
-   `node "${CLAUDE_SKILL_DIR}/scripts/build-index.js"` 重建编译索引。
+7. **归档**:把 `status: archived/superseded` 的 lesson 移到 `~/.yide/lessons/archive/`,保持活跃集精简。
+   (2026-07-25 起 lessons 不再有编译索引与自动浮现——它只是历史档案;真正要常驻/按场景生效的规则见下一条的分流。)
 
 8. **打整理时间戳**:用 Bash 工具运行
    `node "${CLAUDE_SKILL_DIR}/scripts/stamp-consolidate.js"`

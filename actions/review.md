@@ -1,5 +1,8 @@
 # 翼德 · 对抗式评审(review / 评审 / 挑刺 / 审一下)
 
+> **先看原生够不够**:Claude Code 自带 `/code-review`(工作区 diff)和 `/review`(GitHub PR),已覆盖"派独立上下文看 diff"这件事的大部分。
+> 本动作留给它不做的三种情况:① 要指定 base(`git diff <base>...HEAD`)或按文件**分批**评审超大 diff;② 要评审员**调 Unity MCP 真跑**(read_console / run_tests)把"我觉得会崩"变成"我看到它崩";③ 要按下面这套只挑正确性/耦合、明确不挑风格的对抗式口径。其余场景直接用 `/code-review`,别两套并行。
+
 收尾时让一个**全新上下文**的评审员只盯 diff 挑硬伤——专治"自己写的代码自己看不出问题""只为过测而写测"的自评盲区(charter #4 的牙齿)。
 分工:**review 只挑正确性与耦合,不挑风格**;风格/Unity lint 归把关器(PostToolUse),测试计划/bug SOP 归 `qa`。三者别互相抢活。
 
