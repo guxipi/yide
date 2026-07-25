@@ -2,6 +2,14 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.56.0 — 2026-07-25 scope 契约:治"任务不做完就收工"(覆盖度闸门)
+- **背景**:留尾巴是两个正交病根混在一起 —— **覆盖度**(该做的没做完)和**诚实度**(没做完却说做完)。v0.54.0 的 Stop 审计只治后者,而且只治了一半:它扫验证证据是扫**全会话** transcript,会话早期跑过一次 Play,后面每回合都白嫖那次证据放行;`CLAIM_RE` 又只匹配强完成声明,而留尾最典型的措辞是"A 和 B 改好了,C 要不要继续"——不含声明、态度还很坦诚,一律放行。根因在训练层(Anthropic reward tampering 研究里模型会改 checklist 让未完成看起来完成),所以 TodoWrite 的勾选状态本身不可信,治法只能是把 checklist 移到进程外。
+- **① `scope.js` 新建**:scope 契约 = **条目由 AI 登记(此时没有完成压力),状态由验收命令的退出码写**。状态机 open/pass/fail/attested/waived;`pass` 只能由 `check` 跑出退出码 0 得到;没命令可跑的走 `attest --evidence`(强制留具体证据串,空话拒绝);真不做了走 `waive --reason`。落 `~/.yide-local`(会话级易变状态,不进同步盘)。
+- **② `stop-audit.js` 扩成三闸门**:**覆盖度**(登记过 scope 且有 open/fail → block 并列出未完成项,`stop_hook_active` 续跑时**仍拦**,否则一次 block 后闸门失效)、**留尾**(没登记 scope 但收尾把"要不要继续"甩回勾哥 → block;走 `AskUserQuestion`/`ExitPlanMode` 的正当拍板豁免)、**诚实度**(验证证据扫描收窄到**本回合**,且加"本回合改过文件"前置,纯讨论回合不误伤)。
+- **③ 防死循环**:Claude Code 对 Stop hook 有连续 8 次 block 的硬上限,撞满是最糟形态。按 session 计数,连续 3 次后放行(最后一次 block 的 reason 预告"下次放行,如实报告卡在哪");两次之间未完成签名没变(空转)则提前退化;闸门全过清零。
+- **④ SessionStart 注入**:多步任务开工前登记 scope 的规矩 + 本会话真实 `session_id`(session-start.js 原本不读 stdin,拿不到 sid,模型登记的槽会和闸门读的槽对不上 → 一并修掉)。
+- 测试 63→75 全绿(新增 11.1–11.12 覆盖 scope 状态机、三闸门、空转退化、CLI 端到端)。
+
 ### v0.55.0 — 2026-07-07 UI 真源 prefab 化制度接入三 UI skill + mockup sidecar
 - **背景**:2026-07-07 勾哥拍板「UI 真源 prefab 化 + 模型 refine 赋能」总纲 + Visual Refine 契约(存档 ER 仓 `Claude Feature Docs/UI Architecture Refactor/` + `UI Visual Design/`)。把新制度外科手术式增补进 UI 相关 skill,不重写、不破既有内容。
 - **① `ui-placement`**:新增「真源模型 + 交互底线(2026-07-07)」节 —— UI 真源=prefab 目标态、过渡期双轨(已 prefab 化屏直接改 prefab / builder 退役禁重跑;未迁移旧屏仍改 builder+重跑)、判轨方法(总纲 M3 进度 + 菜单 "(retired)" 前缀)、新面板一律 prefab 禁场景内联;交互底线(SafeArea 必须 / 每 UI 必有关闭·后退按钮接 Android 返回键栈 / 新面板注册 AppNavigator 路由);universal 件注册表指针改指 repo `Universal_Widgets_Registry.md`(不再指 Claude memory)。

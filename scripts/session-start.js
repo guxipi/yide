@@ -25,6 +25,10 @@ function verLt(a, b) {
 const BRAIN = brainDir();
 const PLUGIN_ROOT = host.pluginRoot();  // Claude Code / Codex / 裸跑,统一收口在 host.js
 const PROJECT = host.projectDir();
+// hook 输入(只为拿 session_id:scope 契约按会话存,简报里得给出真实 sid,否则模型登记的槽和
+// Stop hook 读的槽对不上,闸门形同虚设)。读不到就退化成 nosid —— scope.js 两端同样兜底。
+let SESSION_ID = 'nosid';
+try { SESSION_ID = (JSON.parse(fs.readFileSync(0, 'utf8') || '{}').session_id) || 'nosid'; } catch {}
 
 function emit(ctx, title) {
   process.stdout.write(JSON.stringify({
@@ -113,6 +117,14 @@ try {
 
   // prompt 库:自动静默捕获(不打断)。召回由 UserPromptSubmit hook 负责,无需在此提示。
   ctx += `\n---\n## prompt 库\n某条 prompt 明显好用(≥2:几轮搞定/说"对了"/没返工/常重复)且库里没近似 → 静默存入 ~/.yide/prompts 跑 prompts.js index,回一行即可;拿不准别存。\n`;
+
+  // scope 契约:治"任务不做完就收工"。多步任务开工前登记,收尾 Stop hook 按它拦。
+  ctx += `\n---\n## scope 契约(多步任务必用)\n` +
+    `勾哥的规矩是一口气做完、不留尾巴。接到需要多步/多文件的活,**开工前**先登记 scope,收尾时 Stop hook 会按它拦住没收敛的条目:\n` +
+    `\`node "${path.join(PLUGIN_ROOT, 'scripts', 'scope.js')}" set --session ${SESSION_ID} --json '[{"what":"做什么","verify":"能判定成败的命令(可省)"}]'\`\n` +
+    `(本会话 sid = \`${SESSION_ID}\`,所有子命令都带上它)\n` +
+    `干完跑 \`check\` 让退出码写状态(0 才算 pass);没命令可跑的走 \`attest --evidence "<具体证据>"\`;真不做了走 \`waive --reason "<理由>"\`。` +
+    `别自己在心里打勾——状态只认命令退出码和写下来的证据。单步小活不用登记。\n`;
 
   // 随手记 inbox:只报未整理条数(手机扔进来的笔记)
   let nInbox = 0;

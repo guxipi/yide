@@ -676,6 +676,89 @@ t('honesty:expertLevel=expert 仍报(不受档过滤)', () => {
   assert(hasRule(f, 'honesty-swallowed-catch'), 'expert 档 swallowed-catch 仍应报');
 });
 
+// === 11. scope 契约 + 覆盖度/留尾闸门(治"任务不做完就收工")===
+const scope = require(path.join(SCRIPTS, 'scope.js'));
+function userText(text) { return { type: 'user', message: { role: 'user', content: text } }; }
+const OK = 'node -e "process.exit(0)"';
+const BAD = 'node -e "process.exit(1)"';
+
+t('11.1 register 登记后 unresolved 列出 open 条目', () => {
+  scope.register('s-reg', [{ what: '改 A', verify: OK }, { what: '改 B' }], true);
+  assert(scope.unresolved('s-reg').length === 2, '刚登记应两条未处理');
+  assert(scope.getScope('s-nope') === null, '没登记的会话应为 null');
+});
+t('11.2 check:退出码 0 → pass,非 0 → fail(fail 仍算未完成)', () => {
+  scope.register('s-chk', [{ what: '好的', verify: OK }, { what: '坏的', verify: BAD }], true);
+  scope.check('s-chk');
+  const items = scope.getScope('s-chk').items;
+  assert(items[0].state === 'pass', '退出 0 应 pass,实为 ' + items[0].state);
+  assert(items[1].state === 'fail', '非 0 应 fail,实为 ' + items[1].state);
+  assert(scope.unresolved('s-chk').length === 1, 'fail 必须仍算未完成');
+});
+t('11.3 attest/waive 强制要具体文字,空话拒绝', () => {
+  scope.register('s-mark', [{ what: 'Play 目测' }], true);
+  let threw = false;
+  try { scope.mark('s-mark', '1', 'attested', '', '证据'); } catch { threw = true; }
+  assert(threw, '空证据应抛错');
+  scope.mark('s-mark', '1', 'attested', 'Editor.log 第 88 行 [WaveDone] 计数 3/3');
+  assert(scope.unresolved('s-mark').length === 0, 'attested 应算已处理');
+});
+t('11.4 覆盖度闸门:有 open 条目 → block;全部收敛 → 放行', () => {
+  const tp = writeTranscript('scope-open', [userText('做三件事'), asstText('第一件改好了。')]);
+  scope.register('s-gate', [{ what: '改 A', verify: OK }, { what: '改 B', verify: BAD }], true);
+  scope.check('s-gate');
+  assert(stopAudit({ transcript_path: tp, session_id: 's-gate', stop_hook_active: false }) === 'block', '有 fail 条目应 block');
+  scope.mark('s-gate', '2', 'waived', '勾哥说 B 这轮不做了');
+  assert(stopAudit({ transcript_path: tp, session_id: 's-gate', stop_hook_active: false }) === 'pass', '全部收敛应放行');
+});
+t('11.5 覆盖度闸门在 stop_hook_active=true 时仍拦(与诚实度闸门的关键区别)', () => {
+  const tp = writeTranscript('scope-active', [userText('做完'), asstText('先到这。')]);
+  scope.register('s-active', [{ what: '还没做的事' }], true);
+  assert(stopAudit({ transcript_path: tp, session_id: 's-active', stop_hook_active: true }) === 'block', '续跑也要拦,否则一次 block 后闸门失效');
+});
+t('11.6 空转退化:连拦两次没进展后放行(不撞 8 次硬上限)', () => {
+  const tp = writeTranscript('scope-loop', [userText('做'), asstText('还没做完。')]);
+  scope.register('s-loop', [{ what: '死活做不完的事' }], true);
+  const seq = [1, 2, 3].map(() => stopAudit({ transcript_path: tp, session_id: 's-loop', stop_hook_active: true }));
+  assert(seq[0] === 'block' && seq[1] === 'block', '前两次应拦,实为 ' + seq.join(','));
+  assert(seq[2] === 'pass', '毫无进展时第三次应退化放行,实为 ' + seq[2]);
+});
+t('11.7 留尾闸门:把"要不要继续"甩回用户 + 没登记 scope → block', () => {
+  const tp = writeTranscript('tail-ask', [userText('把这块做了'), asstTool('Edit', { file_path: '/x.cs', new_string: 'y' }),
+    asstText('A 和 B 改好了,C 那块要不要我继续?')]);
+  assert(stopAudit({ transcript_path: tp, session_id: 's-tail', stop_hook_active: false }) === 'block', '留尾措辞应 block');
+});
+t('11.8 留尾闸门:走 AskUserQuestion 的正当拍板 → 放行', () => {
+  const tp = writeTranscript('tail-popup', [userText('把这块做了'), asstTool('AskUserQuestion', {}),
+    asstText('要不要继续做 C?我给了选项。')]);
+  assert(stopAudit({ transcript_path: tp, session_id: 's-popup', stop_hook_active: false }) === 'pass', '弹窗拍板不该被拦');
+});
+t('11.9 留尾闸门不误伤正常汇报', () => {
+  const tp = writeTranscript('tail-clean', [userText('改一下'), asstText('三处都改完了,顺带发现 Foo 有个旧 bug,记在这里没动它。')]);
+  assert(stopAudit({ transcript_path: tp, session_id: 's-clean', stop_hook_active: false }) === 'pass', '正常汇报不该被拦');
+});
+t('11.10 诚实度闸门收窄到本回合:不能白嫖上一回合的验证', () => {
+  const tp = writeTranscript('turn-scoped', [
+    userText('先做第一件'), asstTool('mcp__coplay-mcp__play_game', {}), asstText('第一件验证过了。'),
+    userText('再改一处'), asstTool('Edit', { file_path: '/x.cs', new_string: 'y' }), asstText('已修复并验证。'),
+  ]);
+  assert(stopAudit({ transcript_path: tp, session_id: 's-turn', stop_hook_active: false }) === 'block', '本回合无验证应 block(旧逻辑会白嫖上回合的 play_game)');
+});
+t('11.11 诚实度闸门不误伤纯讨论回合(没改文件)', () => {
+  const tp = writeTranscript('turn-talk', [
+    userText('先做'), asstTool('Edit', { file_path: '/x.cs', new_string: 'y' }), asstText('改了。'),
+    userText('解释一下刚才那个改动'), asstText('之前那轮测试通过,原因是 xxx。'),
+  ]);
+  assert(stopAudit({ transcript_path: tp, session_id: 's-talk', stop_hook_active: false }) === 'pass', '没改文件的讨论回合不该被拦');
+});
+t('11.12 scope CLI 端到端(set → check → status)', () => {
+  const run = (args) => execFileSync('node', [path.join(SCRIPTS, 'scope.js')].concat(args), { encoding: 'utf8', env: process.env });
+  run(['set', '--session', 's-cli', '--json', JSON.stringify([{ what: 'CLI 条目', verify: OK }])]);
+  run(['check', '--session', 's-cli']);
+  const st = JSON.parse(run(['status', '--session', 's-cli']));
+  assert(st.items.length === 1 && st.items[0].state === 'pass', 'CLI 走完应为 pass,实为 ' + JSON.stringify(st.items));
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 
