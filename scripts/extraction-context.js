@@ -16,6 +16,7 @@ function extractionContext(BRAIN, PROJECT, PLUGIN_ROOT) {
 
   const progressJs = path.join(PLUGIN_ROOT, 'scripts', 'progress.js');
   const musicPct = Math.round(((fun.music && fun.music.rate) || 0.15) * 100);
+  const musicN = (fun.music && Array.isArray(fun.music.tracks) && fun.music.tracks.length) || 1;
   const sit = Array.isArray(fun.situational) ? fun.situational : [];
   const sitLines = sit.length
     ? sit.map(q => `  - ${q.when}(约 ${Math.round((q.rate || 0.3) * 100)}%):"${q.text}"`).join('\n')
@@ -47,7 +48,7 @@ function extractionContext(BRAIN, PROJECT, PLUGIN_ROOT) {
     (erCharter ? `${erCharter}\n\n` : '') +
     `**⚠️ 战绩判据(重要,别刷数):只有"把 ER 这个游戏向前推了一步"才记战绩**——玩家可见的功能/内容、修了影响玩家的 bug、做出可交付的一块。**更新翼德/改工具、改配置/文档、搭环境、没有玩家可见变化的杂活或重构,都不算战绩**(干掉老大难 bug 例外)。\n` +
     `**在事件点调用以下脚本**(它管鼓励语/连斩/打卡链/三国成就,爆率全在 \`~/.yide/.meta/extraction-fun.json\`):\n` +
-    `- 完成一个**推进 ER 产品**的小功能:\`node "${progressJs}" bump "功能简述"\`(出鼓励语,约 ${musicPct}% 放雷霆小鸡)\n` +
+    `- 完成一个**推进 ER 产品**的小功能:\`node "${progressJs}" bump "功能简述"\`(出鼓励语,约 ${musicPct}% 放首歌${musicN > 1 ? `,${musicN} 首轮换` : ''})\n` +
     `- 游戏的测试全绿/构建过:\`node "${progressJs}" win\`(今日首胜 + 打卡链 + 连斩)\n` +
     `- 出错/测试红了:\`node "${progressJs}" fail\`(连斩归零,温和)\n` +
     `- 干掉老大难 bug:\`node "${progressJs}" achieve shoubu\`;把关抓到隐患:\`achieve cuzhong\`\n` +

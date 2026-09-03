@@ -13,12 +13,16 @@ const { brainDir, openUrl, today } = require(path.join(__dirname, 'lib.js'));
 
 const stateFile = path.join(brainDir(), '.meta', 'game-state.json');
 const cfgFile = path.join(brainDir(), '.meta', 'extraction-fun.json');
-const DEF_CFG = { music: { url: 'https://www.bilibili.com/video/BV1kpwszhEDh/', rate: 0.15 },
+const DEF_CFG = { music: { rate: 0.15, tracks: [
+    { title: '雷霆小鸡', url: 'https://www.bilibili.com/video/BV1kpwszhEDh/', emoji: '🐔⚡' },
+    { title: 'Boggis, Bunce and Bean', url: 'https://www.youtube.com/watch?v=9CwnpYKT_yo', emoji: '🦊🎺' } ] },
   completion: [{ text: '张荣张誉!', weight: 3 }, { text: '谁插彩鸭当空舞?', weight: 2 }, { text: '我靠牛逼啊!', weight: 2 }],
   combo: { thresholds: { '3': '三连斩!', '5': '五连斩,燕人咆哮!', '10': '十连斩!万军辟易!' } },
   achievements: [] };
 
 function loadCfg() { try { return Object.assign({}, DEF_CFG, JSON.parse(fs.readFileSync(cfgFile, 'utf8'))); } catch { return DEF_CFG; } }
+// 放歌列表:tracks 优先,回落旧的单 url 字段(别的机器配置还没更新时仍能跑)
+function musicTracks(cfg) { const m = cfg.music || {}; if (Array.isArray(m.tracks) && m.tracks.length) return m.tracks; if (m.url) return [{ url: m.url, emoji: '🐔⚡' }]; return DEF_CFG.music.tracks; }
 function load() { try { return JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch { return {}; } }
 function save(s) { try { fs.mkdirSync(path.dirname(stateFile), { recursive: true }); fs.writeFileSync(stateFile, JSON.stringify(s, null, 2)); } catch {} }
 function pick(arr) { const t = arr.reduce((a, x) => a + (x.weight || 1), 0); let r = Math.random() * t; for (const x of arr) { r -= (x.weight || 1); if (r <= 0) return x.text; } return arr[arr.length - 1].text; }
@@ -28,6 +32,7 @@ function init() {
   let s = load();
   s.total = s.total || 0; s.combo = s.combo || 0; s.bestCombo = s.bestCombo || 0;
   s.achievements = s.achievements || {};
+  s.musicIdx = s.musicIdx || 0;  // 放歌轮换游标:跨天保留,不随 count/plays 每日重置
   s.streak = s.streak || { lastWinDate: '', days: 0 };
   const day = today();
   if (s.date !== day) { s.date = day; s.count = 0; s.plays = 0; s.winToday = false; }
@@ -59,7 +64,13 @@ if (cmd === 'bump') {
   msg = pick(cfg.completion); if (arg) msg = `「${arg}」拿下!` + msg;
   msg += `(今日第 ${s.count} 个)`;
   const rate = (cfg.music && typeof cfg.music.rate === 'number') ? cfg.music.rate : 0.15;
-  if (Math.random() < rate) { s.plays++; if (openUrl((cfg.music && cfg.music.url) || DEF_CFG.music.url)) msg += ' 🐔⚡'; }
+  if (Math.random() < rate) {
+    const tracks = musicTracks(cfg);
+    const t = tracks[s.musicIdx % tracks.length];
+    s.musicIdx = (s.musicIdx + 1) % tracks.length;  // 两首轮流放,不随机
+    s.plays++;
+    if (openUrl(t.url)) msg += ' ' + (t.emoji || '🎵');
+  }
   const cl = comboLine(cfg, s.combo); if (cl) msg += ` —— ${cl}`;
   const un = checkAchievements(s, cfg); if (un.length) msg += `\n🏅 解锁成就:${un.join('、')}`;
   save(s); console.log(msg);

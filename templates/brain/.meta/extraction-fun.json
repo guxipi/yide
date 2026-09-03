@@ -1,7 +1,13 @@
 {
-  "_comment": "extraction 个人项目彩蛋,勾哥随时可调。music.rate=完成时放雷霆小鸡概率(0~1)。completion=完成时按 weight 抽一条。situational=情境台词(模型按 rate 大致频率用)。combo=连斩里程碑。achievements=三国称号(type: total总数/streak连续天/flag模型触发)。greeting/nightGuard 开关。enabled=总开关。",
+  "_comment": "extraction 个人项目彩蛋,勾哥随时可调。music.rate=完成时放歌概率(0~1),music.tracks=歌单,按顺序轮流放(想加歌直接往数组里追加,轮换游标存在 game-state.json 的 musicIdx)。completion=完成时按 weight 抽一条。situational=情境台词(模型按 rate 大致频率用)。combo=连斩里程碑。achievements=三国称号(type: total总数/streak连续天/flag模型触发)。greeting/nightGuard 开关。enabled=总开关。",
   "enabled": true,
-  "music": { "url": "https://www.bilibili.com/video/BV1kpwszhEDh/", "rate": 0.15 },
+  "music": {
+    "rate": 0.15,
+    "tracks": [
+      { "title": "雷霆小鸡", "url": "https://www.bilibili.com/video/BV1kpwszhEDh/", "emoji": "🐔⚡" },
+      { "title": "Boggis, Bunce and Bean(了不起的狐狸爸爸)", "url": "https://www.youtube.com/watch?v=9CwnpYKT_yo", "emoji": "🦊🎺" }
+    ]
+  },
   "completion": [
     { "text": "张荣张誉!", "weight": 3 },
     { "text": "谁插彩鸭当空舞?", "weight": 2 },
