@@ -38,7 +38,7 @@
 > oracle = 测试 + **已接的 Coplay(Unity MCP)**,不是新东西。
 - **只对 `[逻辑]` + `[集成]` 两层自动验到全绿**;**`[手感]` 留给勾哥试玩,绝不声称机器验了手感**。
 - **按层分工(玩法以 PlayMode 为真值)**:纯逻辑(掉率/伤害/计时/状态机)用 **EditMode**(快);**真玩法 / 集成(Boss 关核心)用 PlayMode——这才是真值,以它为准**,别为省时间用 EditMode 假装测了玩法。PlayMode 慢就**批量跑**(一次进 Play 多验几条),靠下面的护栏控时间。
-- 跑 `run_tests` / `read_console` / 必要时 PlayMode 模拟操作 → 没过就**自己定位、纠错、重跑**。
+- 跑测试(EditMode/PlayMode 套件走 Unity CLI `-runTests`,Coplay 没有 `run_tests`)/ `check_compile_errors` / `get_unity_logs` / 必要时 `play_game` + 驱动脚本模拟操作 → 没过就**自己定位、纠错、重跑**。
 - **护栏**(治又慢又脆/失控):设**迭代次数与时间上限**;**卡住就停下,报"卡在哪、试过什么"**,别空转烧时间/token;**Coplay 掉线/超时 → 降级为"交付 + 让勾哥自己跑测"**,不假装跑过。
 - 收尾跑 **`翼德 评审`**:新上下文 subagent 只看 diff、只挑正确性/耦合/暗坑。
 

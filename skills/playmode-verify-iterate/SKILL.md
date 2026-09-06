@@ -82,6 +82,7 @@ Debug.Log($"YIDE: mode={panel.CurrentMode} alpha={cg.alpha:F2} " +
 | 切 tab/MoveTo NRE | 场景对象在 Awake 前被外部调;lazy-resolve 缓存字段(别在 Awake 才初始化) |
 | 上回合 spawn 的预览物/对象突然 `Find` 不到 | 编辑器是勾哥活地盘,active scene 被他中途切走(实测 UIDesign_Gameplay→GameScene→Boot);跨回合先 `list_game_objects_in_hierarchy`/确认 active scene,找不到就重 spawn;临时物 `__` 前缀、尽量"实例化→操作→销毁"一次脚本内闭环(原 L-0009)|
 | `execute_script` 突然报编译错 | 多半是勾哥 IDE 里 WIP 代码编译不过——**先看报错文件,来自他的活就不碰、只汇报**;验证降级为直接读资产 YAML(.anim 曲线 / .controller 的 `m_Motion` / .meta `externalObjects`),资产层证据同样硬(原 L-0009)|
+| Coplay 通道全超时:`get_unity_editor_state` 秒回,但 `execute_script`/`stop_game`/`get_unity_logs` 全 60s 超时,Unity 窗口仍 responding、CPU 三核满转 | **不是编译死锁,是每帧日志风暴**(实例:玩家旁金币 + PlayerData service 缺失,CoinPickup 每帧刷警告+提栈)。鉴别:绕开 MCP 直接 tail `%LOCALAPPDATA%\Unity\Editor\Editor.log`。**卡住时 `stop_game` 只发一次然后等**——超时期间发的会排队迟到生效,连发几发会莫名掐断后续几次 Play。预防:playtest 驱动 warp 后顺手 Destroy 玩家周围 `PickupBase`(2026-08-23)|
 | `save_scene("Name")` 存出 `Assets/Name.unity` 垃圾文件、真场景没动 | 它把 `scene_name` 当相对 Assets 路径;改用 `EditorSceneManager.SaveScene(scene)`(无 path,写回 `scene.path` 原路径),流程 `OpenScene(canonicalPath,Single)`→改→`MarkSceneDirty`→`SaveScene`;改完 `Grep` 真 YAML 核实落地,**别只信工具返回串**(原 L-0007)|
 
 ---
