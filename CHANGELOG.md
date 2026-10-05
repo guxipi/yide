@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.58.0 — 2026-10-05 新动作 polish(翼德 打磨 / polish):把一屏推到成品级的闭环工作法
+- 蒸馏自 ER 简报页三批打磨(14 topic、13 次提交,勾哥评价"效果非常好"):**讨论 → 多路竞品调研(每 topic 一路 opus,输出 block JSON)→ 写进勾哥的 Google Sheet(现状图+对照图+冗余 action+建议/拍板列)→ 弹窗只问真岔路 → 方案(opus 只读+只写一个方案文件)→ 分片施工(executor·opus 一片一棒串行占编辑器,一回合到底)→ 主脑亲眼看截图验收 → 显式路径 commit → 批末对抗评审 → 回填知识库/记忆/表格/Planyway**。
+- 明写**分工与模型表**(主脑只做判断;侦察 Explore·opus;调研/方案/评审 general-purpose·opus;施工 executor·opus;追加修走 SendMessage 回同一执行者)、表格管线(`templates/polish/gen_sheet.py` 一份 JSON 同时出表与知识库、`sheet_helpers.js` 合成 paste/嵌图/行高/任务标记)、出图通道(Coplay 401 时走 ChatGPT 网页版 + `matte-icon-slicer` + 连通域清理)、成品 checklist(2D/3D/动效/**声音**——上次漏做,列为必做)、九条付过学费的坑(Play 中改脚本、超时并发贴错位、浮动图残留、Plan 代理写不了文件、共享树显式路径提交…)。
+- 模板:`templates/polish/{workorder_template.md, research_prompt_template.md, play_route_template.md, contact.py}`。
+
 ### v0.57.0 — 2026-07-25 精简:砍掉模型原生已覆盖的那半层 harness
 - **背景**:翼德的约束层是三年前(按 AI 迭代速度算)那种"模型什么都不会,全靠外面兜"的假设堆起来的。现在 Opus 5 的 system prompt 原生覆盖了"贴合周围风格 / 用最简方案 / 只做被要求的事 / 不编 API / 先查证再下结论",这些还留在常驻注入里就是纯重复。**判据:一条规则如果换成任何一个通用 AI 助手都该遵守,它就该删;只有这台机器 / 这个项目 / 这个人才成立的,才留。**
 - **① 常驻注入去重(4592 → 3437 tokens,-25%)**:发货默认红线 6→4 条(合并"加屎山 / 过度工程 / 加没要求的东西"三条为一,原文逐条对应现代模型的 delivering-work 对齐);charter 5→4 条(删"宁问勿错"——它和用户自己后加的"低风险可逆直接做完"互相打架,原生也倾向少问);用户层 charter-extra 删"结论先行"(已由 output style 覆盖,那才是真正改 system prompt 的层)、"低风险直接做""大任务不中途请示"(原生覆盖);ER 专属删两顶帽子的说理段和"别和红线打架"的自辩段,只留判据、交易/PvP 技术契约、Play Mode 收尾、MCP SAVE。

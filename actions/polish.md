@@ -1,0 +1,125 @@
+# 翼德 · 打磨一屏(polish / 打磨 / refine)
+
+> 把一个已经"能用但像开发版"的游戏界面(2D UI + 3D 场景 + 动效 + 声音)推到**成品级**的完整工作法。
+> 蒸馏自 2026-10-02~05 ER「简报页 Briefing Room」三批打磨:14 个 topic、~30 张竞品对照图/批、13 次提交,勾哥评价"效果非常好"。
+> 它不是"改一改好看点",而是**讨论 → 调研 → 拍板 → 方案 → 分片施工 → 亲眼验收 → 回填**的闭环,且**主脑只做判断,重活全派 Opus**。
+
+## 0. 触发后第一件事:问清四样,别猜
+用 AskUserQuestion(或一句话)问:
+1. **写在哪个表格**:Google Sheet URL + 分页(没有就让他建一个空表给链接;表是讨论的真源,不是报告)。
+2. **哪一屏 + 现状截图**(他发的截图路径;没有就自己进 Play 截)。
+3. **他已经看出的问题**(原话逐条记下,后面每个 topic 的「勾哥原话」列要原样放)。
+4. **美术出图通道**:Coplay `generate_or_edit_images` 能不能用(401 就走 §7 的 ChatGPT 通道),以及是否授权我用 ChatGPT。
+
+然后登记 scope(`scope.js set`),每个 topic 一条「调研」+ 一条「实施+Play 验证」。
+
+## 1. 总流程(一批 = 一轮,勾哥看完会再提一批,循环)
+```
+建档(目录/基线截图/Play 驱动手册)
+ → 代码侦察(现状怎么实现,决定 action 落点)         ← Explore·opus
+ → 竞品调研(每个 topic 一路,多方向+多图+冗余 action)  ← general-purpose·opus ×N 并行
+ → 写表(色带/现状图/对照图/他们怎么做/action/成本/建议/拍板列)
+ → 弹窗拍板(只问真岔路,推荐项放第一)
+ → 方案(精确到文件/方法/公式/数据流/性能/风险/验证)   ← general-purpose·opus(只读+只写一个方案文件)
+ → 分片施工(一片一棒,串行占编辑器,一回合到底)        ← executor·opus
+ → 主脑亲眼验收截图 → 显式路径 commit → attest
+ → 不满意 → SendMessage 让同一执行者追加修(它有上下文,最省)
+ → 批末:对抗式代码评审(只挑正确性/生命周期/关域重载/GC) ← general-purpose·opus
+ → 回填:知识库 md+manifest+README+vault 镜像 / 记忆工地文件 / 表格状态列 / Planyway / 战绩
+```
+**勾哥的节奏**:他说「先这样做看看效果」「现在全做,我需要全通」= 拍板即开工,不要再确认一遍;他看完实物会再提下一批。
+
+## 2. 分工与模型(谁干什么、用什么模型)——这是省 token 的核心
+| 角色 | subagent_type / model | 干什么 | 不干什么 |
+|---|---|---|---|
+| **主脑**(当前会话,Fable/最强模型) | — | 取舍、写工单、定岔路、**亲眼看截图验收**、commit、回填、和勾哥对话 | 不读大文件、不写大段代码、不自己调研(每一步都派) |
+| 代码侦察 | `Explore` + `model: opus` | 读现状实现:怎么上屏、数据从哪来、哪些是占位、可下手的杠杆+成本 S/M/L | 不改文件、不动 scope |
+| 竞品调研 | `general-purpose` + `model: opus`,**每个 topic 一路并行** | 7–11 个参考覆盖多方向,下图到知识库,**Read 每张图亲眼确认**,盘点项目 kit 里现成资源,输出 `block_<id>.json`(见 §4) | 不改项目、不 commit、不动 Unity |
+| 施工方案 | `general-purpose` + `model: opus`(**不要用 `Plan` 类型——它只读,连方案文件都写不了,主脑得自己重打一遍**) | 读代码+数据后出可照做的方案,写到**唯一允许写的方案文件** | 不动编辑器 |
+| 施工 | `executor` + `model: opus`,**一片一棒,串行** | 照工单实现 + 真流程 Play 验证 + 三档截图 + state-dump + 诚实汇报 | 不 commit/push、不 save 场景、不碰 ProjectSettings、不动别的棒的文件 |
+| 追加修 | `SendMessage` 回同一执行者 | 验收后的小修(比重新派省很多) | — |
+| 评审 | `general-purpose` + `model: opus`,只读 | 批末看合并 diff:泄漏/关域重载静态残留/空引用/每帧 GC/Cheat 隔离/字色铁规/行为回归;只报站得住的 | 不改文件 |
+| 记忆整理 | `general-purpose` + `model: opus` | consolidate(到期时) | — |
+| 基线截图+驱动手册 | `executor` + `model: opus`(批 1 开头) | 走真实路径到目标屏,三档截图,写 `PLAY_ROUTE.md` + 驱动脚本供后续所有棒复用 | — |
+
+**编辑器只有一台 → 施工必须串行**;调研/方案/评审不占编辑器,可与施工并行。派活顺序按「勾哥最想先看到的」和「文件冲突最小」排。
+
+## 3. 建档(批 1 开头做一次)
+- 交付目录:`D:\screenshots\ER_<屏名>_<日期>\`(勾哥要求,scratchpad 会被清):`baseline\`(三档现状)、每片 `S1\`/`B2\`… 截图、`final\BEFORE_AFTER_*.png`、`PLAN_*.md`、`WORKORDER_*.md`、`PLAY_ROUTE.md` + `scripts\`。
+- **先派一棒截基线并写驱动手册**:真实玩家路径(从哪点到哪)、每步的 Coplay 调用、怎么切 Game 视图三档分辨率(1080×1920 / 2340 / 2640)、怎么截图(Coplay capture 看不到 screen-space UI,用项目的 `ScreenCapture` 机制)、怎么干净退出。后面每棒都照抄,省掉重复摸路。
+- 现状裁图:按 topic 从基线裁出局部放大(`now_<id>.png`),写表时放「现状图」列。
+
+## 4. 调研工单(每 topic 一路)
+工单要素:背景一段(品类/美术风格/这一屏是什么)、**勾哥原话**、方向种子(列 6–8 个不同 approach,允许增删)、每参考一张真实游戏内图(长边≥700,curl 带 UA,webp 转 jpg,存 `Competitive Research/images/<game>/<game>_<source>_<屏><id>_<nn>.<ext>`,**必须 Read 亲眼确认**)、先 Grep `_manifest_*.md` 复用库里已有图、盘点项目内可用资源(kit sprite/widget/字体/材质)、额外 action ≥6–12 条允许冗余。
+**输出严格 JSON**(主脑不再手打):
+```json
+{"id":"B1","title":"…","goal":"≤40字","cause":"≤80字(基于代码现状)","now_img":"now_B1.png",
+ "rows":[{"dir":"方向≤10字","game":"游戏·场景","img":"<game_dir>/<file>","how":"≤35字","action":"≤45字可执行","cost":"S|M|L","rec":"★ 首选:理由|可选:理由|备胎:理由","src":"URL","srcname":"Steam/Fandom/…"},
+         {"dir":"额外·xxx","game":"灵感来源","action":"…","cost":"S","rec":"可选"}]}
+```
+主脑拿到后:**contact sheet 抽验**(`templates/polish/contact.py` 拼版一张图,Read 一次看全部)→ 调 `rec`(翼德建议)→ 去重跨 topic 重复图 → 进表。
+**选竞品不限品类**:meta/UI 看 Supercell(Brawl Stars/Clash Royale/Squad Busters)、主机成品(Helldivers 2/DRG/Hades/XCOM)、SLG(Whiteout/RoK);地图/沙盘看 Bad North/Islanders/Dorfromantik/Civ VI/Zelda;同品类撤离(Delta Force/Arena Breakout/头号禁区)看题材语义。
+
+## 5. 表格规格(勾哥的讨论真源)
+- 列:`# | 现状图 | 方向 | 参考游戏 | 对照图 | 他们怎么做 | Action 候选 | 成本 | 翼德建议 | 勾哥拍板 | 讨论备注 | 来源`;表头冻结;第 2 行一句用法。
+- 每 topic 一条色带(标题+目标+现状根因),带图行在前(行高 190,对照图嵌格),额外 action 行在后;「现状图」列按 topic **纵向合并**并**顶对齐**,现状大图挨着参考图看;★首选行黄底;来源列用超链接。
+- 表尾「**定案施工单**」(片/名称/做什么/依据行/状态):拍板后填,每棒完成把状态改 ✅+commit hash;下一批追加 Batch 块(topic/原话/做法/状态)再接对照块。
+- **写表管线**(`templates/polish/gen_sheet.py` + `sheet_helpers.js`):block JSON → payload(HTML 表 + 图片放置表 + 行高)→ Chrome MCP 合成 paste 贴表 → `file_upload` 把图传进页内 `<input type=file>` → 合成 paste 落浮动图 → JS 点「Put image in selected cell」。**一份 JSON 同时生成表格与知识库 md + manifest**。
+- **写表三坑(都踩过)**:① 页内长任务(贴 8 块/嵌 72 图)用 **window.__job 完成标记 + 轮询**,**超时后绝不再发任何会改 selection 的脚本**(会把块贴错位、图漂到别处);② 嵌图失败的要重试,失败残留的**浮动图**要逐张选中 Delete;③ 带 colspan 的 HTML 表会撑宽列,贴完复位列宽;`white-space:normal` 不一定生效,选区后用 `alt+/` 菜单搜索「Wrap text」「Text align: Middle/Top」真点。
+- 写中文/格式/图都走合成事件,不碰系统剪贴板(和勾哥共用会互相污染)。
+
+## 6. 拍板 → 方案 → 施工
+### 6.1 弹窗只问真岔路
+每批 ≤4 问,推荐项放第一并标 (Recommended),每项一句利弊+成本;互相牵连的 topic 先问「整体路线」(如:连续地图 vs 切块模型台)。勾哥答完**立刻落表**(拍板列+备注)并改相关记忆/GDD(以现状为准就回写 GDD,注明日期)。
+
+### 6.2 方案工单要它回答
+① 每片改动清单精确到文件/方法/新文件、关键公式与算法可照做;② 数据流只复用已有事件/属性,不新造总线;③ 性能预算(顶点/RT/DC/overdraw/初始化耗时/低端档降级);④ 风险与暗坑(共享资产耦合、关域重载 static、shader strip、烘焙回执、单 mesh 65k);⑤ 验证方法(真流程/三档/防回归);⑥ 切片顺序与工作量;⑦ 只列真岔路。方案文件主脑**落盘保存**(上下文会被压缩),施工工单只引用章节。
+
+### 6.3 施工工单模板(`templates/polish/workorder_template.md`)——必含
+- **必读**:方案章节、现状截图、参考图(Read)、要改的源码、驱动手册、项目 CLAUDE.md、相关技能/记忆。
+- **验收口径 = 勾哥原话 + 拍板**,并写明「你对好不好看负责,调到截图真的好看为止,不是能跑就交」。
+- **范围围栏**:列出"不要动"的文件/系统(别的棒刚改完的)。
+- **硬性约束**:不改共享资产与烘焙工具(`git diff <共享目录>` 为空 + 回执校验 PASS);2D 回退/旧路径不许坏;float 分支不用 shader_feature;关域重载 static 复位;运行时对象 OnDestroy 销毁;只用确认存在的 API;日志按周围风格;**每次改文件前先 `get_unity_editor_state` 确认 playMode=false**(五棒里四棒违反过这条,要写进去);改完 `check_compile_errors` 再进 Play;不 save 被自动标 dirty 的场景;不碰 ProjectSettings;收尾 stop Play + 还原 Game 视图;不 commit/push;不跑 scope.js;**一回合连续干到底,没有 watcher 会叫你**。
+- **验证清单**:编译零错;真流程三档截图(+ 该片特有视角);**每张 Read 亲眼看并迭代**;真点击回归;state-dump 原值;防回归;`git status --short`。
+- **汇报格式**:改动清单 / 证据(截图绝对路径+dump 原值)/ 画面自评逐项 / **偏离与欠账逐条**(不伪造验证)。
+
+### 6.4 主脑验收纪律
+- **不信汇报,看图**:每棒至少 Read 1 张整屏 + 1 张关键局部拼图(`contact.py` 拼多张省 token);对比基线与上一棒。
+- 通过 → `git add -- <显式路径>` + `git commit -- <显式路径>`(共享工作树,只提交这一棒的文件)→ `scope.js attest` 写具体证据 → 表格状态列 ✅。
+- 不通过 → `SendMessage` 同一执行者,写清「主脑看到的具体问题 + 要改成什么 + 怎么验」。
+- 执行者汇报里的「偏离与欠账」原样转给勾哥,不洗白;发现别的工地的东西(DTO 缺字段、ProjectSettings 被编辑器改)只上报不代修。
+
+## 7. 美术通道(项目出不了图时)
+1. Coplay `generate_or_edit_images` 先试一次;401 = 未授权,别反复试。
+2. **ChatGPT 网页版**(勾哥授权后):Chrome MCP 打开 chatgpt.com(已登录),切 Chat 模式,`type` 整段 prompt + Return;轮询 `main img` 的 naturalWidth 与 stop-button 消失;`fetch(img.src)→blob→a[download]` 存到 Downloads 再拷进交付目录(告诉勾哥这一步)。**同一会话续 prompt**,画风自动一致(「Same hero, same art style…」)。桌面版没有稳定的操控通道(会和他抢键鼠),用网页版并说明。
+3. **prompt 配方**:图标集 = 「N 个 … 排成 R×C 网格、均匀留白、**纯品红 #FF00FF 平底、无阴影无文字**、Supercell/Brawl Stars 风、厚白边+深描边圆徽+粗壮卡通物件+柔 cel shading+小高光、尺寸一致」;原画 = 「主角描述(保持一致)+ 场景 + 画风(高饱和厚涂卡通)+ **构图规则**(将被裁成 4:1,主体在左半中带,右 40% 留给 UI,上下只放叶子天空)+ 无文字无 UI」。
+4. 切图:`matte-icon-slicer` 技能(品红底自动键色+去边)→ **按连通域只留主体**(否则带进隔壁图标的边)→ 残留品红/粉色用阈值再抠 → 导出 256/128(地图用)或 512(UI 用);导入 Unity:Sprite(2D and UI),地图小图标**开 mipmap**,压缩对齐同类资源 .meta。
+5. 主脑**逐张 Read 审**,不满意就在同一会话让 ChatGPT 重画那一张。
+
+## 8. 成品级 checklist(交付前逐项过;哪项没做要明写欠账)
+- **2D UI**:字体二分 + 字面白进描边(UIInk)无彩色字面;kit 同族底板不混用;图层完整(底板/高光/厚边/投影/图标/副行);空态有语义(ADD/锁/剪影)不是灰块;主 CTA 与主页同形同级;入场(卡滑入/逐个 pop)、按压(缩放+下沉)、常驻(呼吸/扫光)动效克制只给重点;三档长宽比不出框不互压;交互在 SafeArea 内;返回键栈;Ink Sweep 零命中;新件回填 widget 注册表。
+- **3D 沙盘/场景**:抗锯齿(MSAA 关着就超采样)+ 网格密度足够;toon ramp + AO + rim;轮廓白边/高亮边框;周边不留纯色虚空(云/水/桌面);有厚度(裙边)不悬空;地标夸大+三级 marker 层级+目标光柱脉冲;路线有方向有分段色有 pulse;进页运镜+显形;按需渲染不白跑;性能预算与低端档;**改动只在自己的 shader/网格里,共享烘焙资产零改动**。
+- **动效**:选中态要「大一档 + 外环脉冲/箭头」而不是只缩放 wobble;切换(模式/合约)有过渡(路线生长、镜头跟随);云/水/光柱常驻慢动;所有动效 unscaled 时间,触摸可跳过。
+- **声音**:按钮按下/确认、tab 切换、卡片入场、合约切换、出发确认各配一条 UI SFX(走项目 AudioService,复用现有 SFX 库,不新造播放器);**这一步在简报页那次没做,下次必须排进施工单**。
+- **数据真实**:界面上出现的数字(消耗/负重/奖励)必须接真源,查不到就不显示并写欠账,不编。
+
+## 9. 坑清单(每条都付过学费)
+- Play 中改 .cs/shader = 可能卡死「Reloading Domain」/假故障——写进每张工单并要求先查 playMode。
+- 执行者会把「等待」当回合终点——工单结尾必须写「一回合到底、没有 watcher」。
+- `Plan` 类子代理只读、写不了文件;方案要主脑落盘或改用 general-purpose 限写一个文件。
+- 子代理共用 scratchpad 会互相覆盖临时脚本——让它们用自己的子目录。
+- 共享工作树:只 `commit -- <显式路径>`;别的工地的 WIP/编辑器自动改的 ProjectSettings 不碰不提交。
+- Sheet:超时后的并发脚本会贴错位(见 §5);colspan 撑宽列;`Plan` 的图片 `img` 跨盘路径 relpath 会炸。
+- 图标切图:自动框会带进隔壁徽章的边——按连通域取主体;品红底在半透明光芒处会残留——阈值再抠。
+- 执行者报告的 dump 要有原值(像素/顶点/耗时/delta),没有原值的"验证过了"不算。
+- 翼德 stop hook 会在 scope 未收敛时拦截收工——等后台棒时用一句话状态回应即可,不要为了过审计把没做完的说成做完。
+
+## 10. 收尾(每批)
+1. 知识库:`Competitive Research/<屏>打磨对照_<日期>[_B2].md`(含「实现现状」附录)+ `_manifest_*.md` + README 两行 + `cp` 镜像到 vault `08 - 竞品研究/`(含新图目录)→ 只提交 md。
+2. 记忆:工地文件(状态/提交/拍板/欠账/下一步/出图通道),MEMORY.md 一行索引;被取代的旧记忆加「⚠ 更正」。
+3. 表格:施工单与 Batch 块状态列全部更新(✅+hash / ⚠欠账 / 施工中)。
+4. Planyway:默认建 KAN issue 标完成(assignee 按当次 userEmail);战绩 `progress.js bump` 一次。
+5. 向勾哥汇报:前后对比图路径、每 topic 一两句、**欠账与需要他拍板的**单列,不夸大。
+
+## 模板与脚本
+`${CLAUDE_SKILL_DIR}/templates/polish/`:`gen_sheet.py`(block JSON → 表格 payload + 知识库 md/manifest)、`contact.py`(拼版验图)、`sheet_helpers.js`(Chrome MCP 页内助手:合成 paste / 嵌图 / 调行高列宽 / 任务标记)、`workorder_template.md`(施工工单)、`research_prompt_template.md`(调研工单)、`play_route_template.md`(驱动手册骨架)。用前先读一遍,路径和表头按本次替换。

@@ -1,6 +1,6 @@
 ---
 name: yide
-description: 翼德(yide)——勾哥的专属秘书 / Unity 把关助手。用户对"翼德 / yide"发起一个具体动作时触发(中英文皆可,也可打 `/yide:yide <动作>`)。动作:磨合 onboard、记教训 record、简报 brief、整理 consolidate、更新 update、测试 qa/test、评审 review、笔记 note、蒸馏 distill、专家 experts、prompt 库、战绩 stats、闭环造鸭 plan、线稿 mockup、分镜 storyboard、摆UI ui、项目文档 docs、冻帧标注 playtest、语音输入 voice、体检 doctor。
+description: 翼德(yide)——勾哥的专属秘书 / Unity 把关助手。用户对"翼德 / yide"发起一个具体动作时触发(中英文皆可,也可打 `/yide:yide <动作>`)。动作:磨合 onboard、记教训 record、简报 brief、整理 consolidate、更新 update、测试 qa/test、评审 review、笔记 note、蒸馏 distill、专家 experts、prompt 库、战绩 stats、闭环造鸭 plan、线稿 mockup、分镜 storyboard、摆UI ui、项目文档 docs、冻帧标注 playtest、语音输入 voice、体检 doctor、打磨一屏 polish。
 allowed-tools: Bash
 ---
 
@@ -31,6 +31,7 @@ allowed-tools: Bash
 | `playtest` / `冻帧标注` / `标注` / `试玩反馈` | `actions/playtest.md` | playtest 冻帧标注:Unity 按 F8 冻帧 + 抓命中元素/上下文 + 录音/打字 → 本地转写 → 带定位问题清单 → 联合优化回流 |
 | `voice` / `语音` / `语音输入` / `听写` / `口述` / `speech` | `actions/voice.md` | 语音喂 prompt:Rider 终端全局热键(默认 Ctrl+F9)说中文 → 复用 Google STT 流式转写 → 自动键入当前光标(Claude Code 输入框),审一眼再回车(Windows) |
 | `战绩` / `zhanji` / `stats` / `战绩面板` | `actions/zhanji.md` | (extraction 彩蛋)查连斩/打卡链/三国称号战绩 |
+| `polish` / `打磨` / `打磨一屏` / `refine` / `精修` | `actions/polish.md` | 把一屏推到成品级:先问写哪个表格,竞品调研→写表→弹窗拍板→方案→分片施工(executor·opus 串行)→亲眼验收→回填;含分工/模型表、表格管线、出图通道、成品 checklist(2D/3D/动效/声音) |
 | `体检` / `诊断` / `doctor` / `自检` | `actions/doctor.md` | 一屏自诊断(大脑指针/hook/预算/SmartMerge…)+ 每项修复指引 |
 
 ## 规则
