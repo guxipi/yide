@@ -41,6 +41,9 @@
 | 评审 | `general-purpose` + `model: opus`,只读 | 批末看合并 diff:泄漏/关域重载静态残留/空引用/每帧 GC/Cheat 隔离/字色铁规/行为回归;只报站得住的 | 不改文件 |
 | 记忆整理 | `general-purpose` + `model: opus` | consolidate(到期时) | — |
 | 基线截图+驱动手册 | `executor` + `model: opus`(批 1 开头) | 走真实路径到目标屏,三档截图,写 `PLAY_ROUTE.md` + 驱动脚本供后续所有棒复用 | — |
+| **2D 出图**(图标/原画/贴图/decal) | **codex `gpt-6-astra`**(`codex exec -i <参考图> - < order.md`,产物落 `~/.codex/generated_images/`);Chrome MCP 的 ChatGPT 网页版是备选 | 概念图、图标集、原画、3D 贴图(地面/墙面/烧灼痕迹等 decal)、UI 贴图;主脑逐张审,不满意换 prompt 重出 | 不自己合成"差不多"的图顶上;astra 额度烧得快,别无脑全用 |
+| **3D 建模**(建筑/道具/地标/飞船…) | **codex `gpt-5.6-sol` 跑 Blender 脚本**(默认);sol 看图不达标或要对着概念图抠质感的关键件 → 换 **astra**;也可 `executor`·opus 跑 Blender | 写 bpy 脚本建模→渲染转台/三视图自审图→主脑对照竞品截图审→`codex exec resume <session id> - < feedback.md` 打回续做,直到对齐成品手游 | 不接受"有个形就行";一件模型通常要 2–4 轮打回 |
+| **音效** | `executor`·opus(Coplay `generate_sfx` 可用就用;401 → 已购音效包挑选 + 程序化合成脚本) | 按事件表配 SoundEvent、接项目 AudioService、裁剪/响度统一;循环音做成点缀 | 不能替勾哥"听"——听感验收留给他,汇报里明写 UNVERIFIED |
 
 **编辑器只有一台 → 施工必须串行**;调研/方案/评审不占编辑器,可与施工并行。派活顺序按「勾哥最想先看到的」和「文件冲突最小」排。
 
@@ -89,18 +92,31 @@
 - 不通过 → `SendMessage` 同一执行者,写清「主脑看到的具体问题 + 要改成什么 + 怎么验」。
 - 执行者汇报里的「偏离与欠账」原样转给勾哥,不洗白;发现别的工地的东西(DTO 缺字段、ProjectSettings 被编辑器改)只上报不代修。
 
-## 7. 美术通道(项目出不了图时)
-1. Coplay `generate_or_edit_images` 先试一次;401 = 未授权,别反复试。
-2. **ChatGPT 网页版**(勾哥授权后):Chrome MCP 打开 chatgpt.com(已登录),切 Chat 模式,`type` 整段 prompt + Return;轮询 `main img` 的 naturalWidth 与 stop-button 消失;`fetch(img.src)→blob→a[download]` 存到 Downloads 再拷进交付目录(告诉勾哥这一步)。**同一会话续 prompt**,画风自动一致(「Same hero, same art style…」)。桌面版没有稳定的操控通道(会和他抢键鼠),用网页版并说明。
-3. **prompt 配方**:图标集 = 「N 个 … 排成 R×C 网格、均匀留白、**纯品红 #FF00FF 平底、无阴影无文字**、Supercell/Brawl Stars 风、厚白边+深描边圆徽+粗壮卡通物件+柔 cel shading+小高光、尺寸一致」;原画 = 「主角描述(保持一致)+ 场景 + 画风(高饱和厚涂卡通)+ **构图规则**(将被裁成 4:1,主体在左半中带,右 40% 留给 UI,上下只放叶子天空)+ 无文字无 UI」。
-4. 切图:`matte-icon-slicer` 技能(品红底自动键色+去边)→ **按连通域只留主体**(否则带进隔壁图标的边)→ 残留品红/粉色用阈值再抠 → 导出 256/128(地图用)或 512(UI 用);导入 Unity:Sprite(2D and UI),地图小图标**开 mipmap**,压缩对齐同类资源 .meta。
-5. 主脑**逐张 Read 审**,不满意就在同一会话让 ChatGPT 重画那一张。
+## 7. 美术与建模通道(项目缺素材时自产到满意为止,不等美术)
+### 7.1 2D 出图(图标 / 原画 / 贴图 / decal)
+1. 先试 Coplay `generate_or_edit_images` 一次;401 = 未授权,别反复试。
+2. **主通道 = codex 的 astra**:`~/.codex/config.toml` 里 `model = "gpt-6-astra"`,codex CLI ≥0.160 的 `image_generation` 可用:`codex exec --sandbox workspace-write -i <参考图1> -i <参考图2> - < order.md`(prompt 走 stdin),产物落 `~/.codex/generated_images/`;打回续做 `codex exec resume <session id> - < feedback.md`(session id 在 stdout 日志头)。参考图喂项目现有 KV/kit 预览保证画风一致。
+3. **备选 = ChatGPT 网页版**(勾哥授权后):Chrome MCP 打开 chatgpt.com(已登录)切 Chat 模式,`type` 整段 prompt + Return;轮询 `main img` 的 naturalWidth 与 stop-button 消失;`fetch(img.src)→blob→a[download]` 存到 Downloads 再拷进交付目录(告诉勾哥这一步)。**同一会话续 prompt**,画风自动一致(「Same hero, same art style…」)。桌面版没有稳定操控通道(会和他抢键鼠),用网页版并说明。
+4. **prompt 配方**:图标集 = 「N 个 … 排成 R×C 网格、均匀留白、**纯品红 #FF00FF 平底、无阴影无文字**、Supercell/Brawl Stars 风、厚白边+深描边圆徽+粗壮卡通物件+柔 cel shading+小高光、尺寸一致」;原画 = 「主角描述(保持一致)+ 场景 + 画风(高饱和厚涂卡通)+ **构图规则**(将被裁成 4:1,主体在左半中带,右 40% 留给 UI,上下只放叶子天空)+ 无文字无 UI」;**3D 贴图/地面** = 「无缝可平铺(seamless tileable)、正交俯视、均匀打光无投影、卡通手绘质感、指定 2–3 档色、1024/2048 方图」+ 用 PIL 验平铺接缝;**decal(烧灼/裂缝/苔藓/弹痕)** = 「透明底、单个元素居中、边缘羽化、无投影」+ 切图抠底。
+5. 切图:`matte-icon-slicer` 技能(品红底自动键色+去边)→ **按连通域只留主体**(否则带进隔壁图标的边)→ 残留品红/粉色用阈值再抠 → 导出 256/128(地图用)或 512(UI 用);导入 Unity:Sprite(2D and UI),地图小图标**开 mipmap**,压缩对齐同类资源 .meta;贴图走 gaoguang-3d 的材质口径。
+6. 主脑**逐张 Read 审**,不满意就在同一会话让它重画那一张;「refine 到满意」是硬要求,不是出一版就用。
+
+### 7.2 3D 建模(对齐成品手游,多轮迭代)
+- 工具:本机 Blender(winget 官方源装,先 [[verify-install-source-authenticity]]),脚本化建模(bpy),管线脚本进仓库 `ArtWork/<工地>/gen/`,渲染自审图 `ArtWork/<工地>/renders/`(大文件目录不跟踪)。
+- 流程:① 主脑先拿 2–3 张**同类成品手游的模型截图**当标尺(Brawl Stars / Clash of Clans / Squad Busters 的建筑、载具、地标),写建模单(尺寸、轮廓语言、面数预算、色块数、描边/倒角、贴图方式、必须有的细节如烧灼痕迹/舱门/天线);② 派 **sol**(`codex exec -m gpt-5.6-sol --sandbox workspace-write - < order.md`)写 bpy 脚本建模并渲染转台 4 视 + 一张与竞品同角度的对比图;③ 主脑 Read 对比图,按「轮廓/比例/细节密度/色块/质感」逐项打回(`codex exec resume <id> - < feedback.md`),通常 2–4 轮;④ sol 到顶了就换 **astra**(贵,只给关键件)或 `executor`·opus 跑 Blender;⑤ 贴图/decal 由 7.1 的 astra 出,UV 与材质按 `gaoguang-3d`/`tripo-blender-stylize` 的 ToonLit 口径接入;⑥ 进 Unity 后在真光照下再截一次对比(模型在引擎里和在 Blender 里不是一回事),不达标回到 ③。
+- 判据:**和参照手游并排截图看不出"我们这件是占位"**才算过。勾哥原话:「建模的精细程度要像成品竞品一样,对照着其它手游多次迭代」。
+- 额度:astra 一个下午能把额度烧穿(基地页 10-04 实测),所以**默认 sol,关键件才 astra**;每次换模型在汇报里写明用了谁、几轮。
+
+### 7.3 音效(参考基地页 10-03/10-04 做法)
+- 通道顺序:Coplay `generate_sfx` → 401 则 **已购音效包**(项目里已有 Cyberleaf UI / Cute UI / Epic Toon FX 等,先 Glob 盘点)挑选 → 不够的用**程序化合成脚本**(仓库 `Assets/Audio/SFX/<域>/_gen/gen_*_sfx.py` 已有范式,numpy 合成 wav)→ 注意版权(只用已购包与自产)。
+- 落地:按「事件表」配(按钮按下/确认、tab 切换、卡片入场、合约切换、出发确认、建造开始/完工/揭幕、收取、奖励弹窗…),做成项目的 `SoundEvent`/`XxxSfxLibrary` 资产并接 `GameAudioConfig` 的槽位与 AudioService 调用点(主页那次查到 5 个 UI 音效槽与 `DefaultMusicEvent` 全空、代码早在调——先查配置是不是空的);响度统一(峰值/LUFS 对齐包内同类);**循环音做成点缀**(基地施工循环音太吵,改成近看时的 tick);BGM 全项目尚无,要做先问勾哥风格。
+- 验收:执行者只能验「事件触发→播放调用→clip 非空→音量合理」+ 导出波形/频谱截图;**听感必须勾哥本人验**,汇报里明写 UNVERIFIED,并给出「哪个按钮听哪条」的清单。
 
 ## 8. 成品级 checklist(交付前逐项过;哪项没做要明写欠账)
 - **2D UI**:字体二分 + 字面白进描边(UIInk)无彩色字面;kit 同族底板不混用;图层完整(底板/高光/厚边/投影/图标/副行);空态有语义(ADD/锁/剪影)不是灰块;主 CTA 与主页同形同级;入场(卡滑入/逐个 pop)、按压(缩放+下沉)、常驻(呼吸/扫光)动效克制只给重点;三档长宽比不出框不互压;交互在 SafeArea 内;返回键栈;Ink Sweep 零命中;新件回填 widget 注册表。
 - **3D 沙盘/场景**:抗锯齿(MSAA 关着就超采样)+ 网格密度足够;toon ramp + AO + rim;轮廓白边/高亮边框;周边不留纯色虚空(云/水/桌面);有厚度(裙边)不悬空;地标夸大+三级 marker 层级+目标光柱脉冲;路线有方向有分段色有 pulse;进页运镜+显形;按需渲染不白跑;性能预算与低端档;**改动只在自己的 shader/网格里,共享烘焙资产零改动**。
 - **动效**:选中态要「大一档 + 外环脉冲/箭头」而不是只缩放 wobble;切换(模式/合约)有过渡(路线生长、镜头跟随);云/水/光柱常驻慢动;所有动效 unscaled 时间,触摸可跳过。
-- **声音**:按钮按下/确认、tab 切换、卡片入场、合约切换、出发确认各配一条 UI SFX(走项目 AudioService,复用现有 SFX 库,不新造播放器);**这一步在简报页那次没做,下次必须排进施工单**。
+- **声音**:按 §7.3 配齐事件表(按钮/确认/tab/卡片入场/合约切换/出发/建造三段/收取/奖励),接 AudioService,循环音做点缀;**简报页那次没做,基地页做了但听感未验——每批施工单必须排一棒音效,收尾请勾哥听**。
 - **数据真实**:界面上出现的数字(消耗/负重/奖励)必须接真源,查不到就不显示并写欠账,不编。
 
 ## 9. 坑清单(每条都付过学费)
@@ -112,6 +128,9 @@
 - Sheet:超时后的并发脚本会贴错位(见 §5);colspan 撑宽列;`Plan` 的图片 `img` 跨盘路径 relpath 会炸。
 - 图标切图:自动框会带进隔壁徽章的边——按连通域取主体;品红底在半透明光芒处会残留——阈值再抠。
 - 执行者报告的 dump 要有原值(像素/顶点/耗时/delta),没有原值的"验证过了"不算。
+- 子代理会被看门狗判停(600s 无进展)——需要长跑的棒工单里写「不要再派子代理、不要起后台任务然后等它」。
+- 截图/测试棒在 dev 号上会真花付费货币、真往世界频道发消息——工单写明「不花 GEM/体力、不发真消息」。
+- astra 额度一个下午能烧穿;建模默认 sol,astra 只给关键件。
 - 翼德 stop hook 会在 scope 未收敛时拦截收工——等后台棒时用一句话状态回应即可,不要为了过审计把没做完的说成做完。
 
 ## 10. 收尾(每批)
@@ -120,6 +139,12 @@
 3. 表格:施工单与 Batch 块状态列全部更新(✅+hash / ⚠欠账 / 施工中)。
 4. Planyway:默认建 KAN issue 标完成(assignee 按当次 userEmail);战绩 `progress.js bump` 一次。
 5. 向勾哥汇报:前后对比图路径、每 topic 一两句、**欠账与需要他拍板的**单列,不夸大。
+
+## 先例(记忆里有全套过程资料与教训)
+- 简报页 [[briefing-room-polish-worksite]](本法原型:对照表/弹窗拍板/分片施工/ChatGPT 网页出图/v2 地图 Cheat 对照)
+- 基地页 [[base-page-polish-worksite]](3D 场景主题/Blender 建模迭代/实体施工演出/音效库/加速经济,两波)
+- 主页 [[home-tab-polish-worksite]](13 题 199 条 action 大表、音频配置为空的侦察)
+- 美术自产路线 [[art-asset-production-routes]]
 
 ## 模板与脚本
 `${CLAUDE_SKILL_DIR}/templates/polish/`:`gen_sheet.py`(block JSON → 表格 payload + 知识库 md/manifest)、`contact.py`(拼版验图)、`sheet_helpers.js`(Chrome MCP 页内助手:合成 paste / 嵌图 / 调行高列宽 / 任务标记)、`workorder_template.md`(施工工单)、`research_prompt_template.md`(调研工单)、`play_route_template.md`(驱动手册骨架)。用前先读一遍,路径和表头按本次替换。

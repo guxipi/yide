@@ -2,6 +2,9 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.58.1 — 2026-10-05 polish 补齐美术/建模/音效通道
+- §7 拆成 2D 出图(codex `gpt-6-astra` 主通道 + ChatGPT 网页备选 + 贴图/decal prompt 配方)、3D 建模(sol 跑 Blender→渲染对比图→主脑按竞品标尺打回 2–4 轮,关键件换 astra)、音效(generate_sfx→已购包→程序化合成,事件表+响度+循环音做点缀,听感留给勾哥);分工表加三行;坑清单加看门狗/dev 号真消费/astra 额度;先例链接三个工地与美术路线记忆。
+
 ### v0.58.0 — 2026-10-05 新动作 polish(翼德 打磨 / polish):把一屏推到成品级的闭环工作法
 - 蒸馏自 ER 简报页三批打磨(14 topic、13 次提交,勾哥评价"效果非常好"):**讨论 → 多路竞品调研(每 topic 一路 opus,输出 block JSON)→ 写进勾哥的 Google Sheet(现状图+对照图+冗余 action+建议/拍板列)→ 弹窗只问真岔路 → 方案(opus 只读+只写一个方案文件)→ 分片施工(executor·opus 一片一棒串行占编辑器,一回合到底)→ 主脑亲眼看截图验收 → 显式路径 commit → 批末对抗评审 → 回填知识库/记忆/表格/Planyway**。
 - 明写**分工与模型表**(主脑只做判断;侦察 Explore·opus;调研/方案/评审 general-purpose·opus;施工 executor·opus;追加修走 SendMessage 回同一执行者)、表格管线(`templates/polish/gen_sheet.py` 一份 JSON 同时出表与知识库、`sheet_helpers.js` 合成 paste/嵌图/行高/任务标记)、出图通道(Coplay 401 时走 ChatGPT 网页版 + `matte-icon-slicer` + 连通域清理)、成品 checklist(2D/3D/动效/**声音**——上次漏做,列为必做)、九条付过学费的坑(Play 中改脚本、超时并发贴错位、浮动图残留、Plan 代理写不了文件、共享树显式路径提交…)。
