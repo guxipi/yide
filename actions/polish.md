@@ -133,6 +133,9 @@
 - 截图/测试棒在 dev 号上会真花付费货币、真往世界频道发消息——工单写明「不花 GEM/体力、不发真消息」。
 - astra 额度一个下午能烧穿;建模默认 sol,astra 只给关键件。
 - 翼德 stop hook 会在 scope 未收敛时拦截收工——等后台棒时用一句话状态回应即可,不要为了过审计把没做完的说成做完。
+- Chrome MCP `navigate` 到**同一 URL**(只换 hash)不会重载页面:上一轮没跑完的嵌图循环会继续跑,和新循环抢选区 → 重复图/贴错格。要重置就 `location.reload()` 或先导去别的 URL;嵌图任务统一用 `__job` done 标志,等它结束前不要再发任何改选区的脚本。
+- 勾哥可能正在同一台编辑器里试玩:执行者开工前 `get_unity_editor_state` 若 playMode=true,**等,不要 stop 他的 Play**(曾有执行者把勾哥的试玩停了)。工单里写明。
+- 后台 `git push` 到 yide 仓被看门狗判 killed 不等于没推上——先 `git ls-remote origin main` 比对 hash 再决定重推。
 
 ## 10. 收尾(每批)
 1. 知识库:`Competitive Research/<屏>打磨对照_<日期>[_B2].md`(含「实现现状」附录)+ `_manifest_*.md` + README 两行 + `cp` 镜像到 vault `08 - 竞品研究/`(含新图目录)→ 只提交 md。
