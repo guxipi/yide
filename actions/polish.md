@@ -42,7 +42,7 @@
 | 记忆整理 | `general-purpose` + `model: opus` | consolidate(到期时) | — |
 | 基线截图+驱动手册 | `executor` + `model: opus`(批 1 开头) | 走真实路径到目标屏,三档截图,写 `PLAY_ROUTE.md` + 驱动脚本供后续所有棒复用 | — |
 | **2D 出图**(图标/原画/贴图/decal) | **codex `gpt-6-astra`**(`codex exec -i <参考图> - < order.md`,产物落 `~/.codex/generated_images/`);Chrome MCP 的 ChatGPT 网页版是备选 | 概念图、图标集、原画、3D 贴图(地面/墙面/烧灼痕迹等 decal)、UI 贴图;主脑逐张审,不满意换 prompt 重出 | 不自己合成"差不多"的图顶上;astra 额度烧得快,别无脑全用 |
-| **3D 建模**(建筑/道具/地标/飞船…) | **`executor` + `model: opus`(Opus 5.5)在 Blender 里跑 bpy 脚本**(2026-10-06 勾哥改口:「建模不要用 sol 和 astra 了,优先用 opus 5.5 在 blender 中建模」) | 写 bpy 脚本建模→渲染转台/三视图自审图→主脑对照竞品截图审→`SendMessage` 回同一执行者打回续做,直到对齐成品手游 | 不接受"有个形就行";一件模型通常要 2–4 轮打回;**不派 sol / astra 建模** |
+| **3D 建模**(建筑/道具/地标/飞船…) | **`executor` + `model: opus`(Opus 5.5)在 Blender 里跑 bpy 脚本;质量到顶不达标 → `tripo` CLI 出底模(先备多视角图)→ Opus 5.5 + Blender 精修**(2026-10-06 勾哥改口:「建模不要用 sol 和 astra 了,优先用 opus 5.5 在 blender 中建模」) | 写 bpy 脚本建模→渲染转台/三视图自审图→主脑对照竞品截图审→`SendMessage` 回同一执行者打回续做,直到对齐成品手游 | 不接受"有个形就行";一件模型通常要 2–4 轮打回;**不派 sol / astra 建模** |
 | **音效** | `executor`·opus(Coplay `generate_sfx` 可用就用;401 → 已购音效包挑选 + 程序化合成脚本) | 按事件表配 SoundEvent、接项目 AudioService、裁剪/响度统一;循环音做成点缀 | 不能替勾哥"听"——听感验收留给他,汇报里明写 UNVERIFIED |
 
 **编辑器只有一台 → 施工必须串行**;调研/方案/评审不占编辑器,可与施工并行。派活顺序按「勾哥最想先看到的」和「文件冲突最小」排。
@@ -104,6 +104,7 @@
 ### 7.2 3D 建模(对齐成品手游,多轮迭代)
 - 工具:本机 Blender(winget 官方源装,先 [[verify-install-source-authenticity]]),脚本化建模(bpy),管线脚本进仓库 `ArtWork/<工地>/gen/`,渲染自审图 `ArtWork/<工地>/renders/`(大文件目录不跟踪)。
 - 流程:① 主脑先拿 2–3 张**同类成品手游的模型截图**当标尺(Brawl Stars / Clash of Clans / Squad Busters 的建筑、载具、地标),写建模单(尺寸、轮廓语言、面数预算、色块数、描边/倒角、贴图方式、必须有的细节如烧灼痕迹/舱门/天线);② 派 **`executor`·opus(Opus 5.5)**写 bpy 脚本建模(headless `blender -b -P`)并渲染转台 4 视 + 一张与竞品同角度的对比图;③ 主脑 Read 对比图,按「轮廓/比例/细节密度/色块/质感」逐项打回(`SendMessage` 回同一执行者,它有上下文),通常 2–4 轮;④ Opus 到顶了先换建模思路(拆件/换轮廓语言/加参考图),仍不行上报勾哥,**不擅自改派 sol / astra**;⑤ **材质必须生图再贴**(勾哥 10-06 原话:「材质要生图然后 apply 然后你要迭代到满意对齐其它成品游戏 level 才行」):贴图/decal 由 7.1 的 astra 出(不拿纯色/程序化噪声凑),展 UV 贴上模型后重新渲染,主脑对照成品手游逐项打回贴图本身(笔触/色阶/磨损/接缝)和贴法(UV 比例/朝向),材质与模型一起迭代到对齐;UV 与材质按 `gaoguang-3d`/`tripo-blender-stylize` 的 ToonLit 口径接入;⑥ 进 Unity 后在真光照下再截一次对比(模型在引擎里和在 Blender 里不是一回事),不达标回到 ③。
+- **三段式口径(2026-10-06 晚勾哥原话:「你用 opus5.5+blender,如果感觉模型质量达不到要求就用 tripo cli,之后用 opus5.5+blender 精修,注意提供好多视角视图减少返工」)**:① 默认 Opus 5.5 + Blender(bpy)建;② 主脑看渲染图判定到顶仍不达标(角色/怪物/有机体/复杂造型)→ 用本机 `tripo` CLI 出底模,**先用出图通道备好同一设计的多视角视图(正/侧/背/俯 + 3/4,白底、无透视畸变)并自审一致性再喂**;③ 底模交回 Opus 5.5 + Blender 精修(减面/硬边/toon 化/拆件/UV/材质,走 `tripo-blender-stylize` → `gaoguang-3d`)。仍不派 sol / astra 建模。
 - 判据:**和参照手游并排截图看不出"我们这件是占位"**才算过。勾哥原话:「建模的精细程度要像成品竞品一样,对照着其它手游多次迭代」。
 - 模型口径(2026-10-06 起):**建模优先 Opus 5.5,不用 sol / astra**(勾哥 10-06 原话见 §2 表;背景:astra 一个下午能把额度烧穿,基地页 10-04 实测)。astra 只留给 7.1 的 2D 出图。汇报里写明几轮打回。
 
