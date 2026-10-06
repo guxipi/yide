@@ -137,6 +137,15 @@
 - 勾哥可能正在同一台编辑器里试玩:执行者开工前 `get_unity_editor_state` 若 playMode=true,**等,不要 stop 他的 Play**(曾有执行者把勾哥的试玩停了)。工单里写明。
 - 后台 `git push` 到 yide 仓被看门狗判 killed 不等于没推上——先 `git ls-remote origin main` 比对 hash 再决定重推。
 
+- **对照图必须是干净实机画面**(2026-10-06 主玩法 25 题踩到):让调研代理自由找图,一半会是商店宣传合成图(叠大标题/立绘)或带主播框的封面,勾哥要的是「和我们实机并排比」。做法:调研工单里直接给 `python -m yt_dlp --download-sections "*MM:SS-MM:SS" --force-keyframes-at-cuts` + `ffmpeg -vf fps=1` 抽帧配方;标杆游戏另派「实机帧收割」(`templates/polish/harvest_prompt_template.md`,每游戏一路,产出带 topic 标签的 catalog + 拼版),调研回来后再派「换图质检」(`swap_prompt_template.md`,每 3 个 block 一路,只许改 img/src/how/game + 补标杆帧)。
+- 并发子代理上限 20:题数多时侦察+基线+前 16 题先发,其余等通知补派;调研代理 3–6 分钟就回,**比侦察快**,别让它等 RECON——`cause` 由主脑用脚本从 RECON 的 `cause:` 行回填(RECON 每题固定一行 `cause:`)。
+- 多路代理共用 scratchpad 会互相覆盖同名脚本(clips.py/sheet.py 被踩过)——工单给每路指定独立临时目录。
+- 基线截图拆两棒(UI flow 一棒、战斗/场景/POI 一棒),每棒实耗 ~150k token;真 DEPLOY 扣体力、撤离是真结算会入库——工单写明允许几次。
+- 多分页大表:先把模板页(表头/列宽/冻结)做好再 Duplicate 出各分页(tab 右键菜单用合成 contextmenu 事件可点,Rename 后真键入名字);**paste 会把垂直对齐重置成 bottom,预先设格式无效**——贴完再 `Wrap text` + `Text align: middle`,现状图合并格逐个 `Text align: top`。现成生成器 `templates/polish/gen_sheet_multitab.py`(多分页 + 现状图竖拼 + 总览页 + 知识库 md)。
+- 传图用 base64 JSON 包(每包原图合计 ≤6.3MB,一次 `file_upload`,页内 `atob`→`new File`),比逐张列路径省一个数量级的 token;300 张图嵌格约 20 分钟(~3.7s/张),期间只轮询 `__job`。
+- 表格标签是别的窗口里的后台标签时 `visibilityState=hidden` 嵌不了图;开工先查,hidden 就请勾哥把标签拖成独立窗口。
+- Stop hook 在 scope 未收敛时会拦收工:等后台棒用前台 `until [ 条件 ]; do sleep 5; done`(timeout ≤590s)挂着等,通知会随工具结果一起到。
+
 ## 10. 收尾(每批)
 1. 知识库:`Competitive Research/<屏>打磨对照_<日期>[_B2].md`(含「实现现状」附录)+ `_manifest_*.md` + README 两行 + `cp` 镜像到 vault `08 - 竞品研究/`(含新图目录)→ 只提交 md。
 2. 记忆:工地文件(状态/提交/拍板/欠账/下一步/出图通道),MEMORY.md 一行索引;被取代的旧记忆加「⚠ 更正」。
@@ -147,8 +156,9 @@
 ## 先例(记忆里有全套过程资料与教训)
 - 简报页 [[briefing-room-polish-worksite]](本法原型:对照表/弹窗拍板/分片施工/ChatGPT 网页出图/v2 地图 Cheat 对照)
 - 基地页 [[base-page-polish-worksite]](3D 场景主题/Blender 建模迭代/实体施工演出/音效库/加速经济,两波)
+- 主玩法 [[main-gameplay-polish-worksite]](25 题 288 图 659 action 的多分页大表;实机帧收割+换图质检两段式;三路代码侦察)
 - 主页 [[home-tab-polish-worksite]](13 题 199 条 action 大表、音频配置为空的侦察)
 - 美术自产路线 [[art-asset-production-routes]]
 
 ## 模板与脚本
-`${CLAUDE_SKILL_DIR}/templates/polish/`:`gen_sheet.py`(block JSON → 表格 payload + 知识库 md/manifest)、`contact.py`(拼版验图)、`sheet_helpers.js`(Chrome MCP 页内助手:合成 paste / 嵌图 / 调行高列宽 / 任务标记)、`workorder_template.md`(施工工单)、`research_prompt_template.md`(调研工单)、`play_route_template.md`(驱动手册骨架)。用前先读一遍,路径和表头按本次替换。
+`${CLAUDE_SKILL_DIR}/templates/polish/`:`gen_sheet.py`(block JSON → 表格 payload + 知识库 md/manifest;多分页大表用 `gen_sheet_multitab.py`)、`harvest_prompt_template.md` / `swap_prompt_template.md`(实机帧收割 / 换图质检工单)、`contact.py`(拼版验图)、`sheet_helpers.js`(Chrome MCP 页内助手:合成 paste / 嵌图 / 调行高列宽 / 任务标记)、`workorder_template.md`(施工工单)、`research_prompt_template.md`(调研工单)、`play_route_template.md`(驱动手册骨架)。用前先读一遍,路径和表头按本次替换。
