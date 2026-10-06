@@ -42,7 +42,7 @@
 | 记忆整理 | `general-purpose` + `model: opus` | consolidate(到期时) | — |
 | 基线截图+驱动手册 | `executor` + `model: opus`(批 1 开头) | 走真实路径到目标屏,三档截图,写 `PLAY_ROUTE.md` + 驱动脚本供后续所有棒复用 | — |
 | **2D 出图**(图标/原画/贴图/decal) | **codex `gpt-6-astra`**(`codex exec -i <参考图> - < order.md`,产物落 `~/.codex/generated_images/`);Chrome MCP 的 ChatGPT 网页版是备选 | 概念图、图标集、原画、3D 贴图(地面/墙面/烧灼痕迹等 decal)、UI 贴图;主脑逐张审,不满意换 prompt 重出 | 不自己合成"差不多"的图顶上;astra 额度烧得快,别无脑全用 |
-| **3D 建模**(建筑/道具/地标/飞船…) | **codex `gpt-5.6-sol` 跑 Blender 脚本**(默认);sol 看图不达标或要对着概念图抠质感的关键件 → 换 **astra**;也可 `executor`·opus 跑 Blender | 写 bpy 脚本建模→渲染转台/三视图自审图→主脑对照竞品截图审→`codex exec resume <session id> - < feedback.md` 打回续做,直到对齐成品手游 | 不接受"有个形就行";一件模型通常要 2–4 轮打回 |
+| **3D 建模**(建筑/道具/地标/飞船…) | **`executor` + `model: opus`(Opus 5.5)在 Blender 里跑 bpy 脚本**(2026-10-06 勾哥改口:「建模不要用 sol 和 astra 了,优先用 opus 5.5 在 blender 中建模」) | 写 bpy 脚本建模→渲染转台/三视图自审图→主脑对照竞品截图审→`SendMessage` 回同一执行者打回续做,直到对齐成品手游 | 不接受"有个形就行";一件模型通常要 2–4 轮打回;**不派 sol / astra 建模** |
 | **音效** | `executor`·opus(Coplay `generate_sfx` 可用就用;401 → 已购音效包挑选 + 程序化合成脚本) | 按事件表配 SoundEvent、接项目 AudioService、裁剪/响度统一;循环音做成点缀 | 不能替勾哥"听"——听感验收留给他,汇报里明写 UNVERIFIED |
 
 **编辑器只有一台 → 施工必须串行**;调研/方案/评审不占编辑器,可与施工并行。派活顺序按「勾哥最想先看到的」和「文件冲突最小」排。
@@ -103,9 +103,9 @@
 
 ### 7.2 3D 建模(对齐成品手游,多轮迭代)
 - 工具:本机 Blender(winget 官方源装,先 [[verify-install-source-authenticity]]),脚本化建模(bpy),管线脚本进仓库 `ArtWork/<工地>/gen/`,渲染自审图 `ArtWork/<工地>/renders/`(大文件目录不跟踪)。
-- 流程:① 主脑先拿 2–3 张**同类成品手游的模型截图**当标尺(Brawl Stars / Clash of Clans / Squad Busters 的建筑、载具、地标),写建模单(尺寸、轮廓语言、面数预算、色块数、描边/倒角、贴图方式、必须有的细节如烧灼痕迹/舱门/天线);② 派 **sol**(`codex exec -m gpt-5.6-sol --sandbox workspace-write - < order.md`)写 bpy 脚本建模并渲染转台 4 视 + 一张与竞品同角度的对比图;③ 主脑 Read 对比图,按「轮廓/比例/细节密度/色块/质感」逐项打回(`codex exec resume <id> - < feedback.md`),通常 2–4 轮;④ sol 到顶了就换 **astra**(贵,只给关键件)或 `executor`·opus 跑 Blender;⑤ 贴图/decal 由 7.1 的 astra 出,UV 与材质按 `gaoguang-3d`/`tripo-blender-stylize` 的 ToonLit 口径接入;⑥ 进 Unity 后在真光照下再截一次对比(模型在引擎里和在 Blender 里不是一回事),不达标回到 ③。
+- 流程:① 主脑先拿 2–3 张**同类成品手游的模型截图**当标尺(Brawl Stars / Clash of Clans / Squad Busters 的建筑、载具、地标),写建模单(尺寸、轮廓语言、面数预算、色块数、描边/倒角、贴图方式、必须有的细节如烧灼痕迹/舱门/天线);② 派 **`executor`·opus(Opus 5.5)**写 bpy 脚本建模(headless `blender -b -P`)并渲染转台 4 视 + 一张与竞品同角度的对比图;③ 主脑 Read 对比图,按「轮廓/比例/细节密度/色块/质感」逐项打回(`SendMessage` 回同一执行者,它有上下文),通常 2–4 轮;④ Opus 到顶了先换建模思路(拆件/换轮廓语言/加参考图),仍不行上报勾哥,**不擅自改派 sol / astra**;⑤ 贴图/decal 由 7.1 的 astra 出,UV 与材质按 `gaoguang-3d`/`tripo-blender-stylize` 的 ToonLit 口径接入;⑥ 进 Unity 后在真光照下再截一次对比(模型在引擎里和在 Blender 里不是一回事),不达标回到 ③。
 - 判据:**和参照手游并排截图看不出"我们这件是占位"**才算过。勾哥原话:「建模的精细程度要像成品竞品一样,对照着其它手游多次迭代」。
-- 额度:astra 一个下午能把额度烧穿(基地页 10-04 实测),所以**默认 sol,关键件才 astra**;每次换模型在汇报里写明用了谁、几轮。
+- 模型口径(2026-10-06 起):**建模优先 Opus 5.5,不用 sol / astra**(勾哥 10-06 原话见 §2 表;背景:astra 一个下午能把额度烧穿,基地页 10-04 实测)。astra 只留给 7.1 的 2D 出图。汇报里写明几轮打回。
 
 ### 7.3 音效与音乐(**唯一硬规则:零版权问题**;做法不僵化,勾哥在持续探索怎么把音效/BGM 生成得好,每次都可以试新路)
 - **硬规则**:只用①已购且许可覆盖本项目的音效包/音乐包,②自己生成或合成的素材(AI 生成、程序化合成、自录),③许可明确可商用的来源(CC0 等,记来源)。来源不明、网上随手扒的、带他人作品片段的,一律不用。每条素材在汇报/映射表里写来源与许可。
@@ -131,7 +131,7 @@
 - 执行者报告的 dump 要有原值(像素/顶点/耗时/delta),没有原值的"验证过了"不算。
 - 子代理会被看门狗判停(600s 无进展)——需要长跑的棒工单里写「不要再派子代理、不要起后台任务然后等它」。
 - 截图/测试棒在 dev 号上会真花付费货币、真往世界频道发消息——工单写明「不花 GEM/体力、不发真消息」。
-- astra 额度一个下午能烧穿;建模默认 sol,astra 只给关键件。
+- astra 额度一个下午能烧穿;建模一律优先 Opus 5.5 + Blender(2026-10-06 勾哥改口,不再派 sol / astra 建模),astra 只出 2D 图。
 - 翼德 stop hook 会在 scope 未收敛时拦截收工——等后台棒时用一句话状态回应即可,不要为了过审计把没做完的说成做完。
 - Chrome MCP `navigate` 到**同一 URL**(只换 hash)不会重载页面:上一轮没跑完的嵌图循环会继续跑,和新循环抢选区 → 重复图/贴错格。要重置就 `location.reload()` 或先导去别的 URL;嵌图任务统一用 `__job` done 标志,等它结束前不要再发任何改选区的脚本。
 - 勾哥可能正在同一台编辑器里试玩:执行者开工前 `get_unity_editor_state` 若 playMode=true,**等,不要 stop 他的 Play**(曾有执行者把勾哥的试玩停了)。工单里写明。

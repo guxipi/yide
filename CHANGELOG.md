@@ -2,6 +2,8 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.58.4 — 2026-10-06 polish 建模口径改口:3D 建模优先 Opus 5.5(executor·opus)在 Blender 里建,不再派 sol / astra 建模;astra 只留 2D 出图。
+
 ### v0.58.3 — 2026-10-05 polish 坑清单 +3:同 URL navigate 不重载(旧嵌图循环继续跑抢选区)、勾哥在 Play 时执行者只等不 stop、后台 push 被 killed 先 ls-remote 比 hash。
 
 ### v0.58.2 — 2026-10-05 polish §7.3 音效改成「零版权问题是唯一硬规则,做法不僵化」:列可选路(Coplay 生成/模型音频能力/已购包/程序化/BGM 先问风格),勾哥在探索更好的生成法,新路记回本节。
