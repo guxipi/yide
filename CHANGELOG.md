@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.59.0 — 2026-10-12 ER 画风改为对标 mo.co 游戏内画面的质量和质感
+- 总纲是 vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`:只定水准和验收,不定做法;七条结果红线(3D 世界看不到黑描边、阴影不灰黑、学质感不抄细节、镜头俯角不动、图标保持现有画风、蓝色不满屏、UI 不 busy 不圆润)。
+- `gaoguang-3d` / `tripo-blender-stylize` / `planet-dressing` 去掉 Archero、Brawl Stars 低多边形、硬刻面、engineer.mat 描边 20 的旧口径,原有做法保留但标成"一种验证过的做法";`vfx-production`、`ui-visual-rework`、`ui-placement`、`arena-*` 加目标水准指向总纲;`ui-visual-rework` 明写成品级=层级清楚、安静利落,不是更花更圆。
+- 专家模板 art-director 加 ER 画风段,executor 第 8 条改为"3D 世界里看不到黑描边"。
+
 ### v0.58.4 — 2026-10-06 polish 建模口径改口:3D 建模优先 Opus 5.5(executor·opus)在 Blender 里建,不再派 sol / astra 建模;astra 只留 2D 出图。
 
 ### v0.58.3 — 2026-10-05 polish 坑清单 +3:同 URL navigate 不重载(旧嵌图循环继续跑抢选区)、勾哥在 Play 时执行者只等不 stop、后台 push 被 killed 先 ls-remote 比 hash。
