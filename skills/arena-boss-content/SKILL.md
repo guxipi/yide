@@ -25,7 +25,7 @@ spawn 那一刻合体：`最终 = base × 倍率`。**别在两层调爆同一�
 ## 接入 7 步 flow
 
 ### ① 模型
-boss FBX 进项目 → **走 `gaoguang-3d` skill** 修材质/轴心/动画（ToonLit 去灰、pivot 居中、配 Animator controller，真光照下验）。
+boss FBX 进项目 → **走 `gaoguang-3d` skill** 修材质/轴心/动画（ToonLit 去灰、pivot 居中、配 Animator controller，真光照下验）。观感目标以 vault `01 - 星际拓荒重构/013 美术/ER美术规范.md` 为准：3D 世界看不到黑描边，阴影和暗面不灰黑。
 
 ### ② EnemyConfig（底子）
 建该 boss 的 `EnemyConfig.asset`（`Assets/ScriptableObjects/Actors/Enemies/`）：`_maxHealth`、`_moveSpeed`、`_enemyName`、`_detectionRange`、`_attackInterruptible`(boss 建议 false=超甲)、`_experienceReward` 等。**这是 base 绝对值，Hub 倍率会乘在上面。**

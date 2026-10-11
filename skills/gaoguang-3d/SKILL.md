@@ -1,23 +1,28 @@
 ---
 name: gaoguang-3d
-description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo, Meshy, text-to-3D) into Extraction to match its Archero-style saturated toon look (ToonLit remap + pivot centering + rig/animation + real-lighting verify). Trigger — "高光3D" / "模型太灰暗" / "模型发灰" / "新模型不好看" / "像 archero 一样饱和" / "把XX替换成这个模型" / 新导入的 FBX 看起来灰、暗、塑料感 / pivot 轴心不在模型中间、转身会甩 / 模型有骨架没动画需要配动画. NOT particle/aura/trail/burst/光环拖尾爆开 VFX (→ vfx-production); model intake + look-fix only.
+description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo, Meshy, text-to-3D) into Extraction to match its mo.co-style painted toon look (ToonLit remap + pivot centering + rig/animation + real-lighting verify). Trigger — "高光3D" / "模型太灰暗" / "模型发灰" / "新模型不好看" / "像 mo.co 那样干净鲜亮" / "把XX替换成这个模型" / 新导入的 FBX 看起来灰、暗、塑料感 / pivot 轴心不在模型中间、转身会甩 / 模型有骨架没动画需要配动画. NOT particle/aura/trail/burst/光环拖尾爆开 VFX (→ vfx-production); model intake + look-fix only.
 ---
 
-# 高光3D — AI 模型进项目的"去灰提饱和"流水线 (Extraction)
+# 高光3D — AI 模型进项目的入库与修观感流水线 (Extraction)
 
-AI 生成的模型(Tripo 等)直接进项目必灰。原因是固定的三连:**embedded material 是 URP/Lit(PBR)** + **_BaseColor 常为 (0.8,0.8,0.8) 把贴图乘暗 20%**(也有白的,但 PBR 本身就压灰) + **_Smoothness 0.5 塑料高光**。项目的 Archero 风格来自 `Assets/Shaders/ToonLit.shader`(`Custom/ToonLit`:双阶 toon 光 + rim + 描边)——所有角色(Hero/engineer.mat)都用它。修复 = 换材质 + 对轴心 + 配动画 + 真光照验证,全程 Unity 内,不回 DCC。
+**目标水准和验收以 ER 美术规范为准**:vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 游戏内画面的质量和质感;旧的 Archero / Brawl Stars 低模 / KayKit 平色加黑描边口径全部作废)。和本 skill 最相关的结果要求是:3D 世界里看不到黑描边(角色、怪也一样),阴影和暗面不灰黑,看不出硬刻面,饱和度按"地面低、主体高"的预算走。角色长相和头身以 vault `013 美术/角色手册/` 为准。下面写的是一种验证过的做法,不是唯一做法;换别的路线也行,结果过总纲门槛即可。
+
+AI 生成的模型(Tripo 等)直接进项目必灰。原因是固定的三连:**embedded material 是 URP/Lit(PBR)** + **_BaseColor 常为 (0.8,0.8,0.8) 把贴图乘暗 20%**(也有白的,但 PBR 本身就压灰) + **_Smoothness 0.5 塑料高光**。工程里现成的 3D 着色是 `Assets/Shaders/ToonLit.shader`(`Custom/ToonLit`:双阶 toon 光 + rim + 描边开关)。这里的修法 = 换材质 + 对轴心 + 配动画 + 真光照验证,全程 Unity 内,不回 DCC。
 
 ## 0. 诊断(动手前必做,别猜)
 用 `execute_script` dump 真值(一次性探针 .cs 放 **项目根 `Temp/`,不进 Assets**,用完删;要留作工具的 builder → `Assets/Editor/CoplayTemp/`):
 - 加载 FBX,遍历 `GetComponentsInChildren<Renderer>` 打印每个 sharedMaterial 的 shader 名、`_BaseColor`、`_BaseMap`、`_Smoothness`、`AssetDatabase.GetAssetPath(mat)`。assetPath 指向 .fbx 本身 = embedded 自动材质,就是本 skill 的目标场景。
 - **同时 dump rig 与动画**:hierarchy(有无 Armature)、SkinnedMeshRenderer.bones.Length、`LoadAllAssetsAtPath` 里的 AnimationClip 列表。Tripo 模型分两种:带 NLA 动画(科学家:Idle/Walk/Work)和**有骨架但零 clip**(球形机器人:41 bones,无动画)——后者要走第 3 节。
-- 同时 dump 一个项目标杆(Hero.prefab → engineer.mat)做对照。
+- 同时 dump 当前主角(Hero.prefab 上现在挂的英雄材质)做对照。engineer.mat 是旧 KayKit 角色的材质,不当标杆。
 - grep FBX 的 guid 找到所有引用它的 prefab/scene(决定 pivot 修在哪)。
 - 素材在云盘时注意:用户给的 `G:\My Drive\...` 路径本机 G: 直接可读(本机挂两个云盘账号,G: 和 H: 都在),别想当然换盘符。
 
 ## 1. 修观感:ToonLit 材质 + ModelImporter Remap(不要在 prefab 里 override 材质)
 1. 在模型同目录建 `<Model>.mat`:shader `Custom/ToonLit`,`_BaseMap` = 模型 basecolor 贴图,`_BaseColor` = **纯白**(别留灰)。
-2. Toon 参数**完全对齐 engineer.mat**,保证全场一个画风:`_ShadowColor (0.6,0.5,0.6)`、`_ShadowThreshold 0.746`、`_ShadowSmoothing 0.0619`、`_RimColor 白`、`_RimPower 5.37`、`_RimThreshold 0.351`、`_OutlineWidth 20`、`_OutlineColor 黑`。
+2. Toon 参数按模型类型选,**别再抄 engineer.mat**(描边 20、阴影 0.6/0.5/0.6、阈值 0.746 那组是给 KayKit 低模平色角色调的,叠在自带厚涂明暗的 AI 模型上 = 明暗算两遍 + 每缕头发描一道黑线)。下面是起步值,按截图结果调:
+   - **自带厚涂贴图的角色/怪(Tripo 常态)**:`_ShadowColor (0.85,0.8,0.85)`、`_ShadowThreshold 0.5`、`_ShadowSmoothing 0.25`、`_RimThreshold 0.9`、`_BaseColor 0.95 灰`、**`_OutlineWidth 0`**(2026-10-07 Wren 实测定参,10-11 起描边归零)。注意 ToonLit 新建材质默认 `_OutlineWidth 1.5` 纯黑,要显式写 0。
+   - **环境/建筑/道具**:走 `planet-dressing` §3 的环境配方(rim alpha 0、outline 0)。
+   - 拿不准先做 Unlit 对照:换 URP/Unlit 纯贴图看一眼,判断问题出在几何还是着色。
 3. **Remap 在 importer 上做**,所有使用处自动生效、prefab 零改动:
    ```csharp
    var importer = (ModelImporter)AssetImporter.GetAtPath(fbxPath);
@@ -51,7 +56,7 @@ AI 模型 pivot 常不在模型中心,旋转时会"甩"。修法:
 - **场景会被用户中途切走**:用户在编辑器里干活,active scene 随时变(实测一次会话里 UIDesign_Gameplay → GameScene → Boot)。每次 `GameObject.Find` 临时物前先确认 active scene;预览物随"切场景不保存"自动消失——用 `git status <scene>` 确认场景没被连带保存,而不是假设。
 - **capture 对小物件会钻进几何体**:`capture_scene_object` 自动取景在杂物多的场景里会把相机怼进模型/地面内部(出来一张噪点贴脸图)。解法:把模型单独 spawn 到远处空地(如 (60,0,60))单拍;方向光是无限远的,照样有效。
 - **用户 WIP 编译错会卡死 execute_script**:报错若来自用户正在写的代码,别去修(那是他的活)。验证降级为**直接读资产 YAML**:.anim 的曲线值/`m_LoopTime`、.controller 的 `m_Motion` guid、fbx.meta 的 `externalObjects`——资产层证据同样硬。编译正常时也可用 `AnimationMode.SampleAnimationClip`(实例化→采样→销毁,一次脚本内完成)做数值验证。
-- 修好的样子:亮白/饱和的固有色 + 双阶 toon 阴影 + 黑描边,和 Hero 站一起是一个画风。
+- 修好的样子:贴图原有的厚涂色阶保住、两阶 toon 阴影干净、**看不到黑描边**、暗面不灰黑、不发灰不塑料,和当前 Hero 站一起是一个画风。上面这套隔离摆拍只是自查;最终验收按总纲第 13 节,在真游戏相机、真灯光的竖屏截图上看,编辑器里孤立模型的截图不算数。
 
 ## 6. 收尾
 - 删 `Temp/` 下所有临时 .cs。
@@ -59,6 +64,5 @@ AI 模型 pivot 常不在模型中心,旋转时会"甩"。修法:
 - 不 commit、不 push(红线)。
 
 ## 已知局限 / 升级路线
-- 贴图本身饱和度低(白大褂、灰发)时 ToonLit 只能还原贴图,不能无中生有——还想更艳:微调 `.mat` 的 `_BaseColor` 往暖色推,或 PS 里直接加贴图饱和度,二选一,别叠加过头。
-- `_OutlineWidth 20` 是按 KayKit 角色体量调的;模型特别大/小时描边可能过粗/过细,按截图微调。
+- 贴图本身饱和度低(白大褂、灰发)时 ToonLit 只能还原贴图,不能无中生有。要不要更艳先看总纲第 3 节的饱和度预算:角色、怪、交互物该跳出来,环境件反而要收。确实要提,可以微调 `.mat` 的 `_BaseColor` 往暖色推,或 PS 里直接加贴图饱和度,二选一,别叠加过头。
 - 手做律动 clip 只适合装饰性 NPC;要正经走路/战斗动画,走 Meshy 重 rig(auto_rig_3d_model → apply_animation_to_rigged_model → .glb)或回 DCC。

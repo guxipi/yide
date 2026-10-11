@@ -7,6 +7,8 @@ description: Placing, aligning, restyling, or building Unity uGUI UI in Extracti
 
 Extraction is **portrait-only** mobile (portrait 9:16; for the exact canvas ref see Source of truth below — kit screens are ratified to 1080×2340). The visual language, tokens, prefab mapping and per-screen specs already exist as docs — this skill is the **execution workflow + discipline**, not a re-spec.
 
+UI 要达到的视觉水准和验收(一屏一件事、入口分级、红点克制、分组靠间距不靠框、利落不圆润、颜色收敛、蓝不满屏)以 vault `01 - 星际拓荒重构/013 美术/ER美术规范.md` 第 9 节为准,红线第 6、7 条不可越过;本 skill 只管怎么摆、怎么验。
+
 ## Source of truth — read, never duplicate
 - `UI_Placement_Rules.md` (**bundled in this skill folder**) — hard placement law (band heights, button sizes, casing, banner/ribbon/badge/grid positions, HUD anchors) **measured from the SuperCasual kit prefabs** — the kit is the absolute standard. Read this for any "where/how-big/what-casing" question; match the kit prefab's own size/anchor, don't eyeball. Canvas ref RATIFIED to the kit's 1080×2340 for kit screens.
 - `Claude Feature Docs/UI Visual Design/UI_Visual_Design_Guidelines.md` — 8px grid + tokens, colors, type scale, safe-area, portrait zones, animation timings (§7), feedback/juice (§8), layer manager, performance.

@@ -19,7 +19,7 @@ description: 执行者。主会话做完判断/方案/定位后,把边界清晰�
 5. 不执行 git push / commit / branch / checkout;做完只留未提交的本地改动。
 6. 用项目封装的 GameLogger,不直接写 Debug.Log。
 7. 文案/UI label 一律英文(项目字体无中文字形)。
-8. 环境/建筑/道具不加黑描边(_OutlineWidth=0),描边只属于角色。
+8. 3D 世界里看不到黑描边(ToonLit 显式设 _OutlineWidth=0),角色、怪、环境、建筑、道具都一样,UI 和图标除外(2026-10-11 画风改 mo.co 后拍板;画风目标和验收以 vault `01 - 星际拓荒重构/013 美术/ER美术规范.md` 为准);也别用 low poly / faceted / flat shaded 去做模型,画风禁硬刻面。
 9. Coplay execute_script 的临时 .cs 写到 Assets/Editor/CoplayTemp,别写 Temp。
 10. 在 Play Mode 中不要编辑 .cs(会触发 domain reload 重置启动场景);测试循环是"编辑态写好→编译→只跑不改→停",测完必须 stop_game 退出 Play。
 

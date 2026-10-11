@@ -22,7 +22,7 @@ description: ADD a campaign’s small enemies (小怪/minions, NOT bosses) in Ex
 
 ## 流程（每只怪）
 1. **剪影配原型**：按 appeal 选——胖/硬壳→Brute、瘦快/人形→Assault、有翼/悬浮→Bee/Lobber、圆滚→Charger、能炸/菌伞→Bomber、生根植物→Lobber(固定)。覆盖近战/重甲/远程/冲锋/自爆几槽，威胁不重样。
-2. **intake**（→ gaoguang-3d）：ToonLit remap + 轴心 + 绑定。动画按 3 路径(见记忆)：人形 retarget(套 HeroAnimationController) / Generic 自带 clip 循环 / 程序化(EnemyProceduralMotion)。
+2. **intake**（→ gaoguang-3d）：ToonLit remap + 轴心 + 绑定。观感目标以 vault `01 - 星际拓荒重构/013 美术/ER美术规范.md` 为准：3D 世界看不到黑描边，阴影和暗面不灰黑。动画按 3 路径(见记忆)：人形 retarget(套 HeroAnimationController) / Generic 自带 clip 循环 / 程序化(EnemyProceduralMotion)。
 3. **建注入式 prefab**：
    - 原型 = Assault → BaseEnemy 已是注入式，直接做变体 + 换 config。
    - 原型 = Brute/Charger/Bomber/Lobber（老式焊死模型）→ **注入手术**：InstantiatePrefab → UnpackCompletely → 删模型子物体(humanoid=`Robot_One` / Lobber=`Bee`) → 建 ModelRoot → CopyComponent UnitAnimator+HitFeedback 到 ModelRoot → 清 HitFeedback._renderers → 清硬值(Health/AI/Melee/NavAgent.speed) → 接 `_modelRoot` + `_config` → SaveAsPrefabAsset 到**新路径**（**绝不动原型 prefab**）。模板：Extraction `Assets/Editor/CoplayTemp/BuildRainforestBatch.cs`。

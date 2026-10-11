@@ -1,6 +1,6 @@
 ---
 name: planet-dressing
-description: Turn an Extraction Campaign greybox room map into a production-grade ("成品级") planet-themed environment (walls→cliffs/buildings, floor palettes, "通透感" + Brawl-Stars toon look). Gameplay layer READ-ONLY; visuals = one idempotent re-runnable Dressing node. Trigger on "把灰盒换成星球地貌" / "地图穿衣服" / "关卡环境美化" / "星球主题环境" / "dress the map" / "换成品环境" / "把墙换成悬崖/建筑" or theming a Campaign greybox to shippable quality. Companion to campaign-map-build; vs gaoguang-3d (single-model fix), THIS = whole-map dressing.
+description: Turn an Extraction Campaign greybox room map into a production-grade ("成品级") planet-themed environment (walls→cliffs/buildings, floor palettes, "通透感" + mo.co painted toon look). Gameplay layer READ-ONLY; visuals = one idempotent re-runnable Dressing node. Trigger on "把灰盒换成星球地貌" / "地图穿衣服" / "关卡环境美化" / "星球主题环境" / "dress the map" / "换成品环境" / "把墙换成悬崖/建筑" or theming a Campaign greybox to shippable quality. Companion to campaign-map-build; vs gaoguang-3d (single-model fix), THIS = whole-map dressing.
 ---
 
 # 星球地貌 Dressing · Extraction（灰盒 → 成品级星球环境）
@@ -29,11 +29,13 @@ description: Turn an Extraction Campaign greybox room map into a production-grad
 6. gameplay 净空:spawn/extraction/scientist/门口 barrier 坐标列 KeepClear,半径 2.2-3.5m 不摆件
 7. Barrier 门禁别留裸灰块,换主题能量墙材质(亮青 toon)
 
-## 3. Synty → Brawl Stars 观感(材质层,三个必踩的坑)
-1. **🔴 EnvTriplanar 死于 URP 17**:Synty 大地形件(Cliff/Ground/Rock_Large)用 `SyntyStudios/EnvTriplanar`,本项目下渲染成纯白/纯黑。**全部换 ToonLit 纯色块**——正好更贴 Brawl Stars(干净色块+描边)
+## 3. Synty → mo.co 观感(材质层,三个必踩的坑)
+> **目标水准和验收以 ER 美术规范为准**:vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 游戏内画面的质量和质感,旧的 Brawl Stars 低模/硬刻面口径作废),环境看它第 2、3、6、7 节。结果要点:地面明亮、低饱和、大块平滑色面,只有大尺度的颜色缓变,没有高频纹理和方块边;树荫、墙影是半透明冷色,物体暗面偏冷或偏暖红,都不灰黑;建筑道具形体饱满、看不出刻面,固有色两三个以内;高饱和留给敌人、掉落、危险区和交互物;3D 世界里看不到黑描边。下面的材质配方是工程里验证过的一种做法,不是唯一做法,结果过总纲门槛即可。地面现成的办法见总纲附录(`_ER_UNIQUE_GROUND` 整张手绘地面,PILOT 营地 V7 commit 3515a8899;`_MACRO_PAINT` 是已被否掉的平铺草地层(PILOT B2),画边有色差横缝)。mo.co 环境的逐项观察见 Extraction 工程 `Claude Feature Docs/Competitive Research/视觉元素做法库_2026-10-08.md` 的 mo.co 条目。
+
+1. **🔴 EnvTriplanar 死于 URP 17**:Synty 大地形件(Cliff/Ground/Rock_Large)用 `SyntyStudios/EnvTriplanar`,本项目下渲染成纯白/纯黑。**全部换 ToonLit 纯色块**——干净色块、不描边,正好贴 mo.co 的环境做法
 2. **🔴 植物的鲜艳色来自 _EMISSION**:Synty 科幻植物 albedo 本体是深褐,青蓝发光全靠 emission 贴图(Textures/Emissive)。ToonLit 原本不支持 → **已加 `_EmissionMap`/`_EmissionColor`**(黑图默认=无副作用)。remap 时把原材质的 emission 贴图+颜色一起搬过来,否则植物全是黑巧克力
-3. **环境 toon 参数别抄角色**:角色那套重阴影(threshold 0.746)会把环境压灰。环境配方:`_ShadowThreshold ≈0.32`、`_ShadowColor (0.66,0.62,0.74)`、`_AmbientStrength 0.5`、地面 outline=0、小件 outline≤2
-4. **🔴 matte 铁律(勾哥 2026-07-02 拍板)**:Brawl Stars/Whiteout Survival 质感 = 高饱和固有色 + **零高光零 rim** + 柔阴影。环境材质 **`_RimColor` alpha 必须 = 0**(rim 项乘零关死)——白 rim 在石头上读作"高光/荧光感",是环境显塑料的头号元凶;emission 也别开满,植物 ≈0.55×、水晶 ≈0.65× 原厂色,够点缀不荧光。地面绿往深里压一档(如 (0.28,0.62,0.30))比荧光绿(0.30,0.66,0.33)更"厚"
+3. **环境 toon 参数别抄角色**:角色那套重阴影(threshold 0.746)会把环境压灰。环境配方:`_ShadowThreshold ≈0.32`、`_ShadowColor (0.66,0.62,0.74)`、`_AmbientStrength 0.5`、**所有件 outline=0**(3D 世界看不到黑描边,总纲红线第 1 条)
+4. **🔴 matte 铁律(勾哥 2026-07-02 拍板)**:环境质感 = 干净固有色 + **零高光零 rim** + 柔阴影(阴影偏紫,不灰黑)。环境材质 **`_RimColor` alpha 必须 = 0**(rim 项乘零关死)——白 rim 在石头上读作"高光/荧光感",是环境显塑料的头号元凶;emission 也别开满,植物 ≈0.55×、水晶 ≈0.65× 原厂色,够点缀不荧光。旧笔记里"地面绿往深里压一档(如 (0.28,0.62,0.30))更厚"是 Brawl Stars 时期的口径,和总纲冲突(纯地面要明亮、低饱和,门槛见总纲第 2 节"地面"一行),作废
 - 材质做成资产存 `Assets/Art/Materials/PlanetKits/<Planet>/`,dressing 层实例上 sharedMaterials 替换;**不改 Synty 包本体**(红线)
 
 ## 4. 流程
@@ -41,7 +43,7 @@ description: Turn an Extraction Campaign greybox room map into a production-grad
 2. 建/复用 kit 材质(§3 配方) → 风格小样先过一眼(几件 + LightSet + Hero 对照,场景 additive 建在远处,拍完整场景关掉不保存)
 3. 跑 dresser:墙关 renderer→悬崖脊;地板换 ground/path;房间边带 props+内部小件;外圈大地台(-0.65)+远景环带;barrier 换能量墙材质
 4. `SaveAsPrefabAsset` 回原 prefab —— config 零改动(LevelConfig 还指同一张图)
-5. scene-view 全图+逐房截图自检(通透?边界连续?体量对?) → 迭代参数重跑(幂等)
+5. scene-view 全图+逐房截图自检(通透?边界连续?体量对?) → 迭代参数重跑(幂等)。scene-view 图只用来自查摆放;画风验收按总纲第 13 节,只认真游戏相机截图
 6. Play 验证(Boot 起跑→DriveLoad):看真游戏相机,`[RuntimeNavMeshBake] baked`、玩家能跑、房间触发正常
 
 ## 5. Play 验证的坑(这次全踩过)
@@ -52,11 +54,11 @@ description: Turn an Extraction Campaign greybox room map into a production-grad
 - editor 卡死时 stop_game 会排队,连发后用 get_unity_editor_state 轻探,等它消化;测完必 stop(铁律)
 
 ## 6. 光影底座(扁平感的最大单一来源,配一次全项目受益)
-Gemini 对照 Brawl Stars 拆出的差距里,光影 > 贴图 > 面数。Extraction 已配好(工具 `LightingUpgrade.cs`,幂等),新项目照抄:
+画面差距的来源,光影 > 贴图 > 面数(总纲第 14 节量出来 ER 和 mo.co 差最大的一项也是阴影)。下面是 Extraction 已配好的一套(工具 `LightingUpgrade.cs`,幂等),可以直接复用,也可以另找办法;配完用总纲第 2 节的数字复测,阴影要冷、不黑:
 - **SSAO**:URP renderer feature,Depth 模式(不用 DepthNormals pass)+ InterleavedGradient + Downsample + Samples Medium(手游友好);Intensity≈1.6/Radius≈0.4/Falloff≈60。**自定义 toon shader 必须自己采样**:`multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION` + `SampleAmbientOcclusion(GetNormalizedScreenSpaceUV(positionCS.xy))`(Lighting.hlsl 已带 include),乘进 finalColor——不加这步 SSAO 对 ToonLit 物体完全无效
 - **软阴影**:RP asset `m_SoftShadowsSupported=1` + shadowmap 2048 + Light 组件 `LightShadows.Soft` 三处都要;toon shader 里投影 re-band 放宽(smoothstep 0.15-0.9)边缘才羽化
 - **后处理**:场景相机 `renderPostProcessing=true` + 全局 Volume(Bloom 0.35/threshold 0.95 只给 emission、Saturation +8、Contrast +6、Vignette 0.18)
-- **地面纹理过渡**:ToonLit 的 world-space 双八度 value noise 变化(_VariationColor/Scale/Strength),地面材质开 0.5-0.6 强度——零贴图内存把"纯色块"变"有质感的色块"
+- **地面纹理过渡**:ToonLit 的 world-space 双八度 value noise 变化(_VariationColor/Scale/Strength),地面材质开 0.5-0.6 强度——零贴图内存把"纯色块"变"有质感的色块";开完纯地面的高频和边缘仍要过总纲第 2 节"地面"一行,读成噪点就是过了头
 
 ## 7. 收尾
 - 改动面只应有:地图 prefab、PlanetKits 材质、(首次)ToonLit shader 的 emission 三处、CoplayTemp 工具;字体 SDF .asset 是 Play 动态图集自动 dirty,不算

@@ -1,11 +1,16 @@
 ---
 name: ui-visual-rework
-description: Rework an Extraction UI screen to production quality ("成品级") using the SuperCasual kit. Trigger — "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "把材质底纹动效用起来" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any re-skin/polish of a meta screen (panel, popup, calendar, leaderboard, reward reveal). Companion to ui-placement (that = placement + verification; this = reaching finished-game visual quality).
+description: Rework an Extraction UI screen to production quality ("成品级" = clear hierarchy, calm and crisp per ER美术规范 §9, NOT busier or rounder), with the SuperCasual kit as one available toolset. Trigger — "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "把材质底纹动效用起来" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any re-skin/polish of a meta screen (panel, popup, calendar, leaderboard, reward reveal). Companion to ui-placement (that = placement + verification; this = reaching finished-game visual quality).
 ---
 
 # UI Visual Rework (Extraction · SuperCasual kit)
 
 把一个"代码生成的平面色块界面"重做成成品级,流程与判断全部实跑验证过(Battle Pass / Leaderboard / Daily Login / Reward Reveal 四单)。**先读 `ui-placement` skill**(执行纪律、截图通道、RectTransform 坑)——本 skill 不重复它,只讲它之上的"做到好看"。
+
+## 目标水准:先读总纲第 9 节
+**目标水准和验收以 ER 美术规范第 9 节为准**:vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`。这里的"成品级"指玩家打开一屏三秒内知道这屏干什么、该点哪,不是"做得更花"。ER 现在 UI 的毛病是太满、太圆、太吵,所以总纲要的结果是:一屏一件事(行动型页面一个主按钮,选择型页面突出当前选中或唯一推荐位);入口分级,低频入口不在首屏抢位置;红点和角标只给现在不处理就会损失的东西;分组靠间距看出来,不靠加框;形状利落不圆润,看不到双层边、内倒角高光、粗黑描边;颜色收敛,一个底色一个强调色加一两个语义色,蓝色不满屏,深底读起来是深色而不是黑;内容(物品、角色、奖励)是主角,框和底板是配角。红线第 6 条(蓝不满屏)、第 7 条(不 busy、不圆润)不可越过;交付前过总纲 9.5 的自检和 9.3 的四项数字。
+
+下面的 kit 配方、层叠和动效都是工程里验证过的做法,用来服务层级,不是越丰富越好;叠上去让层级更糊、更吵的就删掉。不用 kit 也行,结果过总纲门槛即可。
 
 ## Refine 工单六步(缺省流程,2026-07-07 契约 §8 原文)
 任何 UI refine 任务的缺省框架;硬契约全文见 `Claude Feature Docs/UI Visual Design/Visual_Refine_Contract.md`,范式库见同目录 `Pattern_Catalog/`。下面的第〇~五步是这六步在本 skill 里的展开。
@@ -39,14 +44,14 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
    - 拿不准 sprite 长相就 Read 那张 PNG 看图。
 5. **尺寸换算**:kit demo 与本项目 kit 屏同基准 **1080×2340 / Match 0.487**,measured px **1:1 照抄**(真源 `UI_Placement_Rules.md`,2026-06-14 RATIFIED)。旧的「canvas 1440×2560 → ×1.33」对 kit 屏**已废弃,别再用**。
 
-## 第二步:视觉语言(从 kit 提炼的规则,直接套)
+## 第二步:视觉语言(从 kit 提炼的做法,结果以总纲第 9 节为准)
 
 - **状态即 tint**:同一张白 sprite,状态只换颜色。日历卡:已领 `#A8BBD1` 灰蓝+绿勾+内容降透明、当前 `#24E715` 绿、未来 `#0787FF` 蓝。Pass 双列:免费蓝/付费金 `#FFD233`。
-- **层叠配方(z 序=创建顺序)**:`Bg(tint, sliced, inset≈2-4)` → 内容层(`Light`高光 / `Gradient` / `Pattern` tiled α≈0.05-0.25 底纹) → `Border`(黑描边, sliced, 全尺寸) → `Glow`(图标后光斑) → 图标 → 文字。逐层都来自 kit 同名 sprite 家族。
+- **层叠配方(z 序=创建顺序)**:`Bg(tint, sliced, inset≈2-4)` → 内容层(`Light`高光 / `Gradient` / `Pattern` tiled α≈0.05-0.25 底纹) → `Border`(黑描边, sliced, 全尺寸) → `Glow`(图标后光斑) → 图标 → 文字。逐层都来自 kit 同名 sprite 家族。这是 kit demo 的满配;按总纲 9.1,结果上不能读出双层边、内倒角高光和粗黑描边,层数够把内容托起来就停,用不上的层不加。
 - **复用既有家族保持全游戏一致**:ticket 弹窗家族(`Popup_Ticket_Bg/Gradient/Border/BottomPattern`+撕票线)、卡片 `CardFrame04_*`、奖励格 `ItemFrame00~03_*`、气泡格 `BubbleFrame05_*`、ribbon `Title_Ribbon01/02_*`。新界面先问"哪个家族最近",别每次发明新皮。
-- **文字**(2026-07-07 修订,对齐字体二分制):**Title / 大数字 = CookieRun Black Outline SDF**,**其余一切非 title 文字(正文/按钮/标签/描述)= `Cairo_Line_Black SDF`**;两者都白色 + 自带深描边(任何底色可读;勾哥明确不要黑字),都必挂 CJK fallback 链(NotoSansCJKsc→ZCOOLKuaiLe)。一律 `enableAutoSizing(min≈26, max=设计值)` + `textWrappingMode = NoWrap` 防溢出换行。深色字只许出现在明确浅底(如 BP 行内 navy)。
-- **"当前/可点"必须活**:focus 双层(`FocusGlow` 青色外扩 + `FocusBorder` 白描边)+ 特效组(`Image_Effect_Rotate` 旋转光线 + `Image_Effect_Star01/Square` 星星方块)+ 呼吸 scale。kit 的 TODAY 卡就是这么做的,照抄。
-- **炫目领奖配方**(`9_PopupFullScreen_RewardItems` 提炼):深黑 dim(≥0.9,越黑光越炸)→ 放射光芒 `Image_Effect_Light01_Yellow` → **旋转光圈 `Image_Effect_Rotate` 必须建在光芒之后**(否则被亮区吃掉看不见)→ `Glow_Circle01` 光晕 → 彩带 `Image_Papers` → ribbon → 奖励卡行。
+- **文字**(2026-07-07 修订,对齐字体二分制):**Title / 大数字 = CookieRun Black Outline SDF**,**其余一切非 title 文字(正文/按钮/标签/描述)= `Cairo_Line_Black SDF`**;两者都白色 + 自带深描边(任何底色可读;勾哥明确不要黑字;总纲 9.9:描边只是一圈轮廓,看起来是深彩色而不是纯黑),都必挂 CJK fallback 链(NotoSansCJKsc→ZCOOLKuaiLe)。一律 `enableAutoSizing(min≈26, max=设计值)` + `textWrappingMode = NoWrap` 防溢出换行。深色字只许出现在明确浅底(如 BP 行内 navy)。
+- **"当前/可点"要一眼看得出来**:kit 的 TODAY 卡用的是 focus 双层(`FocusGlow` 青色外扩 + `FocusBorder` 白描边)+ 特效组(`Image_Effect_Rotate` 旋转光线 + `Image_Effect_Star01/Square` 星星方块)+ 呼吸 scale,这些手段可以挑着用。但一屏只有一个东西在用强调色和动效喊"点我"(总纲 9.11),别把这整套满配铺到每个可点元素上。
+- **炫目领奖配方**(`9_PopupFullScreen_RewardItems` 提炼,奖励物品是画面主角):dim 压暗背景(kit 原配是 ≥0.9 的黑;总纲 9.3 要深底读起来是"深"而不是"黑",颜色和深度以过门槛为准)→ 放射光芒 `Image_Effect_Light01_Yellow` → **旋转光圈 `Image_Effect_Rotate` 必须建在光芒之后**(否则被亮区吃掉看不见)→ `Glow_Circle01` 光晕 → 彩带 `Image_Papers` → ribbon → 奖励卡行。
 - 装饰图 `raycastTarget=false` 一律关;通用图标在 `IconMisc/`、物品图标 `Icon_ItemIcons/256/`、demo 大图标 `Demo/Demo_ItemIcon/`。
 
 ## 第三步:动效语言(DOTween,数值实跑校准)
@@ -56,7 +61,7 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
 2. 主体 punch:ribbon/标题 `localScale 0→1, 0.4s OutBack`(delay 0.1);
 3. 内容 stagger:每项 `0→1 OutBack 0.38s`,间隔 `0.12-0.14s`;每项落位时自己的 glow `0→1→0.55` 闪一下再进 yoyo 脉冲。
 
-**持续层**(进场后一直跑):
+**持续层**(进场后一直跑;只给这屏的主角,也就是奖励或主按钮,其余元素静下来。一屏同时在转、在闪、在呼吸的东西多了就是 busy,碰红线第 7 条):
 - 旋转光圈:`DORotate((0,0,-360), 8-10s, FastBeyond360).SetEase(Linear).SetLoops(-1, Incremental)`;
 - glow 脉冲:alpha 或 scale `yoyo 0.6-0.9s InOutSine`;呼吸(可点卡/CTA):scale `1↔1.04-1.08`;
 - 星星:慢旋 ±18° + scale yoyo,每颗周期错开(`0.7+i*0.18s`);提示文字:落位后 alpha `1↔0.45` 闪。
@@ -88,7 +93,7 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
 | RemoteConfig/JSON 配置里的可选对象 | 反序列化后**非 null 空壳**,判断必须用内容字段(`!string.IsNullOrEmpty(x.Rarity)`) |
 | 弹窗弹了看不见 | 在全屏面板 sibling 之下;走 manager(SetAsLastSibling)或后建 |
 | kit "按钮" prefab | 多数是纯 Image,**没有 Button 组件**,要自己 Add |
-| 光效叠不出来 | 旋转光圈/星星必须建在亮光层**之后**;dim 不够黑光效不炸(≥0.9) |
+| 光效叠不出来 | 旋转光圈/星星必须建在亮光层**之后**;dim 太浅光效不炸(kit 原配 ≥0.9,颜色按总纲 9.3 用深色别用纯黑) |
 | 撕票线 | `Popup_Ticket_BottomPattern` 用 **Tiled** 挂在底条顶边 y+14 |
 | 编辑器失焦 Play 不走 | 第一件事 `Application.runInBackground = true` |
 | check_compile_errors 偶发说谎 | 再 grep Unity logs `error CS` 交叉验证 |
@@ -109,7 +114,7 @@ description: Rework an Extraction UI screen to production quality ("成品级") 
 
 **交付前 6 条自查**:① 无裸 hex(色值可溯源到 Guidelines / kit dump)② 框体策略统一(本项目 = 烘焙 9-slice,永远不用程序化圆角)③ 锚点用预设、无绝对坐标硬编码 ④ 同轴只有一个尺寸权威(LayoutGroup / ContentSizeFitter / 显式,三选一)⑤ 字体规范见下 ⑥ 可点元素挂 `Core.UI.PressScale`。
 
-- **juice = art, not code**:渐变 / 圆角 / 描边一律来自 kit 9-slice 美术资产,不用 `ThemePalette` / `UIGradient` / `com.nobi.roundedcorners` 这类代码方案(它们也不在项目里)。
+- **juice = art, not code**:渐变 / 圆角 / 描边一律来自 kit 9-slice 美术资产,不用 `ThemePalette` / `UIGradient` / `com.nobi.roundedcorners` 这类代码方案(它们也不在项目里)。注意 kit 的面板和按钮底图把大圆角、双层边画死在九宫格贴图里,改尺寸收不小(总纲附录);用 kit 底图做出来读成"圆滚滚、双层边"就没过红线第 7 条,这时换底图还是另找办法,先和勾哥对一下。
 - **`Core.UI.PressScale`**(已入库 `Assets/Scripts/Core/UI/PressScale.cs`):kit 按钮是纯 Image 无按压反馈,新按钮一律挂上;unscaled time,timeScale=0 下照常工作。
 - **Canvas 参考**:kit 屏用 kit 自身 CanvasScaler **1080×2340 / Match 0.487**,measured px 1:1(详见 ui-placement 真源 `UI_Placement_Rules.md`,2026-06-14 RATIFIED;旧的 1440×2560 对 kit 屏已废弃)。
 
