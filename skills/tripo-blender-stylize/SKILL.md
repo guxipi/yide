@@ -7,7 +7,7 @@ description: Take a Tripo-generated 3D model from "AI 肉感/塑料感/细碎噪
 
 **目标水准和验收以 ER 美术规范为准**:vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 游戏内画面的质量和质感,2026-10-11 起取代旧的 Brawl Stars / Synty 低模口径),建筑道具植被看它第 7 节。读起来要是**平滑饱满的大形体 + 大块干净色面 + 两阶明暗 + 没有写实高光**,3D 世界里看不到黑描边。
 
-**结果禁区**(总纲第 7 节):画面上读出硬刻面、低多边形感(玩家能数出面就是失败)、flat shaded、写实材质纹理、细碎凹凸,任何一项都打回。旧版本这份 skill 让 prompt 写 `low poly, flat shaded, faceted` 并在 Blender 里 Shade Flat,那套已作废,别照旧笔记做。
+**结果禁区**(总纲红线和参考资料第 7 节):画面上读出硬刻面、低多边形感(玩家能数出面就是失败)、flat shaded、写实材质纹理、细碎凹凸,任何一项都打回。旧版本这份 skill 让 prompt 写 `low poly, flat shaded, faceted` 并在 Blender 里 Shade Flat,那套已作废,别照旧笔记做。
 
 下面三层是验证过的一种做法,不是唯一做法;别的路线也行,结果过总纲门槛即可。AI 模型(Tripo)默认输出 = 高模平滑 + PBR 贴图 → "肉感/塑料感"。修复分三层,**从便宜的做起**:
 
@@ -32,7 +32,7 @@ Tripo 的软塌感多半来自法线,不是网格本身。先在 Unity 里:
 1. **Decimate 减面**:Modifier `DECIMATE` ratio 起手 0.1(道具目标 800-3000 面);剪影垮了就升到 0.2。**面数只为预算服务,不是画风**——减完必须靠第 2 步把面藏住
 2. **Shade Smooth**:全模型 `shade_smooth`(配 auto smooth / weighted normal),只在真正的结构转折处留硬边。这步决定"看不看得出多边形",看得出就回头调
 3. **Bevel 大边**:Modifier `BEVEL` width 8-15%(视觉元素做法库 mo.co 岩石条)、segments 1-2——边缘圆润不刀刻,剪影变 chunky 圆润(mo.co 岩石/道具 = 大倒角块状体)
-4. **色彩归并**:扔掉 AI 自带的 PBR 贴图和纹理噪点。每块东西的固有色控制在两三个以内(总纲第 7 节),体积靠"顶部亮、底部暗"的渐变(顶点色写 world-Y AO)和边缘提亮出,不靠纹理。可以烘一张小调色板贴图(每个色块一格,UV 挪进对应格子),Unity 侧 ToonLit 直接吃
+4. **色彩归并**:扔掉 AI 自带的 PBR 贴图和纹理噪点。每块东西的固有色控制在两三个以内(总纲红线和参考资料第 7 节),体积靠"顶部亮、底部暗"的渐变(顶点色写 world-Y AO)和边缘提亮出,不靠纹理。可以烘一张小调色板贴图(每个色块一格,UV 挪进对应格子),Unity 侧 ToonLit 直接吃
 5. **导出**:Apply 所有 modifier → 原点放**底部中心**(省 Unity 侧 pivot 补偿) → FBX(`apply transform`, Z-up→Y-up 自动) → 落 `Assets/Art/3DModelsfromGu/<Name>/`
 
 ## 3. Unity 交接(→ gaoguang-3d / planet-dressing)

@@ -7,7 +7,7 @@ description: Build production-grade ("成品级") 3D/world-space VFX in Extracti
 
 把"一坨色块/软光团"的世界特效做到上线级精品。这是 `ui-visual-rework` 的 3D/VFX 对偶面 —— UI 那套是 screen-space uGUI(材质底纹+DOTween 飘窗),**本 skill 是世界空间的粒子/网格/材质/动效**,方法论与坑都不同。
 
-**目标水准和验收以 ER 美术规范第 10 节为准**:vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 实机特效的质量和节奏)。要达到的样子简单说:每个特效先有一个硬边主形(环、斩击弧、地面印章),白色核心只闪一下,外圈柔光比主形淡、比主形先消失,遮掉柔光以后仍读得出"这是什么、打到哪";颜色按敌我、治疗、拾取的语义分开;没事发生的时候画面干净,不常驻装饰光效;特效再大也不盖住角色、怪和敌方预警。验收看动态,按总纲 10.10 录屏逐帧看,截图不够。本 skill 下面写的是工程里验证过的工具和做法,不是唯一做法,结果过总纲门槛即可。
+**目标水准和验收以 ER 美术规范为准**(目标和红线;特效的逐帧观察在 `ER美术规范_参考资料.md` 第 10 节,只是参考):vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 实机特效的质量和节奏)。要达到的样子简单说:每个特效先有一个硬边主形(环、斩击弧、地面印章),白色核心只闪一下,外圈柔光比主形淡、比主形先消失,遮掉柔光以后仍读得出"这是什么、打到哪";颜色按敌我、治疗、拾取的语义分开;没事发生的时候画面干净,不常驻装饰光效;特效再大也不盖住角色、怪和敌方预警。验收看动态,按参考资料 10.10 录屏逐帧看,截图不够。本 skill 下面写的是工程里验证过的工具和做法,不是唯一做法,结果过总纲门槛即可。
 
 > 信条:**先盘资产再动手;能改色复用就别自建;泡泡/壳子用 mesh 求清晰,光晕/爆开用粒子求生动;动效叠在静态视觉之上;静态先在 edit mode 看,运动+反馈再进 play 看。**
 
@@ -33,7 +33,7 @@ description: Build production-grade ("成品级") 3D/world-space VFX in Extracti
 2. **先用 `get_game_object_info(prefabPath=...)` 验单个 ETFX prefab 的结构**:几个 ParticleSystem、`looping`/`playOnAwake`、renderMode(Mesh vs Billboard)、有没有 AudioSource/脚本(ETFX 爆开自带音效+`ETFXPitchRandomizer`,很好用)。单 PS = 轻;多 PS = 注意池化与播放控制。
 3. **复用 vs 自建的判断线**:
    - **持续的"形状壳"(泡泡/护盾/水晶外形)→ 自建 mesh**。教训:ETFX 的 MagicShield/AuraSoft 直接当泡泡壳用,渲出来是**一坨软光团**,糊掉模型、读不出"模型在泡泡里"。要清晰轮廓就用球 mesh + 透明材质。
-   - **光晕/爆开/拖尾/星火 → 复用 ETFX 粒子**(BubbleExplosion 当泡泡爆开、LiquidExplosionWaterClear 当液体溅水、AuraSoft 当内发光、Glitter/Sparkle 当拾取闪)。这些粒子自带成品级运动,自建不划算。注意 ETFX 里名字带 Soft 的版本(139 个)多于带 Sharp 的(45 个),随手拿到的多半是软光团,只能当外圈底衬,不能当主形(总纲 10.1 和附录)。
+   - **光晕/爆开/拖尾/星火 → 复用 ETFX 粒子**(BubbleExplosion 当泡泡爆开、LiquidExplosionWaterClear 当液体溅水、AuraSoft 当内发光、Glitter/Sparkle 当拾取闪)。这些粒子自带成品级运动,自建不划算。注意 ETFX 里名字带 Soft 的版本(139 个)多于带 Sharp 的(45 个),随手拿到的多半是软光团,只能当外圈底衬,不能当主形(参考资料 10.1 和附录)。
    - 复用范式抄 `MeteorStrikeAttack._impactVfxPrefab`(serialized prefab → Instantiate → Destroy(lifetime))或池化版 `Gameplay.Effects.PoolableVFX`。
 
 ---
@@ -70,7 +70,7 @@ root
 
 ## 第四步:动效语言(静态视觉之上可选的动效手段)
 
-叠在静态 rig 之上,按物件的作用挑着用,不是越多越好。总纲 10.7 要求没事发生时画面干净,地上常驻的东西要克制;掉落的出生和拾取那一下要利落(总纲 10.3:各约 0.2~0.3 秒,不超过 0.5 个角色宽,这些是参考值):
+叠在静态 rig 之上,按物件的作用挑着用,不是越多越好。参考资料 10.7 要求没事发生时画面干净,地上常驻的东西要克制;掉落的出生和拾取那一下要利落(参考资料 10.3:各约 0.2~0.3 秒,不超过 0.5 个角色宽,这些是参考值):
 - **原地悬浮**:旋转 + 正弦 bob(`PickupBase` 已有)。
 - **呼吸**:模型 scale 叠 `1 + sin(t)*0.06`,有生命感。
 - **spawn pop-in**:出生时 scale 0→1 走 `EaseOutBack`(过冲),"有重量地出现"。
@@ -100,7 +100,7 @@ root
    - 进局内主玩法用记忆里的 playbook(`GameModeContext.CurrentMode` 先设再 `LoadGameSceneAsync(arena)`)。
    - 直接 `PoolService.Get(prefab)+Initialize(pos)` 在玩家周围生成各 type,看悬浮/飞-停/壳子光晕。
    - 验拾取反馈:生成在玩家身上触发 collect,**state dump 数 popup 数 / body-glow 实例 / 玩家 StatusEffectHandler.ActiveEffects**(overlay canvas 的 popup 截图是盲的,只能 dump);`ScreenCapture.CaptureScreenshot` + PowerShell 裁中心区 Read 判 3D 视觉。
-3. **对比上线级再迭代**(最终验收按总纲 10.10:时间表 + 三张关键帧 + 和 mo.co 同类事件并排):每轮问"差在哪"——糊(光团太大/emission 太猛)、读不出泡泡(壳用了粒子不是 mesh)、色不对(tint 想变色相了→选变体)、没生命(缺呼吸/pop/burst)。一次只改能定位的一项,重跑 builder→重测。
+3. **对比上线级再迭代**(最终验收按参考资料 10.10:时间表 + 三张关键帧 + 和 mo.co 同类事件并排):每轮问"差在哪"——糊(光团太大/emission 太猛)、读不出泡泡(壳用了粒子不是 mesh)、色不对(tint 想变色相了→选变体)、没生命(缺呼吸/pop/burst)。一次只改能定位的一项,重跑 builder→重测。
 
 ---
 
