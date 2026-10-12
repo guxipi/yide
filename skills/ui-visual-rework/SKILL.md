@@ -112,9 +112,9 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 
 **数值真源** = `UI_Visual_Design_Guidelines.md`(项目内 `Claude Feature Docs/UI Visual Design/`,基于真实代码:RarityConfig.cs / UICurrencyItemWidget 等)+ kit prefab dump(配方提取法)。hex / 尺寸 / 时长以这两者为准,散文描述让位。
 
-**交付前 6 条自查**:① 无裸 hex(色值可溯源到 Guidelines / kit dump)② 框体策略统一(本项目 = 烘焙 9-slice,永远不用程序化圆角)③ 锚点用预设、无绝对坐标硬编码 ④ 同轴只有一个尺寸权威(LayoutGroup / ContentSizeFitter / 显式,三选一)⑤ 字体规范见下 ⑥ 可点元素挂 `Core.UI.PressScale`。
+**交付前 6 条自查**:① 无裸 hex(色值可溯源到 Guidelines / kit dump)② 框体策略统一(同一屏用同一种底图;读起来不圆润、没有双层边,见总纲红线第 7 条)③ 锚点用预设、无绝对坐标硬编码 ④ 同轴只有一个尺寸权威(LayoutGroup / ContentSizeFitter / 显式,三选一)⑤ 字体规范见下 ⑥ 可点元素挂 `Core.UI.PressScale`。
 
-- **juice = art, not code**:渐变 / 圆角 / 描边一律来自 kit 9-slice 美术资产,不用 `ThemePalette` / `UIGradient` / `com.nobi.roundedcorners` 这类代码方案(它们也不在项目里)。注意 kit 的面板和按钮底图把大圆角、双层边画死在九宫格贴图里,改尺寸收不小(总纲附录);用 kit 底图做出来读成"圆滚滚、双层边"就没过红线第 7 条,这时换底图还是另找办法,先和勾哥对一下。
+- **底图优先用美术资产**:渐变、圆角、投影通常来自九宫格美术图(kit 或 2026-10-12 批准的新底图,实验版在 `Assets/_Experiments/UIKitV2/`);代码方案不禁止,结果过总纲即可。注意 kit 的面板和按钮底图把大圆角、双层边画死在九宫格贴图里,改尺寸收不小(总纲附录);用 kit 底图做出来读成"圆滚滚、双层边"就没过红线第 7 条,这时换底图还是另找办法,先和勾哥对一下。
 - **`Core.UI.PressScale`**(已入库 `Assets/Scripts/Core/UI/PressScale.cs`):kit 按钮是纯 Image 无按压反馈,新按钮一律挂上;unscaled time,timeScale=0 下照常工作。
 - **Canvas 参考**:kit 屏用 kit 自身 CanvasScaler **1080×2340 / Match 0.487**,measured px 1:1(详见 ui-placement 真源 `UI_Placement_Rules.md`,2026-06-14 RATIFIED;旧的 1440×2560 对 kit 屏已废弃)。
 
