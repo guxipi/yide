@@ -1,9 +1,11 @@
 ---
 name: ui-visual-rework
-description: Rework an Extraction UI screen to production quality ("成品级" = clear hierarchy, calm and crisp per ER美术规范, NOT busier or rounder), with the SuperCasual kit as one available toolset. Trigger — "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "把材质底纹动效用起来" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any re-skin/polish of a meta screen (panel, popup, calendar, leaderboard, reward reveal). Companion to ui-placement (that = placement + verification; this = reaching finished-game visual quality).
+description: Rework an Extraction UI screen to production quality ("成品级" = clear hierarchy, calm and crisp per ER美术规范, NOT busier or rounder), SuperCasual kit as one toolset. Trigger — "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any re-skin/polish of a meta screen (panel, popup, calendar, leaderboard, reward reveal). Companion to ui-placement (placement + verification); this = finished-game visual quality.
 ---
 
 # UI Visual Rework (Extraction · SuperCasual kit)
+
+> 分工提醒:勾哥手摆过的屏,几何归他,AI 只接线和改可读性(见 ui-placement 开头);本 skill 的整屏重做只用于他点名要 AI 重做的屏。
 
 把一个"代码生成的平面色块界面"重做成成品级,流程与判断全部实跑验证过(Battle Pass / Leaderboard / Daily Login / Reward Reveal 四单)。**先读 `ui-placement` skill**(执行纪律、截图通道、RectTransform 坑)——本 skill 不重复它,只讲它之上的"做到好看"。
 

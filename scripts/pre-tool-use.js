@@ -118,7 +118,11 @@ try {
       const tools = Array.isArray(r.tools) && r.tools.length ? r.tools : ['*'];
       if (!tools.includes('*') && !tools.includes(tool)) continue;
       let re; try { re = new RegExp(r.pattern); } catch { continue; }
-      if (re.test(blob)) emit('deny', '🗡️ 翼德拦截:' + (r.reason || ('命中规则 ' + r.pattern)));
+      // fields:只对 tool_input 里这些键的字符串值匹配(如 ["file_path"]),不写则匹配全部字符串值(blob)
+      const target = Array.isArray(r.fields) && r.fields.length
+        ? r.fields.map(k => (typeof ti[k] === 'string' ? ti[k] : '')).join('\n')
+        : blob;
+      if (re.test(target)) emit('deny', '🗡️ 翼德拦截:' + (r.reason || ('命中规则 ' + r.pattern)));
     }
   }
 

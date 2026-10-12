@@ -21,7 +21,7 @@ AI 生成的模型(Tripo 等)直接进项目必灰。原因是固定的三连:**
 1. 在模型同目录建 `<Model>.mat`:shader `Custom/ToonLit`,`_BaseMap` = 模型 basecolor 贴图,`_BaseColor` = **纯白**(别留灰)。
 2. Toon 参数按模型类型选,**别再抄 engineer.mat**(描边 20、阴影 0.6/0.5/0.6、阈值 0.746 那组是给 KayKit 低模平色角色调的,叠在自带厚涂明暗的 AI 模型上 = 明暗算两遍 + 每缕头发描一道黑线)。下面是起步值,按截图结果调:
    - **自带厚涂贴图的角色/怪(Tripo 常态)**:`_ShadowColor (0.85,0.8,0.85)`、`_ShadowThreshold 0.5`、`_ShadowSmoothing 0.25`、`_RimThreshold 0.9`、`_BaseColor 0.95 灰`、**`_OutlineWidth 0`**(2026-10-07 Wren 实测定参,10-11 起描边归零)。注意 ToonLit 新建材质默认 `_OutlineWidth 1.5` 纯黑,要显式写 0。
-   - **环境/建筑/道具**:走 `planet-dressing` §3 的环境配方(rim alpha 0、outline 0)。
+   - **环境/建筑/道具**:rim alpha 0、outline 0(原 planet-dressing 的环境配方;那个 skill 随星球战役退役已删)。
    - 拿不准先做 Unlit 对照:换 URP/Unlit 纯贴图看一眼,判断问题出在几何还是着色。
 3. **Remap 在 importer 上做**,所有使用处自动生效、prefab 零改动:
    ```csharp

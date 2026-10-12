@@ -98,9 +98,14 @@ function isVerificationTool(name, input) {
   }
   return false;
 }
-function isMutationTool(name) {
+const DOC_FILE_RE = /\.(md|markdown|txt|json|ya?ml|html?|css|csv|tsv|xml|svg)$/i;
+function isMutationTool(name, input) {
   const n = String(name || '');
-  if (/^(Write|Edit|MultiEdit|NotebookEdit|apply_patch)$/i.test(n)) return true;
+  if (/^(Write|Edit|MultiEdit|NotebookEdit|apply_patch)$/i.test(n)) {
+    // 改文档 / 配置 / 页面不算"需要运行时验证的改动"(2026-10-12:诚实度闸门只盯代码与引擎资产)
+    const fp = input && typeof input.file_path === 'string' ? input.file_path : '';
+    return !(fp && DOC_FILE_RE.test(fp));
+  }
   if (/^mcp__coplay/i.test(n)) return !COPLAY_READONLY_RE.test(n);
   return false;
 }
@@ -173,7 +178,7 @@ try {
 
   // ③ 诚实度闸门 —— 本回合改了文件 + 有完成声明 + 本回合零验证。stop_hook_active 续跑时不重复追问。
   if (input.stop_hook_active !== true && lastText && CLAIM_RE.test(lastText)) {
-    const mutated = turnTools.some(b => isMutationTool(b.name));
+    const mutated = turnTools.some(b => isMutationTool(b.name, b.input));
     const verified = turnTools.some(b => isVerificationTool(b.name, b.input));
     if (mutated && !verified) reasons.push(HONESTY_REASON);
   }

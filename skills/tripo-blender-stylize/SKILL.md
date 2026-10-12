@@ -15,7 +15,7 @@ description: Take a Tripo-generated 3D model from "AI 肉感/塑料感/细碎噪
 Tripo 的软塌感多半来自法线,不是网格本身。先在 Unity 里:
 - ModelImporter → `importNormals = Calculate`,smoothing angle 从大往小试,**以截图看不出多边形面为准**(减过面的模型角度太小会出刻面,这是禁区)
 - 材质走 `gaoguang-3d`(ToonLit remap,矿塔案例:材质早就对了,纯法线问题)
-- 底部融合差 → `planet-dressing` 的 FoundationRing(土色底盘+低岩环)
+- 底部融合差 → 给件加土色底盘 + 低岩环(原 planet-dressing 的 FoundationRing 思路;该 skill 已随战役退役)
 **只有剪影/面数/比例本身不行,才进 Blender。**
 
 ## 1. Tripo 生成侧:prompt 就把风格钉住
@@ -35,10 +35,10 @@ Tripo 的软塌感多半来自法线,不是网格本身。先在 Unity 里:
 4. **色彩归并**:扔掉 AI 自带的 PBR 贴图和纹理噪点。每块东西的固有色控制在两三个以内(总纲红线和参考资料第 7 节),体积靠"顶部亮、底部暗"的渐变(顶点色写 world-Y AO)和边缘提亮出,不靠纹理。可以烘一张小调色板贴图(每个色块一格,UV 挪进对应格子),Unity 侧 ToonLit 直接吃
 5. **导出**:Apply 所有 modifier → 原点放**底部中心**(省 Unity 侧 pivot 补偿) → FBX(`apply transform`, Z-up→Y-up 自动) → 落 `Assets/Art/3DModelsfromGu/<Name>/`
 
-## 3. Unity 交接(→ gaoguang-3d / planet-dressing)
+## 3. Unity 交接(→ gaoguang-3d)
 - 进项目走 `gaoguang-3d`:ToonLit remap(matte:rim alpha=0)+ LightSet 真光验证
 - importer 法线按 §0 设,以看不出刻面为准
-- 是地图 hero 件 → `planet-dressing` 的 FoundationRing 种进地里
+- 是地图 hero 件 → 加底盘 / 岩环种进地里(远征地编走 vault 016 的施工手册)
 - 描边:结果要求是 3D 世界里看不到黑描边(角色也一样,总纲红线第 1 条);用 ToonLit 的话 `_OutlineWidth` 显式设 0(新建材质默认 1.5 纯黑)
 
 ## 判断表:走哪条路
@@ -49,5 +49,5 @@ Tripo 的软塌感多半来自法线,不是网格本身。先在 Unity 里:
 | 看得出刻面/多边形 | §0 加大 smoothing angle,不行再 §2 第 2 步 |
 | 面数过高/剪影糊/比例差 | §2 Blender 五步 |
 | 表面细碎噪点、像写实贴图 | §2 第 4 步色彩归并 |
-| 跟地面像"摆上去的" | planet-dressing FoundationRing |
+| 跟地面像"摆上去的" | 加土色底盘 / 低岩环,或埋低一点 |
 | 生成侧就丑 | §1 重写 prompt 重 roll,别硬修 |

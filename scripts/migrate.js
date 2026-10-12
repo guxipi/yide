@@ -27,6 +27,8 @@ const SHIPPED = new Set(['style/unity.md', 'README.md', 'lessons/_TEMPLATE.md', 
 //  - 4 个会话级状态:已迁本机 ~/.yide-local(Phase 1),共享侧旧副本清掉(readLocal 已做过一次性回退)
 const REMOVED = [
   'core/charter.md',
+  'style/communication.md',   // 2026-10-12:行文/沟通规则归 output style(guge-writing),模板不再发货
+  'style/writing.md',
   '.meta/digest-latest.md',
   '.meta/last-digest.txt',
   '.meta/session-health.json',

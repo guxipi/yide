@@ -14,8 +14,8 @@
 
 | 这条规则的性质 | 放哪 | 什么时候生效 |
 |---|---|---|
-| 通用行为约束,跨项目都成立,严重(sev≥8) | `~/.yide/core/hard-rules.md` | 每次会话常驻 |
-| 通用工作方法 / 权限约定 / 本机环境事实 | `~/.yide/core/charter-extra.md` | 每次会话常驻 |
+| 不可逆、代价高的禁令,或用户点名过的错 | `~/.yide/core/hard-rules.md` | 每次会话常驻 |
+| 放权 / 工作约定 / 本机环境事实(ER 专属进 charter-extra-er) | `~/.yide/core/charter-extra.md` | 每次会话常驻 |
 | 只在某个项目成立(路径、约定、铁规) | 该项目的 `CLAUDE.md` | 在该项目的会话里常驻 |
 | 某类活的技术知识(摆 UI / 写服务端 / 做 VFX / 模型 intake…) | 对应 skill 的 `SKILL.md`(`skills/<name>/`) | 干这类活时自动加载 |
 | 能用一个精确正则在工具输入里抓到的硬约束 | `~/.yide/.meta/hook-rules.json` | PreToolUse **真 block** |
@@ -28,7 +28,7 @@
 ## 第三步:落地
 
 - **常驻层 / 项目 CLAUDE.md / skill**:直接改对应文件,措辞先给勾哥确认再落盘。规则**正向化**("该怎么做"而非"不要怎样"),具体、可验证,常驻层配 `**IMPORTANT**`。
-  - ❌ 不要用 Debug.Log → ✅ **IMPORTANT** 调试输出一律走项目封装的 Logger
+  - ❌ 别乱 push → ✅ **IMPORTANT** 做完可 commit,push / 建分支等勾哥明说
 - **hook 规则**:向 `.meta/hook-rules.json` 的 `rules` 追加 `{pattern, reason, tools}`。pattern 是 **JS 正则**(`new RegExp(pattern)` 加载),reason 写清为什么拦。保守:只在正则能精确命中、误伤风险低时才做(`Debug.Log` 这类高频词慎做,易误伤注释/字符串)。
 - **档案**:基于 `~/.yide/lessons/_TEMPLATE.md` 写 `~/.yide/lessons/L-XXXX.md`(编号取现有最大 +1),frontmatter 填 id/date/severity/status。**不必再写 scope glob**(没有消费者了),也不必重建索引。
 

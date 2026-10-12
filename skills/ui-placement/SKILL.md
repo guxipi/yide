@@ -1,9 +1,11 @@
 ---
 name: ui-placement
-description: Placing, aligning, restyling, or building Unity uGUI UI in Extraction — RectTransform layout, anchors, panels, HUD, popups, tabs, item slots, multi-resolution / safe-area fitting. Trigger — "摆一下UI" / "摆UI" / "摆一下界面" / "摆界面" / "调一下界面" / "做个界面" / "改UI" / "弄个面板/弹窗/HUD" / 涉及 UI、界面、面板、暂停界面、掉落/奖励格子、item slot、安全区、对齐 的任何摆放任务. Coplay capture tools are BLIND to screen-space UI — verify via F8 ScreenCapture PNG + numeric geometry. Invoke BEFORE touching any .unity/.prefab UI or UI layout code.
+description: Wiring, placing, aligning or building Unity uGUI UI in Extraction — RectTransform/anchors, panels, HUD, popups, item slots, safe-area; plus the "勾哥手摆、我接线" recipes (fixed slots + dynamic content, reference-box measuring, scale-up, equal spacing, wire-setup scripts). Trigger — "接线" / "接数据" / "摆UI" / "摆界面" / "调界面" / "做个界面" / "改UI" / "弄个面板/弹窗/HUD" / any UI、界面、面板、格子、安全区、对齐 task. Coplay capture is BLIND to screen-space UI — verify via ScreenCapture PNG + numbers. Invoke BEFORE touching .unity/.prefab UI.
 ---
 
 # UI Placement (Extraction)
+
+> **分工(2026-09-07 拍板)**:默认是勾哥在 Prefab Mode 手摆几何(位置 / 尺寸 / icon / 字号 / 排布 / 节点结构),AI 只接线。本 skill 的"摆"只在他明确让 AI 摆、或给了数字 / 参照的几何改动时用;否则先看文末「手摆接线套路」。可读性不达标(对比度不够)直接修,不当选项抛给他。
 
 Extraction is **portrait-only** mobile (portrait 9:16; for the exact canvas ref see Source of truth below — kit screens are ratified to 1080×2340). The visual language, tokens, prefab mapping and per-screen specs already exist as docs — this skill is the **execution workflow + discipline**, not a re-spec.
 
@@ -119,3 +121,14 @@ Gradients/metallic/glow come from kit 9-slice sprites, not code (uGUI has no nat
 - Portrait only · place in Edit Mode · **save scene right after editing** · no text-editing of `.unity`/`.prefab` (use execute_script / MCP) · **verify before "fixed": numeric worldPos on-screen OR an F8 PNG — never trust Coplay's capture tools or a flow-only test.**
 
 **一个屏"改了又弹回来"、override 几百条、prefab 里对进场景全歪 → 那是结构性的多作者问题,别在这里硬摆,走 `ui-truth-reclaim` 先收成单一真源(`Tools/UI Truth/Reclaim Window` + `Audit All Screens`)。**
+
+## 手摆接线套路(勾哥手摆、我只接线;从 charter 迁来,2026-09-07 拍板)
+- **开工先复述再问**:用人话复述"我读到的布局是什么、每块接什么数据",真正影响接法的分岔(接哪份数据 / 按钮去哪 / 面板怎么关)一次弹窗问全,其余按自己理解先做并说明假设。
+- **屏的用途决定数据源**:局内背包不看仓库全集;"看全部 item"是 Gear tab / 出击前屏。手摆稿可能被翻案到别的屏,接线脚本要能整块搬运(克隆手摆子树进目标 prefab,保留目标该留的按钮行,重接字段)。
+- **数据一律真源**:仓库 PersistentInventoryService、出击包 LoadoutService、保险袋 SafePocketService / SafePocketHandler、局内包 InventoryHandler、总值 PlayerStatResolver.Stats(FinalAttackDamage / MaxHealth)。mock 文本全换真值绑定;演示格运行时关掉。
+- **固定格接动态内容**:他摆的格子是死节点不是 LayoutGroup 生成的。按阅读顺序列成 List<RectTransform>,有货往格子里 Instantiate 物品 widget 铺满(anchor 0-1 offset 0,标 `// ui-truth: dynamic`),空态显示格子自带子节点(item_empty / plus),超容量的格子隐藏,"已用 / 容量"写他放的那行字。同一格需要两种状态图而他只放了一张时,从兄弟格复制过来同尺寸叠原位默认隐藏。妨碍手摆的 LayoutGroup / ContentSizeFitter 关掉(先 ForceRebuild 保住排布再关),他说"拖不动 / 弹回去"就是这个。
+- **参考框当尺子**:他在列表区摆几行空框表示格子大小和间距,在 Prefab Mode 实测中心与尺寸,算 cellSize / spacing / 列数 / 留白写进 GridLayoutGroup,参考框关显示留着别删。
+- **"scale up N 倍、排布不变"** = 每个按钮子树的 sizeDelta、anchoredPosition、字号(含 autosize min/max)全乘 N,LayoutGroup spacing 也乘 N,锚点不动。**"上下 / 左右距离一样"** = 进 Play 实测 canvas 坐标(GetWorldCorners → 根 canvas InverseTransformPoint)算该挪多少,不肉眼。**"变成可滚、第三个只露 60%"** = ScrollRect + RectMask2D 视口居中于容器,视口宽 = 第 1 格左边到第 N 格 60% 处,格子搬进 content 保持原间距。
+- **"打开这个 screen 我手动改"** = `PrefabStageUtility.OpenPrefab` 进 Prefab Mode(环境场景 PrefabUIEnvironment 1440×2560)+ Scene 视图切 2D 正交 FrameSelected + 选中目标节点,然后告诉他要改的节点名、哪些节点上有 LayoutGroup 会弹回、哪些是运行时生成看不到(仓库格子来自 Resources/Core/UIUniversalItemWidget.prefab 全游戏共用)。3D 角色预览是场景相机渲染,Prefab Mode 里不显示。
+- **接线脚本**:放 `Assets/Scripts/Editor/Setup/*WireSetup.cs`,Tools/Setup 菜单,idempotent;Prefab Mode 正开着目标 prefab 时直接改 `stage.prefabContentsRoot` 再 `PrefabUtility.SaveAsPrefabAsset(root, stage.assetPath)` + `stage.ClearDirtiness()`,不和他未保存的手摆冲突;否则 LoadPrefabContents。找按钮按节点名精确认,别 Contains("back") 这种松匹配。
+- **交付 = 实机**:Play 里真实数据截图 + 关键数字(数量文本、格子数、绑定是否命中),点过的按钮说清是 onClick.Invoke 还是手点;没测到的明说。Overlay canvas 截图走 `panel.StartCoroutine` + `WaitForEndOfFrame` + `ScreenCapture.CaptureScreenshotAsTexture`。交手摆屏前自己先在 Prefab Mode(2D 对准 + SceneView 截图)看见,少一步不许说好了。

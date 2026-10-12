@@ -223,12 +223,12 @@ t('resolve:发货默认+用户层 读取时合并(去重不拆 + 自定义 + 禁
 
   let out = resolve('hard-rules', ROOT, rb);
   assert(/防测试/.test(out), '应保留用户自定义红线');
-  assert((out.match(/防"hackfix"/g) || []).length === 1, '默认红线不该因"旧大脑也有"而重复(去重不拆)');
+  assert((out.match(/防"编造事实\/API"/g) || []).length === 1, '默认红线不该因"旧大脑也有"而重复(去重不拆)');
 
   // 禁用某条默认
-  fs.writeFileSync(path.join(rb, '.meta', 'redline-suppress.json'), JSON.stringify(['防"hackfix"']));
+  fs.writeFileSync(path.join(rb, '.meta', 'redline-suppress.json'), JSON.stringify(['防"编造事实/API"']));
   out = resolve('hard-rules', ROOT, rb);
-  assert(!/防"hackfix"/.test(out), '被 suppress 的默认应消失');
+  assert(!/防"编造事实\/API"/.test(out), '被 suppress 的默认应消失');
   assert(/防测试/.test(out), 'suppress 不影响自定义');
 
   // charter 读发货

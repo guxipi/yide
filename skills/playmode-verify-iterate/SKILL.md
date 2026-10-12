@@ -1,6 +1,6 @@
 ---
 name: playmode-verify-iterate
-description: Drive the Unity game in Play Mode via Coplay MCP, observe REAL behavior, fix, re-test, and iterate until the player experience is flawless — or the verification step of any gameplay/UI/data/server change. Trigger on "测一下" / "进 play 测" / "验证这个改动" / "确保好用" / "跑起来看看" / "自己测到满意" / "测到满分".
+description: Drive the Unity game in Play Mode via Unity CLI (Coplay MCP as fallback), observe REAL behavior, fix, re-test, and iterate until the player experience is flawless — or the verification step of any gameplay/UI/data/server change. Trigger on "测一下" / "进 play 测" / "验证这个改动" / "确保好用" / "跑起来看看" / "自己测到满意" / "测到满分".
 ---
 
 # Play Mode Verify & Iterate (Extraction · Coplay MCP)
@@ -12,6 +12,8 @@ CC 自己进 Play Mode 真测 → 发现问题 → 回来修 → 重测 → **�
 ---
 
 ## 第〇步:进 Play 前
+
+> **通道(2026-09-29 起)**:首选 Unity CLI —— `unity status` 确认连上,`unity cmd editor_status / console / editor_play / editor_stop / capture_game_view / eval / find_gameobjects`;eval 走 Bash 不走 PowerShell,代码写成 `return <expr>;`,eval 里绝不同步等异步(会把编辑器锁死)。下文的 Coplay 工具名只在 CLI 没对应命令或连不上时用。
 
 - 确认编译干净:`check_compile_errors` + grep logs `error CS`(工具偶发说谎,交叉验证)。
 - 若改了 editor builder:**先把 builder 的产物落进场景**(跑 builder → SaveScene),否则 Play 里看到的是旧场景。

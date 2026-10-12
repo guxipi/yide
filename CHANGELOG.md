@@ -2,6 +2,15 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.60.0 — 2026-10-12 全面清理:翼德只放事实、放权、高代价禁令和带脚本的流程
+- 原则换了:翼德不再是"要乖"的训话集。发货红线从 4 条砍到 2 条(可逆性划线、不编造),"别加屎山 / 修根因"交还模型原生;charter 从"先调研 / 先写快照测试 / 先说计划"改成"prompt 是意图不是规格、approach 自选、拍板不再问、做完才算完"。
+- 红线 1 改为按可逆性划线:能 git 回退的直接做,只有 push / 改历史 / 删资产 / 动线上 / 部署 / 花钱 / 缩范围才先问。
+- 删 4 个随星球战役退役的 skill:arena-boss-content、arena-minion-content、campaign-map-build、planet-dressing;gaoguang-3d / tripo-blender-stylize 里的交叉引用改成文字。
+- ui-placement 加「手摆接线套路」节(从 ER charter 迁来)和分工提醒;ui-visual-rework 加分工提醒;playmode-verify-iterate 改为 Unity CLI 首选、Coplay 备用。
+- qa 动作的行为快照测试改为可选(只在点名或改强一致核心时做);record 分流表措辞对齐新原则。
+- Stop 诚实度闸门只盯代码与引擎资产,改 .md / .json / .html 等文档不再触发;PreToolUse 规则新增 `fields` 限定(只匹配 file_path 等指定键),不再对文件内容误拦。
+- README 补 polish 行、charter 行;战绩段压缩。
+
 ### v0.59.0 — 2026-10-12 ER 画风改为对标 mo.co 游戏内画面的质量和质感
 - 总纲是 vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`:只定水准和验收,不定做法;七条结果红线(3D 世界看不到黑描边、阴影不灰黑、学质感不抄细节、镜头俯角不动、图标保持现有画风、蓝色不满屏、UI 不 busy 不圆润)。
 - `gaoguang-3d` / `tripo-blender-stylize` / `planet-dressing` 去掉 Archero、Brawl Stars 低多边形、硬刻面、engineer.mat 描边 20 的旧口径,原有做法保留但标成"一种验证过的做法";`vfx-production`、`ui-visual-rework`、`ui-placement`、`arena-*` 加目标水准指向总纲;`ui-visual-rework` 明写成品级=层级清楚、安静利落,不是更花更圆。
