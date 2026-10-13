@@ -23,6 +23,7 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 2. 第一轮可以出 mock 定方向(竞品只借布局和层次);**方向一定就只改真 prefab,每轮给勾哥的是 Play 截图**(`ScreenCapture.CaptureScreenshot`,1080×2340)。mock 和 builder 两套组装代码必出偏差,这次因此多返工三轮。
 3. 有 builder 的 prefab 改 builder 再跑(菜单覆盖前要确认,避免冲掉手摆);没有 builder 的直接 `PrefabUtility.LoadPrefabContents` 改结构 → `SaveAsPrefabAsset`。脚本改成序列化引用,不按节点名查。
 4. 进 Play 走真入口打开,每个变体都开一遍(单格 / 多格 / 不同礼包),state dump(文本、`characterCount`、active、屏上 rect)+ 截图;关闭键走真 `onClick`。测完停 Play,只提交本单文件。
+5. **遮挡检查是交付硬门(勾哥 10-13 点名)**:每屏两道都过才算完。① 脚本:关键元素(标题 / 副标题 / 内容行 / 按钮 / 倒计时 / 角标 / info)屏上矩形两两求交,TMP 按**可见字形轮廓**(`characterInfo` 的 bottomLeft/topRight)算,别用 `textBounds`(含整行行高,Saira ≈1.57em,会大量误报),重叠 >3% 或出卡/出窗即红;有意的叠放(贴纸角标压按钮沿)显式豁免。脚本在 vault `013 美术/工具/ui_occlusion_check.cs`。② 肉眼:人物的脸、手、主道具不许被任何 UI 压住,压插画的元素优先放插画空景一侧。
 
 **勾哥定的硬口径**
 - 组件用 SuperCasual kit 现成 prefab(少用大圆角),**不要自己画 / 渲按钮和底板**,不用粉色。已验证可直接嵌套的件:`Popup09_Topbar_Divided_Label_*` 壳(顶栏放大到 ~170)、`Button01_l_BtnText_Yellow`(价格直接写在按钮上)、`BorderFrame_Oval58_Dark`(倒计时套件 = 深底 + `Icon_Timer`,倒计时不在正中就用它)、`Label_Parallelogram_Yellow`(ONE-TIME / PICK ONE 角标)、`Title_LIne03_Divider`(YOU GET / PICK ONE 分隔)、`CardFrame04_FocusBorder`(选中框)。
@@ -45,6 +46,8 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 | 通用格整格消失 | `ItemDesignData` icon 传 null 会被当空格隐藏;要替换图就传真 icon(或做合成 icon) |
 | eval 报 Main thread 5000ms 超时 | 长操作(导图 / 生成字体 / 跑 builder)用 `unity cmd eval_file --detach` + `unity job wait` |
 | 离屏渲染拍进场景物体 | 临时相机 `cullingMask = UI 层`,节点 layer 设 5 |
+| 外部新建的 .cs 永远不进编译(`recompile` 报 up_to_date、MonoScript.GetClass()=null) | 编辑器不在前台时新文件没登记进脚本集合;删掉后用 `unity cmd create_script --name X --path ... --namespace ...` 让 Unity 建,再覆盖内容、recompile |
+| 倒计时 / 角标压脸 | 放插画空景一侧(右上);跑遮挡检查 + 看脸 |
 | 关掉弹窗又弹出来 | 不是 bug:`HomeAttentionDirector` 排队,手动先开的话关闭后它补弹;新手三礼包会依次弹 |
 
 ## Refine 工单六步(缺省流程,2026-07-07 契约 §8 原文)
