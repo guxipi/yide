@@ -1,6 +1,6 @@
 ---
 name: ui-visual-rework
-description: Rework an Extraction UI screen to production quality ("成品级" = clear hierarchy, calm and crisp per ER美术规范, NOT busier or rounder), SuperCasual kit as one toolset. Trigger — "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any re-skin/polish of a meta screen (panel, popup, calendar, leaderboard, reward reveal). Companion to ui-placement (placement + verification); this = finished-game visual quality.
+description: Rework an Extraction UI screen to production quality ("成品级" = clear hierarchy, calm and crisp per ER美术规范, NOT busier or rounder), SuperCasual kit as one toolset. Trigger — "逐屏优化" / "优化这个 screen / pop up" / "更有商业化成品感" / "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any re-skin/polish of a meta screen (panel, popup, calendar, leaderboard, reward reveal). Companion to ui-placement (placement + verification); this = finished-game visual quality.
 ---
 
 # UI Visual Rework (Extraction · SuperCasual kit)
@@ -13,6 +13,39 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 **目标水准和验收以 ER 美术规范为准**(目标和红线;UI 的详细观察和判断方法在 `ER美术规范_参考资料.md` 第 9 节,只是参考):vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`。这里的"成品级"指玩家打开一屏三秒内知道这屏干什么、该点哪,不是"做得更花"。ER 现在 UI 的毛病是太满、太圆、太吵,所以总纲要的结果是:一屏一件事(行动型页面一个主按钮,选择型页面突出当前选中或唯一推荐位);入口分级,低频入口不在首屏抢位置;红点和角标只给现在不处理就会损失的东西;分组靠间距看出来,不靠加框;形状利落不圆润,看不到双层边、内倒角高光、粗黑描边;颜色收敛,一个底色一个强调色加一两个语义色,蓝色不满屏,深底读起来是深色而不是黑;内容(物品、角色、奖励)是主角,框和底板是配角。红线第 6 条(蓝不满屏)、第 7 条(不 busy、不圆润)不可越过;交付前过参考资料 9.5 的自检和 9.3 的四项数字。
 
 下面的 kit 配方、层叠和动效都是工程里验证过的做法,用来服务层级,不是越丰富越好;叠上去让层级更糊、更吵的就删掉。不用 kit 也行,结果过总纲门槛即可。
+
+## 逐屏优化实战套路(2026-10-13 礼包弹窗 UIOfferPopup + 选弹药 UIShopChooseAmmoPopup 两屏跑通)
+
+勾哥开始"逐屏优化 screen / pop up"时的缺省做法。两屏的真源可直接当样板抄:`Assets/Scripts/Editor/Setup/OfferUISetup.cs`(BuildVisual)、`Assets/Scripts/Meta/UI/Offers/UIOfferPopup.cs` / `UIOfferContentSlot.cs`、`Assets/Scripts/Meta/UI/ShopDesign/UIShopChooseAmmoPopup.cs`;实机截图在 vault `013 美术/UI弹窗优化_2026-10-13/`。
+
+**流程**
+1. 现状先实读:prefab dump(节点 / sprite / 色值 / 字体 / 字号)+ 实机截图;字号一律换算成屏上像素(字号 × 父级缩放 × canvas scaleFactor;Popup 层 1440 参考 → 1080 屏 ×0.75,kit 屏 1080 参考 1:1)。
+2. 第一轮可以出 mock 定方向(竞品只借布局和层次);**方向一定就只改真 prefab,每轮给勾哥的是 Play 截图**(`ScreenCapture.CaptureScreenshot`,1080×2340)。mock 和 builder 两套组装代码必出偏差,这次因此多返工三轮。
+3. 有 builder 的 prefab 改 builder 再跑(菜单覆盖前要确认,避免冲掉手摆);没有 builder 的直接 `PrefabUtility.LoadPrefabContents` 改结构 → `SaveAsPrefabAsset`。脚本改成序列化引用,不按节点名查。
+4. 进 Play 走真入口打开,每个变体都开一遍(单格 / 多格 / 不同礼包),state dump(文本、`characterCount`、active、屏上 rect)+ 截图;关闭键走真 `onClick`。测完停 Play,只提交本单文件。
+
+**勾哥定的硬口径**
+- 组件用 SuperCasual kit 现成 prefab(少用大圆角),**不要自己画 / 渲按钮和底板**,不用粉色。已验证可直接嵌套的件:`Popup09_Topbar_Divided_Label_*` 壳(顶栏放大到 ~170)、`Button01_l_BtnText_Yellow`(价格直接写在按钮上)、`BorderFrame_Oval58_Dark`(倒计时套件 = 深底 + `Icon_Timer`,倒计时不在正中就用它)、`Label_Parallelogram_Yellow`(ONE-TIME / PICK ONE 角标)、`Title_LIne03_Divider`(YOU GET / PICK ONE 分隔)、`CardFrame04_FocusBorder`(选中框)。
+- 物品格 = 背包同款 `UIUniversalItemWidget`(颜色按真实稀有度,数量右下);不要另造格子。多于一行的内容分行居中、整窗加高,不缩格子(缩了字会低于下限)。
+- 每个功能 / 礼包一套主题色,进配置不进代码(范式:`OfferBannerLibrary` 条目的 Theme 四色);正文由浅到深(竖向 alpha 渐变条 `expedition_竖向渐变遮罩_8x256` 染深色压下半);底纹用勾哥的半调波点 `expedition_波点渐变底纹_1024x1024`,透明度 ~1.5%。
+- 字体 Saira,字号下限见 Extraction 工程 CLAUDE.md UI 字体铁规第 4 条(1080 屏 32px / 标签 40 / 按钮 48 / 标题 64);每段字对比度量完再交。
+- 头图要讲这个功能的故事并放英雄;避开 UI 压条的安全区(顶部倒计时 / 渐变、底部渐变);已定稿 KV 构图不合优先往外扩画,不重画;人物按角色手册修(出图口径见 KV 相关记忆)。头图下沿渐变融进正文底色。
+- 提示语义:红点 = "有新东西 / 待处理",不能当"这格可选";自选类用文字标签,且和下一屏用同一个词。
+
+**动效(只给主角,不铺满)**:CTA `UIShineSweep` + 呼吸;内容格依次弹出(0.38s OutBack,间隔 0.12s);头图闪星 / 格子背光用 `UIAmbientPulse`(alpha 闪烁要同节点有 `CanvasGroup`)。挂了 `Core.UI.PressScale` 的节点不要再做缩放动效,它每帧回拉 localScale。
+
+**这两屏踩实的坑**
+| 现象 | 根因 / 修法 |
+|---|---|
+| 内容区顶部被裁一截 | 纵向拉伸锚点的新节点 `sizeDelta` 默认 (100,100) → 比视口高 100,被 RectMask2D 裁;新建后清零 |
+| 高光条错位 | 抄 kit 子节点位置前先实读 pivot(kit `LIght` 是 pivot 居中 y-24 = 贴顶) |
+| 倒计时秒表压住首字母 | kit 套件 HLG 左 padding 58 按 Cairo 留,Saira 加到 ~86 |
+| 物品名整行消失,`characterCount=0` | TMP Ellipsis + 框高 < 行高(Saira ≈1.57×字号)→ 整行被省略;框高跟字号走 |
+| 多行内容互相压 | VerticalLayoutGroup `childControlHeight=false` 时子级 LayoutElement 不生效 |
+| 通用格整格消失 | `ItemDesignData` icon 传 null 会被当空格隐藏;要替换图就传真 icon(或做合成 icon) |
+| eval 报 Main thread 5000ms 超时 | 长操作(导图 / 生成字体 / 跑 builder)用 `unity cmd eval_file --detach` + `unity job wait` |
+| 离屏渲染拍进场景物体 | 临时相机 `cullingMask = UI 层`,节点 layer 设 5 |
+| 关掉弹窗又弹出来 | 不是 bug:`HomeAttentionDirector` 排队,手动先开的话关闭后它补弹;新手三礼包会依次弹 |
 
 ## Refine 工单六步(缺省流程,2026-07-07 契约 §8 原文)
 任何 UI refine 任务的缺省框架;硬契约全文见 `Claude Feature Docs/UI Visual Design/Visual_Refine_Contract.md`,范式库见同目录 `Pattern_Catalog/`。下面的第〇~五步是这六步在本 skill 里的展开。
