@@ -30,9 +30,10 @@ let SESSION_ID = 'nosid';
 try { SESSION_ID = (JSON.parse(fs.readFileSync(0, 'utf8') || '{}').session_id) || 'nosid'; } catch {}
 
 function emit(ctx, title) {
-  process.stdout.write(JSON.stringify({
-    hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: ctx, sessionTitle: title || '' },
-  }));
+  const out = { hookEventName: 'SessionStart', additionalContext: ctx };
+  // sessionTitle 是 Claude Code 专有字段;Codex 遇到不认识的字段会把整个 hook 判失败、简报丢光。
+  if (!host.isCodex()) out.sessionTitle = title || '';
+  process.stdout.write(JSON.stringify({ hookSpecificOutput: out }));
 }
 function read(rel, base) {
   try { return fs.readFileSync(path.join(base, rel), 'utf8'); } catch { return null; }

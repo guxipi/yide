@@ -1,13 +1,28 @@
 {
+  "description": "翼德 · Codex 宿主 hooks。命令用 node -e 读 PLUGIN_ROOT 环境变量,不依赖 shell 展开(Windows 下 PowerShell/cmd/bash 都能跑)。",
   "hooks": {
     "SessionStart": [
       {
+        "matcher": "startup|resume|clear|compact|fork",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${PLUGIN_ROOT}/scripts/session-start.js\"",
+            "command": "node -e \"process.env.YIDE_HOST='codex';require((process.env.PLUGIN_ROOT||process.env.CLAUDE_PLUGIN_ROOT)+'/scripts/session-start.js')\"",
             "timeout": 15,
-            "statusMessage": "翼德正在准备简报…"
+            "statusMessage": "翼德正在准备简报…",
+            "additionalContextLimit": 0
+          }
+        ]
+      },
+      {
+        "matcher": "startup|resume|clear|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"process.env.YIDE_HOST='codex';require((process.env.PLUGIN_ROOT||process.env.CLAUDE_PLUGIN_ROOT)+'/scripts/memory-bridge.js')\"",
+            "timeout": 10,
+            "statusMessage": "翼德正在加载共用项目记忆…",
+            "additionalContextLimit": 0
           }
         ]
       }
@@ -17,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${PLUGIN_ROOT}/scripts/user-prompt-submit.js\"",
+            "command": "node -e \"process.env.YIDE_HOST='codex';require((process.env.PLUGIN_ROOT||process.env.CLAUDE_PLUGIN_ROOT)+'/scripts/user-prompt-submit.js')\"",
             "timeout": 10
           }
         ]
@@ -29,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${PLUGIN_ROOT}/scripts/pre-tool-use.js\"",
+            "command": "node -e \"process.env.YIDE_HOST='codex';require((process.env.PLUGIN_ROOT||process.env.CLAUDE_PLUGIN_ROOT)+'/scripts/pre-tool-use.js')\"",
             "timeout": 10
           }
         ]
@@ -41,9 +56,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${PLUGIN_ROOT}/scripts/post-tool-use.js\"",
+            "command": "node -e \"process.env.YIDE_HOST='codex';require((process.env.PLUGIN_ROOT||process.env.CLAUDE_PLUGIN_ROOT)+'/scripts/post-tool-use.js')\"",
             "timeout": 15,
             "statusMessage": "翼德把关中…"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"process.env.YIDE_HOST='codex';require((process.env.PLUGIN_ROOT||process.env.CLAUDE_PLUGIN_ROOT)+'/scripts/stop-audit.js')\"",
+            "timeout": 15
           }
         ]
       }

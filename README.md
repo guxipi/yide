@@ -29,6 +29,20 @@
 > **开启自动更新(强烈建议,一次性)**:`/plugin` → Marketplaces → 选 `guji-tools` → 打开 **Auto-update**。第三方插件源**默认关闭**,不开就永远不会自动更新。开了之后开机自动拉最新、提示 `/reload-plugins` 热加载。手动更新则:`/plugin marketplace update guji-tools` + `/reload-plugins`。
 > ⚠️ 注:翼德"静默更新"指的是**大脑默认(红线/charter 等)**在插件更新后自动生效;**插件代码本身的更新**走 Claude Code 的市场机制(上面那条),**模型/翼德无法代跑** `/plugin`。
 
+### 装进 Codex(与 Claude Code 共用大脑和项目记忆)
+
+每台机器 clone 本仓后在系统终端跑一次，重复跑安全:
+
+```text
+node scripts/install-codex.js
+```
+
+它把本仓注册成 Codex 本地 marketplace 并安装 `yide@guji-tools`(简报、共用记忆、红线拦截、Stop 闸、12 个 skills),再给 `~/.codex/config.toml` 补两样:`project_doc_fallback_filenames = ["CLAUDE.md"]` 让 Codex 读 CLAUDE.md,`writable_roots` 放开大脑、`~/.yide-local` 和 Claude 项目记忆，好让 Codex 登记 scope、写回记忆。改 config 前会备份，改完让 Codex 自己解析一遍，解析失败就自动还原。
+
+装完必须人做一步：在 Codex 里输入 `/hooks`,把翼德的 hooks 逐条 trust。Codex 按 hook 内容哈希记信任，`hooks/hooks.codex.json` 不改就只需要信任一次。改了插件代码后重跑 `codex plugin add yide@guji-tools`,Codex 才会重新拷贝到缓存。
+
+共用记忆不是复制，而是 `scripts/memory-bridge.js` 在 Codex 开会话时按 cwd 找到 Claude Code 的 `~/.claude/projects/<slug>/memory/`,把 `MEMORY.md` 注入进去，并告诉 Codex 写回同一目录。Codex 下有两处已知差异：沙箱不让起子进程，所以 `scope.js check` 会提示改走"自己跑 verify,再 attest";诚实度闸门读不懂 Codex 的会话记录格式，在 Codex 下不触发。
+
 ## 用法:直接喊"翼德 + 动作"(自然语言)
 
 > 翼德是插件,**做不到裸 `/yide`**(插件命令一律带命名空间)。所以:**最省事是用中文喊**——"翼德 磨合""翼德 记一下…""翼德 整理";要打命令则是 **`/yide:yide <动作>`**。下表 `<动作>` 是这些动作词。

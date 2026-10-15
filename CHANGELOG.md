@@ -2,6 +2,14 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.61.0 — 2026-10-15 翼德装进 Codex,与 Claude Code 共用记忆
+- 一键装:`node scripts/install-codex.js [--trust <项目目录>]`。注册本仓为 Codex 本地 marketplace(guji-tools)并装 yide;config.toml 加 `project_doc_fallback_filenames = ["CLAUDE.md"]`(Codex 读 CLAUDE.md,与 Claude Code 共用项目说明)、writable_roots 补大脑 / ~/.yide-local / Claude 项目记忆;写后让 Codex 自解析一遍,坏了自动还原。装完要在 Codex 里 /hooks 逐条 trust。
+- 新 scripts/memory-bridge.js(只挂 Codex SessionStart):按 cwd 找 Claude Code 的项目记忆,把 MEMORY.md 索引 + 写回规则 + 宿主差异注入 Codex;Codex 学到的东西写回同一目录,不另存。
+- hooks.codex.json 重写:命令改 `node -e` 读 PLUGIN_ROOT,不依赖 shell 展开;显式设 YIDE_HOST=codex;注入不截断(additionalContextLimit 0);补 Stop 闸。插件清单带上 skills。
+- Codex 协议差异三处修复(均实测):简报带 Claude 专有的 sessionTitle 会让 Codex 判整个 hook 失败;PreToolUse 裸 allow 在 Codex 判失败,改为静默 defer;apply_patch 当作 Write/Edit 匹配红线,file_path 取补丁内全部文件(此前第三方包红线在 Codex 下拦不住)。
+- scope.js check 在 Codex Windows 沙箱里起不了子进程(cmd/powershell 都 EPERM):条目不判 fail,保持原状并提示"自己跑 verify 再 attest"。
+- Stop 闸读 Codex 的 last_assistant_message;Codex 下诚实度闸门③不触发(读不懂 rollout 的工具调用,只会漏拦不会误拦)。
+
 ### v0.60.1 — 2026-10-13 ui-visual-rework 加「逐屏优化实战套路」
 - 从礼包弹窗 + 选弹药两屏实战沉淀:先实读现状、方向定后只改真 prefab 用 Play 截图迭代;kit 现成件清单(Popup09 壳 / 黄按钮 / 倒计时套件 / 角标 / 分隔 / 焦点框);物品格用背包同款通用件;每功能主题色进配置;Saira 字号下限指向工程 CLAUDE.md;红点语义;九条踩实的坑。
 - description 加触发词"逐屏优化 / 优化这个 screen / 更有商业化成品感"。

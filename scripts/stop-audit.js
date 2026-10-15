@@ -136,17 +136,23 @@ try {
   const input = JSON.parse(fs.readFileSync(0, 'utf8') || '{}');
   const sid = input.session_id || 'nosid';
 
+  // Codex 的 Stop 直接给 last_assistant_message;它的 transcript 是 rollout 格式,下面按 Claude
+  // 形状解析读不出 tool_use —— 诚实度闸门③在 Codex 下不触发(只会漏拦,不会误拦)。
+  const codexLast = typeof input.last_assistant_message === 'string' ? input.last_assistant_message : null;
   const fp = input.transcript_path;
-  if (!fp || typeof fp !== 'string' || !fs.existsSync(fp)) process.exit(0);
+  const hasTranscript = !!(fp && typeof fp === 'string' && fs.existsSync(fp));
+  if (!hasTranscript && !codexLast) process.exit(0);
 
-  const { text, truncated } = readTranscriptTail(fp);
-  const lines = text.split(/\r?\n/);
-  if (truncated && lines.length) lines.shift();  // 丢掉第一个可能不完整的行
   const entries = [];
-  for (const line of lines) {
-    const s = line.trim();
-    if (!s) continue;
-    try { entries.push(JSON.parse(s)); } catch {}
+  if (hasTranscript) {
+    const { text, truncated } = readTranscriptTail(fp);
+    const lines = text.split(/\r?\n/);
+    if (truncated && lines.length) lines.shift();  // 丢掉第一个可能不完整的行
+    for (const line of lines) {
+      const s = line.trim();
+      if (!s) continue;
+      try { entries.push(JSON.parse(s)); } catch {}
+    }
   }
 
   const turn = currentTurn(entries);
@@ -159,6 +165,7 @@ try {
     const texts = contentBlocks(e).filter(b => b && b.type === 'text' && typeof b.text === 'string').map(b => b.text);
     if (texts.length) lastText = texts.join('\n');
   }
+  if (codexLast) lastText = codexLast;
 
   const reasons = [];
 

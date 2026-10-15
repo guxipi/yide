@@ -105,6 +105,13 @@ function check(sid, cwd) {
       execSync(item.verify, opts);
       item.state = 'pass'; item.note = '';
     } catch (e) {
+      // Codex 的 Windows 沙箱禁止沙箱内进程再起子进程(cmd.exe / powershell.exe 都是 spawnSync EPERM,2026-10-15 实测)。
+      // 这不是验证失败:条目保持原状,提示改走"自己跑 verify → attest 贴退出码和输出"。
+      if (/EPERM/.test(String(e && (e.code || e.message)))) {
+        item.note = '沙箱禁止起子进程(EPERM),check 跑不了:请直接用你的 shell 工具跑 `' + item.verify + '`,再 attest 贴退出码和关键输出';
+        results.push({ id: item.id, state: item.state, note: item.note });
+        continue;
+      }
       item.state = 'fail';
       const tail = String((e && (e.stderr || e.stdout)) || (e && e.message) || '').trim();
       item.note = tail.length > OUT_CAP ? tail.slice(-OUT_CAP) : tail;

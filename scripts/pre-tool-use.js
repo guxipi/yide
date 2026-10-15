@@ -12,6 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const { brainDir } = require(path.join(__dirname, 'lib.js'));
+const host = require(path.join(__dirname, 'host.js'));
 
 const META = path.join(brainDir(), '.meta');
 const RULES = path.join(META, 'hook-rules.json');
@@ -34,6 +35,9 @@ const GIT_WRITE_SUBS = new Set(['config', 'branch', 'tag', 'remote', 'reflog']);
 const GIT_WRITE_FLAGS = /^(-d|-D|--delete|-m|-M|--move|-c|-C|--copy|--add|--unset|--unset-all|--replace-all|-e|--edit|--edit-description|-u|--set-upstream-to|--unset-upstream|--create-reflog|--rename-section|--remove-section|-f|--force|--prune|--expire)$/;
 
 function emit(decision, reason) {
+  // Codex 不支持不带 updatedInput 的裸 allow(实测判 hook Failed);放行在 Codex 下就静默 defer,
+  // 交给 Codex 自己的审批策略。deny 两边协议相同,照常输出。
+  if (decision === 'allow' && host.isCodex()) process.exit(0);
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: decision, permissionDecisionReason: reason },
   }));
@@ -113,14 +117,21 @@ try {
     let conf = null;
     try { conf = JSON.parse(fs.readFileSync(RULES, 'utf8')); } catch {}
     const rules = conf && Array.isArray(conf.rules) ? conf.rules : [];
+    // Codex 改文件只有 apply_patch(补丁信封在 tool_input.command):当作 Write/Edit/MultiEdit 匹配,
+    // file_path/notebook_path 取补丁里涉及的全部文件 —— 否则按 Write/Edit 写的红线在 Codex 下全部落空。
+    const patch = tool === 'apply_patch' ? host.parseApplyPatch(ti.command) : null;
+    const aliases = patch ? ['apply_patch', 'Write', 'Edit', 'MultiEdit'] : [tool];
+    const fieldVal = k => (patch && (k === 'file_path' || k === 'notebook_path'))
+      ? patch.files.join('\n')
+      : (typeof ti[k] === 'string' ? ti[k] : '');
     for (const r of rules) {
       if (!r || !r.pattern) continue;
       const tools = Array.isArray(r.tools) && r.tools.length ? r.tools : ['*'];
-      if (!tools.includes('*') && !tools.includes(tool)) continue;
+      if (!tools.includes('*') && !aliases.some(t => tools.includes(t))) continue;
       let re; try { re = new RegExp(r.pattern); } catch { continue; }
       // fields:只对 tool_input 里这些键的字符串值匹配(如 ["file_path"]),不写则匹配全部字符串值(blob)
       const target = Array.isArray(r.fields) && r.fields.length
-        ? r.fields.map(k => (typeof ti[k] === 'string' ? ti[k] : '')).join('\n')
+        ? r.fields.map(fieldVal).join('\n')
         : blob;
       if (re.test(target)) emit('deny', '🗡️ 翼德拦截:' + (r.reason || ('命中规则 ' + r.pattern)));
     }

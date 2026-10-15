@@ -57,4 +57,7 @@ function normalizeToolEvent(input) {
   return input;
 }
 
-module.exports = { pluginRoot, projectDir, parseApplyPatch, normalizeToolEvent };
+// 当前宿主是不是 Codex。hooks.codex.json 的每条命令都显式设 YIDE_HOST=codex,不靠猜环境变量。
+function isCodex() { return process.env.YIDE_HOST === 'codex'; }
+
+module.exports = { pluginRoot, projectDir, parseApplyPatch, normalizeToolEvent, isCodex };
