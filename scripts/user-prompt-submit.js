@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// 翼德 UserPromptSubmit hook。你每发一句,翼德做两件事(都非阻断,合并成一次 additionalContext):
+// 翼德 UserPromptSubmit hook。你每发一句,翼德做三件事(都非阻断,合并成一次输出):
 //   1) prompt 库召回:命中就温和推荐一条存过的好用 prompt(同会话不重复、低置信不推)。
 //   2) 会话健康度:纠正太多次 / 会话太长 → 一次性提醒重开会话(且承诺"重开不丢")。
+//   3) 会话命名:标题按主要目标改成"<目标名>_<已就位底标>"(见 session-title.js)。
 // 绝不阻断(exit 0);让勾哥"根本不用记"。仅 Node 内置模块。
 'use strict';
 const fs = require('fs');
@@ -9,11 +10,17 @@ const path = require('path');
 const { readLocalJson, writeLocalJson } = require(path.join(__dirname, 'store.js'));
 const { matchByText } = require(path.join(__dirname, 'prompts-lib.js'));
 const { sessionNudge } = require(path.join(__dirname, 'session-health.js'));
+const sessionTitle = require(path.join(__dirname, 'session-title.js'));
+const host = require(path.join(__dirname, 'host.js'));
 
 const THRESHOLD = 2; // 至少命中 2 个关键词/标签才推,避免刷屏
 
-function emit(text) {
-  process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: text } }));
+function emit(text, title) {
+  const out = { hookEventName: 'UserPromptSubmit' };
+  if (text) out.additionalContext = text;
+  // sessionTitle 是 Claude Code 专有字段,Codex 不认会判 hook 失败
+  if (title && !host.isCodex()) out.sessionTitle = title;
+  process.stdout.write(JSON.stringify({ hookSpecificOutput: out }));
 }
 
 // 计算 prompt 库召回提示(命中则返回字符串,否则 null)。含同会话去重写盘。
@@ -47,7 +54,18 @@ try {
   try { const n = sessionNudge(input); if (n) parts.push(n); } catch {}
   // 2) prompt 库召回
   try { const r = recallSuggestion(prompt, sid); if (r) parts.push(r); } catch {}
+  // 3) 会话命名:首句粗取名字 + 提醒模型起正式名;模型起的名在下一句换上
+  let title = null;
+  if (!host.isCodex()) {
+    try {
+      const r = sessionTitle.onPrompt(sid, prompt);
+      if (r) {
+        title = r.title;
+        if (r.ask) parts.push(sessionTitle.instruction(sid, path.join(__dirname, 'session-title.js')));
+      }
+    } catch {}
+  }
 
-  if (parts.length) emit(parts.join('\n\n'));
+  if (parts.length || title) emit(parts.join('\n\n'), title);
   process.exit(0);
 } catch (e) { process.exit(0); }

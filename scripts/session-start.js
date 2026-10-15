@@ -12,6 +12,7 @@ const { extractionContext } = require(path.join(__dirname, 'extraction-context.j
 const store = require(path.join(__dirname, 'store.js'));
 const { resolve } = require(path.join(__dirname, 'resolve.js'));
 const host = require(path.join(__dirname, 'host.js'));
+const sessionTitle = require(path.join(__dirname, 'session-title.js'));
 
 // a < b ?(semver,缺位按 0)
 function verLt(a, b) {
@@ -32,7 +33,12 @@ try { SESSION_ID = (JSON.parse(fs.readFileSync(0, 'utf8') || '{}').session_id) |
 function emit(ctx, title) {
   const out = { hookEventName: 'SessionStart', additionalContext: ctx };
   // sessionTitle 是 Claude Code 专有字段;Codex 遇到不认识的字段会把整个 hook 判失败、简报丢光。
-  if (!host.isCodex()) out.sessionTitle = title || '';
+  // 标题 = "<目标名>_<底标>":底标首次记下后 resume/compact 不换日期,已起过的目标名带回来(见 session-title.js)。
+  if (!host.isCodex()) {
+    let t = title || '';
+    try { t = sessionTitle.forStart(SESSION_ID, t); } catch {}
+    out.sessionTitle = t;
+  }
   process.stdout.write(JSON.stringify({ hookSpecificOutput: out }));
 }
 function read(rel, base) {

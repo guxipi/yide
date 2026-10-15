@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.63.0 — 2026-10-15 会话按主要目标命名
+- 会话标题从固定的"🗡️ 翼德已就位 · 日期"改成"<目标名>_🗡️ 翼德已就位 · 日期",底标和日期原样保留。新增 scripts/session-title.js。
+- 首句 UserPromptSubmit 先从 prompt 粗取一个名字(去掉"我想要/帮我"这类口头前缀,截到第一个标点,最多 12 字),同时提醒模型按主要目标起 2-8 字正式名,跑 `session-title.js set --session <sid> "名字"`。Claude Code 只在 SessionStart / UserPromptSubmit 认 sessionTitle,所以模型起的名在下一句生效。
+- 底标在会话第一次 SessionStart 时记下,resume / compact 再触发 SessionStart 不再把标题打回当天的"已就位",目标名也带回来。状态落 ~/.yide-local/session-titles.json(本机私有,留最近 200 个会话)。Codex 不认 sessionTitle,照旧跳过。
+
 ### v0.62.0 — 2026-10-15 Codex 两道闸 + 推理强度 high + UI skill 合并瘦身
 - 勾哥反馈 Codex"开发时不尊重既有逻辑""常不查证、拿旧信息作答"。根因之一:Codex 10 月全部会话跑在 low 推理强度;勾哥拍板改 high,install-codex.js 同步写入。
 - 改写闸(PreToolUse,仅 Codex):一个 apply_patch 删改 ≥60 行既有代码(Delete File 按原文件行数),而本回合用户话里没有重构/重写/替换/换成/精简/删等意思 → 拦下，要求先读懂现有实现、能增量改就增量改、要推倒先说明并等同意。实测拦住"整文件推倒",放行小改和明说的整体替换。

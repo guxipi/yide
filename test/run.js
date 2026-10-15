@@ -759,6 +759,35 @@ t('11.12 scope CLI 端到端(set → check → status)', () => {
   assert(st.items.length === 1 && st.items[0].state === 'pass', 'CLI 走完应为 pass,实为 ' + JSON.stringify(st.items));
 });
 
+// === 12. 会话命名(SessionStart 底标 + 首句粗取 + 模型 set 下一句生效 + resume 保留)===
+t('12.1 会话标题:底标保留,目标名前缀,模型名下一句生效,resume 不丢', () => {
+  const tb = path.join(TMP, 'titlebrain', '.yide');
+  fs.mkdirSync(path.join(tb, 'core'), { recursive: true });
+  for (const f of ['identity.md', 'hard-rules.md', 'charter.md']) fs.copyFileSync(path.join(ROOT, 'templates', 'brain', 'core', f), path.join(tb, 'core', f));
+  fs.writeFileSync(path.join(tb, 'INDEX.md'), '# index');
+  const env = Object.assign({}, process.env, { YIDE_HOME: tb, CLAUDE_PLUGIN_ROOT: ROOT, CLAUDE_PROJECT_DIR: TMP });
+  const sid = 's-title';
+  const start = () => JSON.parse(execFileSync('node', [path.join(SCRIPTS, 'session-start.js')], { input: JSON.stringify({ session_id: sid }), encoding: 'utf8', env })).hookSpecificOutput.sessionTitle;
+  const prompt = (p) => { const o = execFileSync('node', [path.join(SCRIPTS, 'user-prompt-submit.js')], { input: JSON.stringify({ session_id: sid, prompt: p }), encoding: 'utf8', env }).trim(); return o ? JSON.parse(o).hookSpecificOutput : {}; };
+  const base = start();
+  assert(/已就位 · \d{4}-\d{2}-\d{2}$/.test(base), '首个标题应是底标,实为 ' + base);
+  const h1 = prompt('我想要给翼德加个会话命名功能,保留时间戳');
+  assert(h1.sessionTitle === '给翼德加个会话命名功能_' + base, '首句应粗取名字,实为 ' + h1.sessionTitle);
+  assert((h1.additionalContext || '').includes('session-title.js'), '首句应提醒模型起名');
+  execFileSync('node', [path.join(SCRIPTS, 'session-title.js'), 'set', '--session', sid, '优化翼德'], { encoding: 'utf8', env });
+  const h2 = prompt('继续');
+  assert(h2.sessionTitle === '优化翼德_' + base, '模型名应在下一句生效,实为 ' + h2.sessionTitle);
+  assert(!(h2.additionalContext || '').includes('session-title.js'), '起名提醒只给一次');
+  const h3 = prompt('再看看');
+  assert(!h3.sessionTitle, '标题没变就不重复下发');
+  assert(start() === '优化翼德_' + base, 'resume 应保留目标名和原底标');
+});
+t('12.2 粗取名字:口头前缀去掉、短回复/命令不取', () => {
+  const { guessGoal } = require(path.join(SCRIPTS, 'session-title.js'));
+  assert(guessGoal('帮我修一下金币HUD越来越大的bug') === '修一下金币HUD越来越大', '截 12 字,实为 ' + guessGoal('帮我修一下金币HUD越来越大的bug'));
+  assert(guessGoal('继续') === '' && guessGoal('/loop 5m') === '' && guessGoal('ok') === '', '短回复/命令不应取名');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 
