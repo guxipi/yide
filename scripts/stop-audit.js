@@ -19,6 +19,8 @@ const fs = require('fs');
 const path = require('path');
 const scope = require(path.join(__dirname, 'scope.js'));
 const { readLocalJson, writeLocalJson } = require(path.join(__dirname, 'store.js'));
+const host = require(path.join(__dirname, 'host.js'));
+const { readCodexTurn } = require(path.join(__dirname, 'codex-turn.js'));
 
 // 完成/通过声明(保守强匹配,中英)。(?<!un)verified:UNVERIFIED 是合规的"未验证"标注,不算完成声明。
 const CLAIM_RE = /(已接通|接通了|部署完成|部署成功|已部署|测试通过|全部通过|验证通过|验收通过|已验证|修复完成|已修复并验证|(?<!un)verified|all tests pass(ed)?|tests? pass(ed)?|deployed successfully|works as expected)/i;
@@ -28,6 +30,16 @@ const TAIL_RE = /((要不要|需不需要|是否需要|用不用)(我)?(继续|�
 const CMD_RE = /(npm (run )?test|node .*test|dotnet (test|build)|pytest|go test|cargo test|ugs |deploy|curl |Invoke-RestMethod|Invoke-WebRequest)/i;
 // coplay 里的只读工具(不算"改了东西")。
 const COPLAY_READONLY_RE = /^mcp__coplay[^_]*__(get_|list_|search_|read_|check_|capture_)/i;
+
+// Codex 专属。
+const CODEX_CODE_PATCH_RE = /\*\*\*\s+(Update|Add|Delete)\s+File:\s+[^\n"\\]*\.(cs|shader|hlsl|cginc|compute|js|mjs|cjs|ts|tsx|py|uss|uxml)\b/i;
+const CODEX_VERIFY_RE = /check_compile_errors|get_unity_logs|play_game|execute_script|dotnet (build|test)|unity (cmd|test|status)|npm (run )?test|pytest|node [^\n]*test/i;
+const FACTCHECK_MIN_CHARS = 200;
+const NO_CHECK_RE = /不用查|不要查|别查|不要调用|不要读|不用读|凭印象|随便聊|闲聊|只凭(你)?(此刻)?上下文/;
+const FACTCHECK_REASON = '🗡️ 翼德查证闸:本回合你一个工具都没调,就给出了一段较长的答复。' +
+  '其中凡是项目事实(名字、数字、当前状态、是否已实装、拍板了什么、文件在哪),回真源核一遍:共用记忆里对应的文件、vault 设计文档、代码或 Config。' +
+  '核过的标出处;核不了的标"未核实";记忆和文档都带日期,新旧冲突时说清以哪个为准。' +
+  '如果整段只是观点或建议、不涉及项目事实，就在开头说明这一点后收尾。';
 
 const BLOCKS_FILE = 'stop-blocks.json';
 const MAX_BLOCKS = 3;          // 硬上限 8,留足余量
@@ -188,6 +200,23 @@ try {
     const mutated = turnTools.some(b => isMutationTool(b.name, b.input));
     const verified = turnTools.some(b => isVerificationTool(b.name, b.input));
     if (mutated && !verified) reasons.push(HONESTY_REASON);
+  }
+
+  // Codex 专属两道(读 rollout;解析不了就不拦)。stop_hook_active 续跑时不重复追问。
+  if (host.isCodex() && input.stop_hook_active !== true && lastText) {
+    const turn = readCodexTurn(input.transcript_path);
+    if (turn) {
+      const texts = turn.calls.map(c => c.text);
+      // ③' 诚实度:改了代码 + 声称完成 + 本回合没跑过任何编译/测试/引擎验证。Claude 版读不懂 rollout,这里补上。
+      const mutated = texts.some(t => CODEX_CODE_PATCH_RE.test(t));
+      const verified = texts.some(t => CODEX_VERIFY_RE.test(t) || CMD_RE.test(t));
+      if (mutated && !verified && CLAIM_RE.test(lastText)) reasons.push(HONESTY_REASON);
+      // ④ 查证闸:交互会话里一个工具都没调就给了长答复 → 拦一次,要它回真源核对。派单(exec)和子 agent 不管。
+      const interactive = turn.source !== 'exec' && turn.source !== 'subagent';
+      if (interactive && turn.calls.length === 0 && lastText.length >= FACTCHECK_MIN_CHARS && !NO_CHECK_RE.test(turn.userPrompt)) {
+        reasons.push(FACTCHECK_REASON);
+      }
+    }
   }
 
   // 全过 → 清零计数,放行。

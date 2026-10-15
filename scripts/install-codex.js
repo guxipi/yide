@@ -76,6 +76,16 @@ function patchConfig() {
     log('⚠ project_doc_fallback_filenames 已存在但不含 CLAUDE.md,未自动改,请手动加上');
   }
 
+  // 2b) 推理强度:勾哥 2026-10-15 拍板 Codex 默认 high(low 时查证和遵守既有逻辑明显变差)。
+  //     只改顶层键(第一个 [table] 之前);缺省或 low/minimal/medium 才改,已是 high/xhigh 不动。
+  {
+    const firstTable = lines.findIndex(l => /^\s*\[/.test(l));
+    const top = firstTable < 0 ? lines.length : firstTable;
+    const i = lines.findIndex((l, k) => k < top && /^\s*model_reasoning_effort\s*=/.test(l));
+    if (i < 0) { lines.splice(top, 0, 'model_reasoning_effort = "high"  # 翼德:勾哥 2026-10-15 拍板'); changes.push('model_reasoning_effort = "high"(新增)'); }
+    else if (/"(low|minimal|medium)"/.test(lines[i])) { changes.push(`model_reasoning_effort: ${lines[i].trim()} → "high"`); lines[i] = 'model_reasoning_effort = "high"'; }
+  }
+
   // 3) writable_roots
   const want = [...new Set([
     path.join(os.homedir(), '.yide'), brainDir(), realOrSelf(brainDir()), localDir(), path.join(os.homedir(), '.claude', 'projects'),

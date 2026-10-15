@@ -2,6 +2,14 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.62.0 — 2026-10-15 Codex 两道闸 + 推理强度 high + UI skill 合并瘦身
+- 勾哥反馈 Codex"开发时不尊重既有逻辑""常不查证、拿旧信息作答"。根因之一:Codex 10 月全部会话跑在 low 推理强度;勾哥拍板改 high,install-codex.js 同步写入。
+- 改写闸(PreToolUse,仅 Codex):一个 apply_patch 删改 ≥60 行既有代码(Delete File 按原文件行数),而本回合用户话里没有重构/重写/替换/换成/精简/删等意思 → 拦下，要求先读懂现有实现、能增量改就增量改、要推倒先说明并等同意。实测拦住"整文件推倒",放行小改和明说的整体替换。
+- 查证闸(Stop,仅 Codex 交互会话):本回合零工具调用却给了 ≥200 字的答复 → 拦一次，要它回真源核对项目事实并标出处/未核实。codex exec 派单和子 agent 不管;用户说"不用查/随便聊"豁免。
+- Codex 版诚实度闸门:读 rollout,改了代码 + 声称完成 + 本回合没跑编译/测试/引擎验证 → 拦。
+- 新 scripts/codex-turn.js:解析 Codex rollout 的本回合用户原话、工具调用和会话来源(exec / vscode / 子 agent)。
+- Codex 个人 skill er-ui-refine 删除(与 ui-visual-rework 重复，且字号、START 字体、canvas match 三处已被工程规则推翻);仅剩的项目约定和 09-04 宽度实测并入 ui-visual-rework/references,按"只留事实"瘦身。
+
 ### v0.61.0 — 2026-10-15 翼德装进 Codex,与 Claude Code 共用记忆
 - 一键装:`node scripts/install-codex.js [--trust <项目目录>]`。注册本仓为 Codex 本地 marketplace(guji-tools)并装 yide;config.toml 加 `project_doc_fallback_filenames = ["CLAUDE.md"]`(Codex 读 CLAUDE.md,与 Claude Code 共用项目说明)、writable_roots 补大脑 / ~/.yide-local / Claude 项目记忆;写后让 Codex 自解析一遍,坏了自动还原。装完要在 Codex 里 /hooks 逐条 trust。
 - 新 scripts/memory-bridge.js(只挂 Codex SessionStart):按 cwd 找 Claude Code 的项目记忆,把 MEMORY.md 索引 + 写回规则 + 宿主差异注入 Codex;Codex 学到的东西写回同一目录,不另存。

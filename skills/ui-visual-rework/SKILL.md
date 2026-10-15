@@ -116,7 +116,7 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 
 ## 第五步:验证闭环(交付前必过)
 
-通道与纪律见 `ui-placement` skill;本打法特有的:
+通道与纪律见 `ui-placement` skill;物品格的项目约定和面板宽度实测数据见 `references/itemframe-group-and-text-crispness.md`。本打法特有的:
 
 - **分步驱动截图**:动画是时序的——`Open`(走 manager)→ sleep 2-3s → `Capture` 拆成独立 execute_script 调用(`Application.runInBackground=true` 否则编辑器失焦游戏冻结、`Time.time` 不走)。
 - **动画在动的证明**:间隔 1-2s 截两帧,对比旋转光圈角度/光线位置。

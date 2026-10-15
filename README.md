@@ -41,6 +41,8 @@ node scripts/install-codex.js
 
 装完必须人做一步：在 Codex 里输入 `/hooks`,把翼德的 hooks 逐条 trust。Codex 按 hook 内容哈希记信任，`hooks/hooks.codex.json` 不改就只需要信任一次。改了插件代码后重跑 `codex plugin add yide@guji-tools`,Codex 才会重新拷贝到缓存。
 
+装完 Codex 默认推理强度会是 high(勾哥 2026-10-15 拍板)。翼德在 Codex 下多两道闸：改写闸拦"没让重构却推倒既有代码",查证闸拦"交互会话里一个工具没调就长篇作答"。
+
 共用记忆不是复制，而是 `scripts/memory-bridge.js` 在 Codex 开会话时按 cwd 找到 Claude Code 的 `~/.claude/projects/<slug>/memory/`,把 `MEMORY.md` 注入进去，并告诉 Codex 写回同一目录。Codex 下有两处已知差异：沙箱不让起子进程，所以 `scope.js check` 会提示改走"自己跑 verify,再 attest";诚实度闸门读不懂 Codex 的会话记录格式，在 Codex 下不触发。
 
 ## 用法:直接喊"翼德 + 动作"(自然语言)

@@ -13,6 +13,38 @@ const fs = require('fs');
 const path = require('path');
 const { brainDir } = require(path.join(__dirname, 'lib.js'));
 const host = require(path.join(__dirname, 'host.js'));
+const { readCodexTurn } = require(path.join(__dirname, 'codex-turn.js'));
+
+// Codex 改写闸参数。
+const REWRITE_LINES = 60;
+const CODE_EXT_RE = /\.(cs|shader|hlsl|cginc|compute|js|mjs|cjs|ts|tsx|py|uss|uxml)$/i;
+// 用户本轮话里有这些"要大改"的意思就放行(宁可漏拦,不误伤明确的指令)。
+const REWRITE_OK_RE = /重构|重写|推倒|重做|删|移除|替换|换成|整个|全部改|精简|简化|清理|清空|拆掉|合并|rewrite|refactor|remove|delete|replace|simplify|clean ?up|同意|批准|go ahead/i;
+
+// 数 apply_patch 信封里对代码文件删掉的旧行:Update 块里 - 开头的行;Delete File 按现有文件行数算。
+function rewriteSize(command, cwd) {
+  const out = { removed: 0, files: [] };
+  if (typeof command !== 'string') return out;
+  let cur = null;
+  for (const line of command.split(/\r?\n/)) {
+    const m = line.match(/^\*\*\*\s+(Update|Add|Delete)\s+File:\s+(.+?)\s*$/);
+    if (m) {
+      cur = CODE_EXT_RE.test(m[2]) && m[1] !== 'Add' ? m[2] : null;
+      if (cur && m[1] === 'Delete') {
+        try {
+          const p = path.isAbsolute(cur) ? cur : path.join(cwd || process.cwd(), cur);
+          out.removed += fs.readFileSync(p, 'utf8').split(/\r?\n/).length;
+        } catch {}
+        out.files.push(path.basename(cur));
+        cur = null;
+      } else if (cur) out.files.push(path.basename(cur));
+      continue;
+    }
+    if (cur && /^-/.test(line) && !/^---/.test(line)) out.removed++;
+  }
+  out.files = [...new Set(out.files)];
+  return out;
+}
 
 const META = path.join(brainDir(), '.meta');
 const RULES = path.join(META, 'hook-rules.json');
@@ -134,6 +166,21 @@ try {
         ? r.fields.map(fieldVal).join('\n')
         : blob;
       if (re.test(target)) emit('deny', '🗡️ 翼德拦截:' + (r.reason || ('命中规则 ' + r.pattern)));
+    }
+  }
+
+  // 1b) Codex 改写闸:一个补丁大面积删改既有代码,而本回合用户没要求重构 → 拦下要它先说明。
+  //     治"Codex 不尊重既有开发逻辑、推倒重写"。只数删掉的旧行(新增不算),阈值宽松,只拦明显的推倒。
+  if (host.isCodex() && tool === 'apply_patch') {
+    const r = rewriteSize(ti.command, input.cwd);
+    if (r.removed >= REWRITE_LINES) {
+      const turn = readCodexTurn(input.transcript_path);
+      const asked = turn && REWRITE_OK_RE.test(turn.userPrompt);
+      if (!asked) {
+        emit('deny', `🗡️ 翼德改写闸:这个补丁要删掉/改写 ${r.removed} 行既有代码(${r.files.slice(0, 4).join('、')}),本回合用户没要求重构或重写。` +
+          '先读懂现有实现为什么这样写(git log -p、调用方、记忆里的相关拍板),能在原逻辑上增量改就增量改;' +
+          '确实需要推倒,停下来向用户说明现有逻辑哪里不能沿用、打算怎么改,等用户同意后再动。');
+      }
     }
   }
 

@@ -40,7 +40,9 @@ const HOST_NOTES =
   '- Read/Grep/Glob/Edit/Write = 你的 shell 与 apply_patch;Coplay MCP 工具名一致(mcp__coplay-mcp__*)。\n' +
   '- 翼德 skills 已随插件装进来,同名可直接用;skill 正文里的 Claude 专属工具名按上面两条换算。\n' +
   '- scope 契约照常用:简报里给的 scope.js 路径和 sid 就是你这边的,Stop 闸会按它拦未收敛条目。' +
-  '沙箱里 check 起不了子进程(EPERM)时,自己用 shell 跑 verify 命令,再 attest 贴退出码和关键输出。\n';
+  '沙箱里 check 起不了子进程(EPERM)时,自己用 shell 跑 verify 命令,再 attest 贴退出码和关键输出。\n' +
+  '- 翼德在你这边多两道闸(勾哥 2026-10-15 要求):改写闸——一个补丁删改 60 行以上既有代码、而用户本轮没要求重构时会被拦;' +
+  '查证闸——交互会话里一个工具没调就长篇作答,收尾时会被拦一次。被拦就照提示做,不要绕。\n';
 
 function writeRules(dir) {
   return '## 写回规则(共用一源,别另存副本)\n' +
