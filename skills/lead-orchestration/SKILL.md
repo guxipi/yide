@@ -129,6 +129,6 @@ Unity 同一时间只能一个会话写,但观察、测量、Blender 建模、�
 
 ## 11 lead 自己的节拍
 
-- 开工:读交接笔记、spec、看板;给每条线发一条"总控换人/回报发我"。
+- 开工:先用 get_session("self") 查自己的 `local_…` 会话 id(不是 Claude Code 的 session uuid,10-16 总控把 uuid 当 id 发给所有子会话,子会话回报全部 not found);读交接笔记、spec、看板;给每条线发一条"总控换人/回报发我"。
 - 每轮:巡检(第 8 条)→ 有交付就按 reference-replicate 验收 → 一张清单 + spec 升版本 → 更新看板和巡检记录。
 - 需要用户拍板时一次问全(弹窗),推荐项放第一;push、删资产、花钱一律先问。
