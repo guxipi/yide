@@ -73,13 +73,15 @@ def cmd_lobes_place(a):
         sc = G.Scale.from_args(a)
         tr = G.trace_contour(G.load_mask(a.outline, a.color, a.tol), G.parse_box(a.box), sc, a.sigma, lib["step"])
         pts, cut = tr["pts"], tr["cut"]
-    out, ocut, info = LB.place(lib, pts, cut, a.seed, a.size_mult, a.jitter, (a.run_min, a.run_max),
+    out, ocut, info, rep = LB.place(lib, pts, cut, a.seed, a.size_mult, a.jitter, (a.run_min, a.run_max),
                                a.base_sigma_w, a.inset, not a.no_mirror)
     unit = lib["unit"]
     G.write_outline(a.out, dict(pts=out, cut=ocut),
                     f"# lobes place from {os.path.basename(a.lib)} on {os.path.basename(a.outline)}, seed {a.seed}, size_mult {a.size_mult:g}, {unit}; cols x z cut")
     res = lib["step"]
     m_new, _ = G.raster_shape(out, res); m_in, _ = G.raster_shape(pts, res); m_ref = lib["ref_shape"]
+    print(f"自交处理: 压平 {rep['flattened']} 个叶瓣(跳过,保持基线), 残留自交 {rep['selfx_left']} 处"
+          + ("  <-- 残留来自输入大轮廓本身,先修输入" if rep["selfx_left"] else ""))
     print(f"{a.out}: {len(info)} 段, {len(out)} 点, 面积 {abs(G.poly_area(out)):.2f} (输入 {abs(G.poly_area(pts)):.2f})")
     for name, r in (("库来源参考", m_ref), ("输入大轮廓", m_in), ("重放结果", m_new)):
         print(f"  {name:6s} 实度 {r['solidity']:.3f} 细尺度 {r['fine']:.2f} 凸起 {r['peaks']:3d} 间距CV {r['gap_cv']:.2f} 大小CV {r['size_cv']:.2f}")
@@ -106,6 +108,11 @@ def cmd_regress(a):
     for lab, key, f in rows:
         print(lab.ljust(8) + "".join(f.format(R[n][key]).rjust(10) for n in names))
     ref, new = R["ref"], R["new"]; reasons, warns = [], []
+    if a.new_outline:
+        pts, _ = G.read_outline(a.new_outline); sx = G.self_intersections(pts)
+        print(f"轮廓自交检测 {os.path.basename(a.new_outline)}: {len(sx)} 处")
+        if sx:
+            reasons.append(f"新版轮廓自交 {len(sx)} 处")
     if "best" in R:
         best = R["best"]
         dn, db = abs(new["solidity"] - ref["solidity"]), abs(best["solidity"] - ref["solidity"])
@@ -159,6 +166,7 @@ def add_parsers(s):
     q = s.add_parser("regress")
     for k in ("ref", "best", "new"):
         q.add_argument("--" + k); q.add_argument(f"--{k}-color"); q.add_argument(f"--{k}-box")
+    q.add_argument("--new-outline", help="新版 x z cut 轮廓 txt;有自交算退步")
     q.add_argument("--tol", type=int, default=40); q.add_argument("--eps-solid", type=float, default=0.01)
     q.add_argument("--eps-rel", type=float, default=0.05, help="CV/细尺度相对最好版的容差"); q.add_argument("--gate", action="store_true")
     q.set_defaults(f=cmd_regress)

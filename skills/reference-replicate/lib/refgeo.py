@@ -237,3 +237,27 @@ def draw_plan(pts, cut, h, pad=24, grid=None, color=(255, 220, 0)):
         if cf:
             d.ellipse([p[0] - 2, p[1] - 2, p[0] + 2, p[1] + 2], fill=(255, 40, 40))
     return im
+
+
+def self_intersections(pts, max_pairs=200):
+    """闭合折线自交检测。返回相交的线段下标对 [(i,j)],最多 max_pairs 对;相邻线段不算。"""
+    n = len(pts); A = pts; B = np.roll(pts, -1, 0)
+    res = []
+    for i in range(n):
+        j = np.arange(i + 2, n)
+        j = j[~((i == 0) & (j == n - 1))]
+        if len(j) == 0:
+            continue
+        p, r = A[i], B[i] - A[i]
+        q, sv = A[j], B[j] - A[j]
+        den = r[0] * sv[:, 1] - r[1] * sv[:, 0]
+        qp = q - p
+        with np.errstate(divide="ignore", invalid="ignore"):
+            t = (qp[:, 0] * sv[:, 1] - qp[:, 1] * sv[:, 0]) / den
+            u = (qp[:, 0] * r[1] - qp[:, 1] * r[0]) / den
+        hit = np.nonzero((np.abs(den) > 1e-12) & (t > 0) & (t < 1) & (u > 0) & (u < 1))[0]
+        for h in hit:
+            res.append((i, int(j[h])))
+        if len(res) >= max_pairs:
+            break
+    return res

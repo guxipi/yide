@@ -124,36 +124,31 @@ def overlay(tr, lib, src, path, zoom=2):
 
 def place(lib, base_pts, cut, seed=0, size_mult=1.0, jitter=0.12, run_len=(4, 12), base_sigma_w=0.6,
           inset=None, mirror=True, fixed_run=None):
-    """沿大轮廓(逆时针)按库里的真实形状重放边缘。返回 (pts, cut, info)。"""
+    """沿大轮廓(逆时针)按库里的真实形状重放边缘。返回 (pts, cut, info, rep)。
+    放完检测自交:相交的叶瓣(取凸出更大的一个)压平成基线,重复到无自交;rep 里报告压平数和残留自交数。"""
     rng = np.random.default_rng(seed)
-    N = len(base_pts)
     seg = np.linalg.norm(np.diff(np.vstack([base_pts, base_pts[:1]]), axis=0), axis=1)
     step = float(seg.mean())
     items = lib["items"]
     wmed = lib["stats"]["w_med"] * size_mult
     base = base_curve(base_pts, max(2.0, base_sigma_w * wmed / step))
-    base_cut = cut
     sb = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(np.vstack([base, base[:1]]), axis=0), axis=1))])
     L = sb[-1]
-    t, nb = normals(base)
-    ext = lambda a: a  # noqa
+    _, nb = normals(base)
     Bx = np.append(base[:, 0], base[0, 0]); Bz = np.append(base[:, 1], base[0, 1])
-    Tx = np.append(t[:, 0], t[0, 0]); Tz = np.append(t[:, 1], t[0, 1])
     Nx = np.append(nb[:, 0], nb[0, 0]); Nz = np.append(nb[:, 1], nb[0, 1])
-    cutarr = np.append(base_cut, base_cut[0]).astype(float)
+    cutarr = np.append(cut, cut[0]).astype(float)
 
     def at(a):
         a = np.clip(a, 0, L)
         return (np.array([np.interp(a, sb, Bx), np.interp(a, sb, Bz)]),
                 np.array([np.interp(a, sb, Nx), np.interp(a, sb, Nz)]))
     inset = lib["inset"] if inset is None else inset
-    # 库按 run 分组,runs 里的连续项保留原顺序
     runs = {}
     for it in items:
         runs.setdefault(it["run"], []).append(it)
     run_list = [r for r in runs.values() if len(r) >= 2] or list(runs.values())
-    out, outcut, placed = [], [], []
-    s = 0.0
+    specs, s = [], 0.0
     while s < L - 1e-6:
         r = run_list[rng.integers(len(run_list))] if fixed_run is None else run_list[fixed_run % len(run_list)]
         a0 = rng.integers(len(r)); n = int(rng.integers(run_len[0], run_len[1] + 1))
@@ -167,25 +162,46 @@ def place(lib, base_pts, cut, seed=0, size_mult=1.0, jitter=0.12, run_len=(4, 12
             w = it["w"] * size_mult * jit
             if s + w > L - 0.4 * wmed:  # 收尾:拉伸到恰好闭合
                 w = L - s
-            prof = np.array(it["profile"]); h = it["h"] * size_mult * jit
-            if mir:
-                prof = prof[::-1].copy(); prof[:, 0] = 1 - prof[:, 0]
-            a_mid = s + w / 2
-            skip = np.interp(a_mid, sb, cutarr) > 0.5 or np.interp(s, sb, cutarr) > 0.5
-            if skip:
-                n_pt = max(2, int(w / step)); aa = np.linspace(s, s + w, n_pt, endpoint=False)
-                for a in aa:
-                    p, _ = at(a); out.append(p); outcut.append(1)
-            else:
-                # 弦压在 base-inset 上,profile 的 v 以 w 为单位;长宽比保持,w 被收尾拉伸时 v 同比
-                f = w / max(it["w"] * size_mult * jit, 1e-9)
-                for u, v in prof[:-1]:
-                    p, nn = at(s + u * w)
-                    out.append(p + nn * (v * it["w"] * size_mult * jit * (f if f < 1 else 1.0) + inset * size_mult))
-                    outcut.append(0)
-            placed.append(dict(s=round(s, 3), w=round(w, 3), h=round(h, 3), mirror=bool(mir)))
+            iscut = np.interp(s + w / 2, sb, cutarr) > 0.5 or np.interp(s, sb, cutarr) > 0.5
+            specs.append(dict(s=s, w=w, it=it, mir=mir, wfull=it["w"] * size_mult * jit, flat=bool(iscut), cut=bool(iscut)))
             s += w
-    return np.array(out), np.array(outcut, dtype=bool), placed
+
+    def build():
+        out, oc, own = [], [], []
+        for k, sp in enumerate(specs):
+            w = sp["w"]
+            if sp["flat"]:
+                for a in np.linspace(sp["s"], sp["s"] + w, max(2, int(w / step)), endpoint=False):
+                    out.append(at(a)[0]); oc.append(sp["cut"]); own.append(k)
+            else:
+                prof = np.array(sp["it"]["profile"])
+                if sp["mir"]:
+                    prof = prof[::-1].copy(); prof[:, 0] = 1 - prof[:, 0]
+                f = min(1.0, w / max(sp["wfull"], 1e-9))
+                for u, v in prof[:-1]:
+                    p, nn = at(sp["s"] + u * w)
+                    out.append(p + nn * (v * sp["wfull"] * f + inset * size_mult)); oc.append(False); own.append(k)
+        return np.array(out), np.array(oc, dtype=bool), np.array(own)
+    pts, oc, own = build()
+    n_flat = 0
+    for _ in range(40):
+        pairs = G.self_intersections(pts)
+        if not pairs:
+            break
+        # 每对相交里挑凸出更大且还没压平的叶瓣压平
+        fixed = False
+        for i, j in pairs:
+            cand = [k for k in (own[i], own[j]) if not specs[k]["flat"]]
+            if not cand:
+                continue
+            k = max(cand, key=lambda k: specs[k]["it"]["h"] * specs[k]["wfull"] / specs[k]["it"]["w"])
+            specs[k]["flat"] = True; n_flat += 1; fixed = True
+        if not fixed:
+            break
+        pts, oc, own = build()
+    left = len(G.self_intersections(pts))
+    placed = [dict(s=round(sp["s"], 3), w=round(sp["w"], 3), flat=sp["flat"], mirror=bool(sp["mir"])) for sp in specs]
+    return pts, oc, placed, dict(flattened=n_flat, selfx_left=left)
 
 
 def lib_to_json(lib, path):
