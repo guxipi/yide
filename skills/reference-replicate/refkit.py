@@ -12,6 +12,10 @@
   py refkit.py flicker A.png B.png --out f.gif
   py refkit.py sheet   IMG --boxes "x0,y0,x1,y1;..." --zoom 3 --out sheet.png
   py refkit.py shape   MASK.png [--color #RRGGBB --tol 40] [--box ..]   形状自然度指标
+  py refkit.py trace   IMG|MASK --pitch-px 65 --cell-m 1.58 --yx 0.92 [--box ..] --out o.txt   描轮廓到地面米
+  py refkit.py lobes   IMG|MASK --pitch-px .. --cell-m .. --yx .. --out lib.json               切叶瓣形状库
+  py refkit.py lobes place --lib lib.json --outline o.txt --out new.txt                        按库重放边缘
+  py refkit.py regress --ref R.png --best B.png --new N.png [--new-color ..]                   退步拦截,退出码非 0=退步
 
 grid:按比例尺每 N 米画一条细线(需先 scale),用于肉眼读尺寸。
 sbs:--ha/--hb 是同一参照长度(如角色身高)在 A/B 里的像素,自动缩放到同比例再并排。
@@ -19,6 +23,7 @@ flicker:两张同尺寸对齐图交替的 GIF,看轮廓/位置差。
 color:区域中位色 + k 簇(按亮度排序,一般是 暗/中/亮),输出 hex 与占比。
 """
 import argparse, json, math, os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 from PIL import Image, ImageDraw
 sys.stdout.reconfigure(encoding="utf-8")
 import numpy as np
@@ -160,37 +165,11 @@ def _mask(path, color=None, tol=40):
 
 def cmd_shape(a):
     """自然度指标:实度(面积/凸包)、边界粗糙度、轮廓凸起的间距/大小变异系数。参考和我方各跑一次对比。"""
-    import cv2
+    import refgeo as G
     m = _mask(a.img, a.color, a.tol)
     if a.box:
         x0, y0, x1, y1 = box(a.box); z = np.zeros_like(m); z[y0:y1, x0:x1] = m[y0:y1, x0:x1]; m = z
-    n, lab, stats, _ = cv2.connectedComponentsWithStats(m)
-    if n < 2:
-        sys.exit("掩膜为空")
-    k = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
-    m = (lab == k).astype(np.uint8)
-    cs, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    c = max(cs, key=cv2.contourArea)[:, 0, :].astype(float)
-    area = cv2.contourArea(c.astype(np.float32)); hull = cv2.convexHull(c.astype(np.float32))
-    solidity = area / cv2.contourArea(hull)
-    per = cv2.arcLength(c.astype(np.float32), True)
-    # 平滑后的轮廓到原轮廓的偏移 = 细节;按两个尺度看
-    def smooth(pts, w):
-        w = max(1, int(w)); k_ = np.ones(2 * w + 1) / (2 * w + 1)
-        return np.stack([np.convolve(np.r_[pts[-w:, i], pts[:, i], pts[:w, i]], k_, "valid") for i in (0, 1)], 1)
-    L = math.sqrt(area)
-    s_big = smooth(c, len(c) * 0.04); s_small = smooth(c, len(c) * 0.006)
-    d_mid = np.linalg.norm(s_small - s_big, axis=1); d_fine = np.linalg.norm(c - s_small, axis=1)
-    # 凸起:中尺度偏移的峰(向外)
-    cen = c.mean(0)
-    out = np.sign(np.einsum("ij,ij->i", s_small - s_big, s_small - cen)) * d_mid
-    peaks = [i for i in range(len(out)) if out[i] > 0.15 * out.max() and out[i] == out[max(0, i - 6):i + 7].max()]
-    gaps = np.diff(peaks + [peaks[0] + len(c)]) if len(peaks) > 2 else np.array([0])
-    sizes = out[peaks] if peaks else np.array([0])
-    cv = lambda v: float(np.std(v) / np.mean(v)) if len(v) > 1 and np.mean(v) > 0 else float("nan")
-    print(f"面积 {area:.0f}px  周长/√面积 {per/L:.2f}  实度(面积/凸包) {solidity:.3f}")
-    print(f"中尺度起伏 均值 {d_mid.mean()/L*100:.2f}%√A  细尺度 {d_fine.mean()/L*100:.2f}%√A")
-    print(f"凸起 {len(peaks)} 个  间距CV {cv(gaps):.2f}  大小CV {cv(sizes):.2f}  (均匀排列≈0.1,自然≥0.35)")
+    G.print_shape(G.shape_metrics(m))
 
 
 def main():
@@ -209,6 +188,8 @@ def main():
     q.add_argument("--out", required=True); q.set_defaults(f=cmd_sheet)
     q = s.add_parser("shape"); q.add_argument("img"); q.add_argument("--color"); q.add_argument("--tol", type=int, default=40)
     q.add_argument("--box"); q.set_defaults(f=cmd_shape)
+    import cmds
+    cmds.add_parsers(s)
     a = p.parse_args(); a.f(a)
 
 
