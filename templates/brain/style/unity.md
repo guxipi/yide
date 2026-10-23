@@ -4,7 +4,7 @@
 > 把隐患作为**建议**浮出来(不强制、不擅自大改)。以下也是翼德向你解释把关结果时的依据。
 
 ## 🔌 先在引擎里验证,别只凭文本猜
-操作 Editor 首选 **Unity CLI**(`unity status` / `unity cmd editor_status|console|editor_play|editor_stop|capture_game_view|eval|find_gameobjects`;eval 走 Bash 不走 PowerShell,eval 里绝不同步等异步),Coplay MCP(`check_compile_errors` / `get_unity_logs` / `play_game` / `execute_script` / `get_worst_cpu_frames` / `get_worst_gc_frames`)只在 CLI 没对应命令时用。两者都**没有测试运行器**:跑 NUnit 只能 Unity CLI `-runTests -batchmode`(解析 XML,别看退出码)或勾哥在 Test Runner 手动跑。贴图导入设置 / 包体没现成工具,走 eval 读 `TextureImporter`。没接引擎时明说"这是静态建议、没在引擎里验证过"。
+操作 Editor **首选 Unity 官方 CLI**(2026-10-23 起 Pipeline 0.9 分组命名:`unity status --project-path <p>` / `unity command --project-path <p> editor status|editor.playmode start|editor.playmode stop|console get|capture game_view|script eval|script eval_file|script run|gameobject find|job wait|test run`;多编辑器必带 `--project-path`;Pipeline 参数放 `--` 后;eval 走 Bash 不走 PowerShell,eval 里绝不同步等异步),Coplay MCP(`capture_scene_object` / `capture_ui_canvas` / `get_worst_cpu_frames` / `get_worst_gc_frames` / `execute_script`)只在 `unity command --query <词>` 确认 CLI 没对应命令时用。跑 NUnit 走 `unity command test run` 或无头 `unity test <project>`(退出码 8=用例失败)。贴图导入设置 / 包体没现成工具,走 eval 读 `TextureImporter`。没接引擎时明说"这是静态建议、没在引擎里验证过"。
 
 ## 0. 让位项目约定 + 专家友好(把关原则)
 - **项目约定 > 通用建议**:本仓库的 `CLAUDE.md`/`AGENTS.md`/`.editorconfig`/`.cursor/rules`、以及已探测的 Unity 事实(管线/版本/Input/Addressables)**优先**;通用 best practice 与它们冲突时**让位、闭嘴**(那是有意的取舍,不是错)。
