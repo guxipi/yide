@@ -25,10 +25,13 @@ Tripo 的软塌感多半来自法线,不是网格本身。先在 Unity 里:
 - 出图先看**剪影缩略图**:顶视角认不出的直接重 roll,别指望后期救
 - 角色不走这份 skill:角色从定稿设计图到游戏走 `er-character-pipeline`(四视图 → Tripo → 绑骨 → 入库),长相和头身以角色手册为准
 
-## 2. Blender 精修(blender-mcp 驱动,Claude 直接执行)
-> 前置:Blender 装 blender-mcp addon 并连上(https://github.com/ahujasid/blender-mcp,`uvx blender-mcp` + addon 里 Connect)。会话里没有 mcp__blender__* 工具就先让勾哥开 Blender+Connect。
+## 2. Blender 精修(Blender 官方 MCP 驱动,Claude 直接执行)
+> 前置:用 **Blender 官方 MCP**(Blender Lab 维护,仓库 https://projects.blender.org/lab/blender_mcp ,文档 https://www.blender.org/lab/mcp-server/ ,要 Blender ≥ 5.1)。`ahujasid/blender-mcp`(PyPI `mcp-for-blender`)是个人社区项目,不是官方,不再用。
+> 装法(2026-10-23 验证过):①winget 装 uv;②`git clone https://projects.blender.org/lab/blender_mcp.git C:lender_mcp` 并 checkout 最新 tag,`cd mcp && uv sync`;③从发布页下 `mcp-<ver>.zip`,`blender.exe --command extension install-file -r user_default -e <zip>`;④`claude mcp add -s user blender -- <uv.exe 全路径> --directory C:lender_mcp\mcp run blender-mcp`(裸 `uv` 会因 PATH 未刷新 CONNECTION_CLOSED)。
+> 启动条件:Blender 偏好 System → Network → **Allow Online Access 必须开**,否则 add-on 静默不起 socket(localhost:9876);GUI 模式才自启,`-b` 后台不自启。会话里没有 `mcp__blender__*` 就先确认 Blender GUI 已开、`claude mcp get blender` 为 Connected,再重启会话。
+> 工作法:`get_objects_summary`/`get_object_detail_summary` 先读场景 → `execute_blender_code` 改 → `get_screenshot_of_area_as_image` 或 `render_viewport_to_path` 回看 → 迭代;写 bpy 拿不准先 `search_api_docs`。勾哥可以随时在同一个窗口里手动选中/拖动,Claude 接着改。
 
-对每个 Tripo 模型(GLB/FBX)常用这五步,全部可用 execute code 驱动(顺序和参数按模型调,不是死流程):
+对每个 Tripo 模型(GLB/FBX)常用这五步,全部可用 execute_blender_code 驱动(顺序和参数按模型调,不是死流程):
 1. **Decimate 减面**:Modifier `DECIMATE` ratio 起手 0.1(道具目标 800-3000 面);剪影垮了就升到 0.2。**面数只为预算服务,不是画风**——减完必须靠第 2 步把面藏住
 2. **Shade Smooth**:全模型 `shade_smooth`(配 auto smooth / weighted normal),只在真正的结构转折处留硬边。这步决定"看不看得出多边形",看得出就回头调
 3. **Bevel 大边**:Modifier `BEVEL` width 8-15%(视觉元素做法库 mo.co 岩石条)、segments 1-2——边缘圆润不刀刻,剪影变 chunky 圆润(mo.co 岩石/道具 = 大倒角块状体)

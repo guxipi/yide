@@ -44,9 +44,9 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 | 物品名整行消失,`characterCount=0` | TMP Ellipsis + 框高 < 行高(Saira ≈1.57×字号)→ 整行被省略;框高跟字号走 |
 | 多行内容互相压 | VerticalLayoutGroup `childControlHeight=false` 时子级 LayoutElement 不生效 |
 | 通用格整格消失 | `ItemDesignData` icon 传 null 会被当空格隐藏;要替换图就传真 icon(或做合成 icon) |
-| eval 报 Main thread 5000ms 超时 | 长操作(导图 / 生成字体 / 跑 builder)用 `unity cmd eval_file --detach` + `unity job wait` |
+| eval 报 Main thread 5000ms 超时 | 长操作(导图 / 生成字体 / 跑 builder)用 `unity command --detach script eval_file --file <path>` + `unity job wait <jobId>`(Pipeline 0.9 分组名) |
 | 离屏渲染拍进场景物体 | 临时相机 `cullingMask = UI 层`,节点 layer 设 5 |
-| 外部新建的 .cs 永远不进编译(`recompile` 报 up_to_date、MonoScript.GetClass()=null) | 编辑器不在前台时新文件没登记进脚本集合;删掉后用 `unity cmd create_script --name X --path ... --namespace ...` 让 Unity 建,再覆盖内容、recompile |
+| 外部新建的 .cs 永远不进编译(`recompile` 报 up_to_date、MonoScript.GetClass()=null) | 编辑器不在前台时新文件没登记进脚本集合;删掉后用 `unity command script create -- --name X --path ... --namespace ...` 让 Unity 建,再覆盖内容、recompile |
 | 倒计时 / 角标压脸 | 放插画空景一侧(右上);跑遮挡检查 + 看脸 |
 | 关掉弹窗又弹出来 | 不是 bug:`HomeAttentionDirector` 排队,手动先开的话关闭后它补弹;新手三礼包会依次弹 |
 

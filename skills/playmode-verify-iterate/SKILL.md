@@ -3,7 +3,7 @@ name: playmode-verify-iterate
 description: Drive the Unity game in Play Mode via Unity CLI (Coplay MCP as fallback), observe REAL behavior, fix, re-test, and iterate until the player experience is flawless — or the verification step of any gameplay/UI/data/server change. Trigger on "测一下" / "进 play 测" / "验证这个改动" / "确保好用" / "跑起来看看" / "自己测到满意" / "测到满分".
 ---
 
-# Play Mode Verify & Iterate (Extraction · Coplay MCP)
+# Play Mode Verify & Iterate (Extraction · Unity CLI 主路)
 
 CC 自己进 Play Mode 真测 → 发现问题 → 回来修 → 重测 → **一轮轮迭代到玩家体验满分**的闭环能力。这是头号铁律("改完先自己测到通过再交")的执行手册。蒸馏自一单实战:Base tab 改动跑了 6+ 轮 Play(按钮挤成方块→资源条被挡→raid 执行验证→loc 缺补 21 条→字体 tofu→驱动找不到按钮),每轮真测发现真问题、回来修、再测,直到全绿。
 
@@ -13,21 +13,56 @@ CC 自己进 Play Mode 真测 → 发现问题 → 回来修 → 重测 → **�
 
 ## 第〇步:进 Play 前
 
-> **通道(2026-09-29 起)**:首选 Unity CLI —— `unity status` 确认连上,`unity cmd editor_status / console / editor_play / editor_stop / capture_game_view / eval / find_gameobjects`;eval 走 Bash 不走 PowerShell,代码写成 `return <expr>;`,eval 里绝不同步等异步(会把编辑器锁死)。下文的 Coplay 工具名只在 CLI 没对应命令或连不上时用。
+> **通道(2026-10-23 定稿,替代 09-29 口径)**:**Unity 官方 CLI 是主路,Coplay MCP 只兜底**(Coplay 公司 2026-03 被收购并入 Aura,dev MCP 自 2026-02 停更)。Pipeline 包 **0.9.0-exp.1 起命令全部分组命名,旧扁平名直接报错**(`editor_play`→`editor.playmode start`、`eval`→`script eval`、`console`→`console get`…;全表 `unity command --obsolete-command-names`)。多编辑器并存时**每条命令都带 `--project-path <工程路径>`**;Pipeline 自有参数放 `--` 之后(`script eval` 的 `timeout` 是毫秒,会被 CLI 自己的 `--timeout` 秒吞掉);`--format json` 的输出末尾可能多一行 `<claude-code-hint …/>`,解析前 `grep -v claude-code-hint`。eval 走 Bash 不走 PowerShell,代码写成 `return <expr>;`,eval 里绝不同步等异步(会把编辑器锁死)。
 
-- 确认编译干净:`check_compile_errors` + grep logs `error CS`(工具偶发说谎,交叉验证)。
+**下面这些事 CLI 有明确优势,一律用 CLI,不许退回 Coplay**(验证口径 2026-10-23,Pipeline 0.9 / CLI 1.0.0-beta.14):
+
+| 要做的事 | Unity CLI 写法 | 为什么必须用它(Coplay 做不到或做不好) |
+|---|---|---|
+| 找到并钉住编辑器 | `unity status --project-path <path>`;Play 后 `unity status --until-ready --project-path <path>` | 原生多编辑器钉选;`--until-ready` 代替手写轮询等域重载 |
+| 进/出 Play | `unity command editor.playmode start` / `editor.playmode stop` / `editor.playmode pause` | Coplay `stop_game` 会说 "not playing",CLI 直接可靠 |
+| 失焦不冻结 | 进 Play 前 `unity command editor set_auto_tick` + `unity command editor.playmode set_run_in_background`(退出后 `-- --enable false` 还原) | 项目级 Run In Background 覆盖且不进构建,比探针首行 `runInBackground=true` 干净 |
+| 证明游戏真在跑 | `unity command job wait -- --condition '{"member":"UnityEngine.Time.frameCount","op":"changed"}' --timeout 10` | 服务端等帧数变化,截图冻帧骗不了它;同一命令可 `--on_met` 命中那一帧截图 |
+| 截游戏画面(含 UI) | `unity command capture game_view -- --source screen --save_path Screenshots/x.png`(需内联加 `--include_inline_image true --max_resolution 512`) | **含 Screen Space-Overlay UI**,Coplay capture 看不见屏幕空间 UI;`capture scene_view` 拍 Scene 视图 |
+| 读 Console | `unity command console get -- --tail 50 --level error`;只要编译红/计数用 `console status`;流式看 `unity logs --console --follow --project-path <path>` | 带 cursor/level 过滤,不用 tail Editor.log;`console status` 给编译失败标志 |
+| 跑 C# | 一行 `unity command script eval 'return …;'`;多行走文件 `script eval_file --file <path>`;批量建对象用 `script run --file <Assets 外的 .cs> --entry Type.Method`(内存编译,无域重载,`--dry_run true` 只编不跑) | Roslyn 内存编译,不触发域重载;`script run` 就是 builder 模式 |
+| 重编译 | `unity recompile`(失焦也能编;`--strict` 把 warning 当错) / `unity command recompile_status` 轮询 | 不用切窗口让编辑器拿焦点 |
+| 跑 NUnit | 编辑器内 `unity command test run -- --mode playmode --filter <Fixture>`(长跑 `--async_tests true` + `test status`);无头 `unity test <project> --mode PlayMode --output r.xml`(退出码 8=有用例失败,其它非 0=没跑完) | Coplay 根本没有测试运行器 |
+| 找对象/读写字段 | `gameobject find -- --name X --include_inactive true` → `component get_fields -- --target <handle> --component <Type>` / `component set_field` | 返回可复用 handle,不用每次反射 Find |
+| 场景 | `scene open -- --path Assets/Scenes/Meta/HomeScreen.unity` / `scene save` / `scene list_open` / `scene get_hierarchy` | `scene save` 写回原路径,没有 Coplay `save_scene(scene_name)` 存错地方的坑 |
+| 输入模拟 | `unity command simulate_pointer -- --x --y --action` / `simulate_key`(runtime 组) | 真 Input System 事件 |
+| 等条件 | `job wait`(短同步)/ `job wait -- --async true` + `job wait_status`;CLI 侧长命令 `unity command --detach …` + `unity job wait <id>` | 服务端等待不占 MCP 往返 |
+
+Coplay 工具只在 CLI 没对应命令时用,且要先 `unity command --query <关键词>` 确认真没有。Coplay 独有且还在用的:`capture_scene_object` / `capture_ui_canvas`(可用 `script eval_file` 自己写 `RenderTexture` 截法替代)、`get_worst_cpu_frames` / `get_worst_gc_frames`、`generate_*` 生成类(项目不靠它,走 Tripo 网页 / sol / astra)。
+
+**进 Play 前后固定序列**(Play 前先读 `unity command editor status`,`playMode` 已是 playing/paused = 这局是勾哥的,只读不动、不 stop):
+```bash
+P="--project-path C:/DuckGames/Extraction"
+unity status $P --format json | grep -v claude-code-hint
+unity command $P editor status
+unity command $P editor set_auto_tick
+unity command $P editor.playmode set_run_in_background
+unity command $P editor.playmode start
+unity status $P --until-ready --format json | grep -v claude-code-hint
+unity command $P job wait -- --condition '{"member":"UnityEngine.Time.frameCount","op":"changed"}' --timeout 10
+# …驱动(script eval_file / script run)、capture game_view、console get…
+unity command $P editor.playmode stop
+unity command $P editor.playmode set_run_in_background -- --enable false
+```
+
+- 确认编译干净:`unity command console status`(compile-failure 标志)+ `unity recompile`,再 grep logs `error CS` 交叉验证(单一工具偶发说谎)。
 - 若改了 editor builder:**先把 builder 的产物落进场景**(跑 builder → SaveScene),否则 Play 里看到的是旧场景。
-- `play_game` 启动。游戏有 boot/sign-in,**等 ~20s** 再操作(用 `sleep 20 && echo ok` 这种带条件的等待,纯 `sleep N` 会被拦)。
+- `unity command editor.playmode start` 启动,随后 `unity status --until-ready`。游戏有 boot/sign-in,**等 ~20s** 再操作(用 `sleep 20 && echo ok` 这种带条件的等待,纯 `sleep N` 会被拦)。
 
-> **想跑 NUnit 单测?**(原 L-0001)Coplay MCP **没有 run_tests**——`play_game` 只验运行时行为,**不等于跑测试套件**。真要跑单测只能:① Unity CLI `-runTests -batchmode`(解析 NUnit XML,**别看退出码**);② 勾哥在 Editor Test Runner 手动跑、我读结果/日志。`execute_script` 调 `TestRunnerApi` 异步 + 跨域重载,拿结果不稳,不当主路径。
+> **想跑 NUnit 单测?** 走 CLI:编辑器内 `unity command test run -- --mode playmode --filter <Fixture.Test>`(`test list` 先看有哪些;长跑 `--async_tests true` 再 `test status` 轮询);无头跑 `unity test <project> --mode PlayMode --output results.xml`(退出码 **8=有用例失败**,其它非 0=没跑完可重试;别只看 0/非 0)。`editor.playmode start` 只验运行时行为,**不等于跑测试套件**。Coplay `execute_script` 调 `TestRunnerApi` 那条路作废。
 
 ---
 
 ## 第一步:驱动的四条铁律
 
-1. **`Application.runInBackground = true` 是每个驱动脚本的第一行**。编辑器失焦后游戏冻结、`Time.time` 不走、截图拍到坏帧。每个 `execute_script` 入口先设它。
+1. **失焦不冻结**:进 Play 前 `unity command editor set_auto_tick` + `editor.playmode set_run_in_background`(见上面固定序列);仍走 Coplay `execute_script` 的旧驱动脚本保留首行 `Application.runInBackground = true`。编辑器失焦后游戏冻结、`Time.time` 不走、截图拍到坏帧——用 `job wait` 等 `Time.frameCount` 变化证明真在跑。
 
-2. **分步驱动,每步独立调用**。动画/异步是时序的:`切到目标 tab` → `sleep 2-4s` → `关掉挡路弹窗` → `操作` → `sleep` → `截图`,拆成多次 `execute_script`,不要塞进一个脚本一口气跑完。服务端往返要 `sleep 3-4s`。
+2. **分步驱动,每步独立调用**。动画/异步是时序的:`切到目标 tab` → `sleep 2-4s` → `关掉挡路弹窗` → `操作` → `sleep` → `截图`,拆成多次 `script eval_file`(或 Coplay `execute_script`),不要塞进一个脚本一口气跑完。服务端往返要 `sleep 3-4s`,或直接 `job wait` 等目标字段。
 
 3. **驱动走真实链路,不静态摆拍**。用 `button.onClick.Invoke()` 触发真实点击 → 服务端 → 回调 → 刷新,验证整条链路。涉及一次性状态(签到/首次)用 Debug 重置后重启 Play 验自动路径。
 
@@ -58,14 +93,14 @@ Debug.Log($"YIDE: mode={panel.CurrentMode} alpha={cg.alpha:F2} " +
 ```
 **关键:停 Play 会切回 Boot 场景**(首场景)。重跑 builder/存场景前**必须先 `open_scene` 回目标场景**(如 HomeScreen),否则 builder 报 "X not found"、SaveScene 存错场景。
 
-- 停 Play:`EditorApplication.isPlaying = false`(`stop_game` 偶尔说 "not playing"),等 ~8s 重编译 + domain reload。
+- 停 Play:`unity command editor.playmode stop`(Coplay `stop_game` 偶尔说 "not playing";兜底 eval `EditorApplication.isPlaying = false`),然后 `unity status --until-ready` 等域重载。
 - `SaveScene` **Play 模式下会抛 "cannot be used during play mode"**,必须先停。
-- 改了 builder C#:停 Play → 等编译 → open 目标场景 → 跑 builder → SaveScene。
+- 改了 builder C#:停 Play → `unity recompile` 等编译 → `unity command scene open -- --path <场景>` → 跑 builder(`script run` / `editor invoke_menu`)→ `scene save`。
 - 写操作回读验证落盘:`grep` 场景文件确认新对象进去了。
 
 一轮只修能定位根因的问题,别盲改。修完那个问题,下一轮 Play 专门复验它 + 扫有没有引入新问题。**直到玩家从进入到完成整个 loop 都顺、好看、无报错。**
 
-> **收尾铁律:测完(无论通过还是这一回合先告一段落)立刻停 Play,别把 Editor 晾在 Play 状态。** 退出本身要 ~8s 重编译 + domain reload,留着它挂着 = 勾哥那头一直卡在 Play 里、下次操作还得先等它退。判定「这一轮 MCP 自测做完」的最后一个动作**固定是停 Play**(`EditorApplication.isPlaying = false`,`stop_game` 偶尔说 "not playing" 就用前者),跟「MCP 改完必 SAVE」同级。只有「马上要进下一轮 fix→replay、停了又得重进」时才允许暂时留着——但回话给勾哥前必须已停。
+> **收尾铁律:测完(无论通过还是这一回合先告一段落)立刻停 Play,别把 Editor 晾在 Play 状态。** 退出本身要 ~8s 重编译 + domain reload,留着它挂着 = 勾哥那头一直卡在 Play 里、下次操作还得先等它退。判定「这一轮自测做完」的最后一个动作**固定是停 Play**(`unity command editor.playmode stop`;Coplay `stop_game` 偶尔说 "not playing",兜底 eval `EditorApplication.isPlaying = false`),跟「MCP 改完必 SAVE」同级。只有「马上要进下一轮 fix→replay、停了又得重进」时才允许暂时留着——但回话给勾哥前必须已停。
 
 ---
 
@@ -91,12 +126,12 @@ Debug.Log($"YIDE: mode={panel.CurrentMode} alpha={cg.alpha:F2} " +
 
 ## 第五步:交付前终检清单(全过才喊"测好了")
 
-- [ ] `check_compile_errors` 干净 **且** grep logs `error CS` 为空(交叉验证)
+- [ ] `unity command console status` 无编译失败 **且** grep logs `error CS` 为空(交叉验证)
 - [ ] builder 重跑日志零 `Sprite not found` / `Property '...' not found`
 - [ ] 端到端真点击走通完整 loop(进入→操作→服务端→结果→刷新),用 state dump 确认副作用数值正确
 - [ ] 关键 UI 区域全分辨率裁块 Read,对齐/配色/字体/无瑕疵
 - [ ] 场景已 SaveScene 且回读确认落盘
 - [ ] 多轮迭代后无残留问题、无新引入问题
-- [ ] **Play Mode 已停**(`EditorApplication.isPlaying=false`),没把 Editor 晾在 Play 状态就回话
+- [ ] **Play Mode 已停**(`unity command editor.playmode stop`),`set_run_in_background -- --enable false` 已还原,没把 Editor 晾在 Play 状态就回话
 
 UI 专属的截图通道/几何数值核实细节见 `ui-placement`;视觉质量标准见 `ui-visual-rework`;服务端验证见 `cloud-code-deploy`。
