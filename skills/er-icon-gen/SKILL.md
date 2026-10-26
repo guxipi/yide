@@ -65,4 +65,4 @@ cut 做的事:按蓝色面板程序抠框(不再调 AI 去框)、切图、按 `�
 
 ## 6. 现在不覆盖的
 
-CLI 只包了物品 icon 工具的 prompt。装备整套(编辑真实截图那套)、枪械、UI 黑白 glyph、buff 九宫格仍在 GUI(`er_launch.pyw` 双击开 hub),要用这些先告诉勾哥 CLI 还没接,别拿物品 prompt 硬套。
+CLI 只包了物品 icon 工具的 prompt。装备整套(编辑真实截图那套)、枪械、UI 黑白 glyph、buff 九宫格仍在 GUI(`er_launch.pyw` 双击开 hub),要用这些先告诉勾哥 CLI 还没接,别拿物品 prompt 硬套。头像框(中间镂空、套头像)走 er-frame-gen。
