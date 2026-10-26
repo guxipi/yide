@@ -67,6 +67,7 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 | `blender/tex_extract.py` | 导出三角形/UV/法线 + 原贴图给 tex_clean |
 | `blender/rig_build.py` | 配置驱动的修骨 + 次级链 + 权重 + 形变测试 + FBX |
 | `blender/rig_audit.py` | 绑骨数值审计(13 条门) |
+| `blender/deform_gates.py` | 形变数字门:手臂钻躯干 + 小幅度姿势拉伸(10-26,见 05 章 6.4 第 3 条) |
 | `blender/face_render.py` | 脸底图 + 投影 json + 标定图 |
 | `blender/face_swap.py` | 脸面选面、格子空间 UV、表情材质、QA 渲染、FBX |
 | `blender/export_fbx.py` | 从 blend 重新导出 FBX 并回读校验 |
