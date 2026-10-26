@@ -2,6 +2,10 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.64.0 — 2026-10-26 新 skill er-icon-gen:icon 走 gemini 工具箱 CLI
+- ER 所有 icon 需求改走勾哥本机的 gemini 生图工具箱(`F:\AI\Claude\ER\er_icon_cli.py`,工具本身不在本仓):先入队攒批,一张网格出 9~12 件,程序抠框切图、自动 QA,对照板在 Claude 窗口给勾哥点选,点过的才入 Unity。
+- skill 写死了这几条:队列只收勾哥原话要的;默认参考 v4 母版样张;每批 1K 约 $0.067,已授权按批出;同件两轮不对就停;一物多图由勾哥选;装备/枪械/glyph/buff 还在 GUI,CLI 没接。
+
 ### v0.63.0 — 2026-10-15 会话按主要目标命名
 - 会话标题从固定的"🗡️ 翼德已就位 · 日期"改成"<目标名>_🗡️ 翼德已就位 · 日期",底标和日期原样保留。新增 scripts/session-title.js。
 - 首句 UserPromptSubmit 先从 prompt 粗取一个名字(去掉"我想要/帮我"这类口头前缀,截到第一个标点,最多 12 字),同时提醒模型按主要目标起 2-8 字正式名,跑 `session-title.js set --session <sid> "名字"`。Claude Code 只在 SessionStart / UserPromptSubmit 认 sessionTitle,所以模型起的名在下一句生效。
