@@ -1,0 +1,9 @@
+You are working in {WORKSPACE}. Blender {BLENDER} headless, absolute output paths. Python py -3. Do not ask questions, do not touch other files, do not open Unity, do not git commit.
+
+GOAL: texture-swap face for {NAME} with the skill scripts in {SKILL}/scripts.
+1. `{BLENDER} -b --python {SKILL}/scripts/blender/face_render.py -- --config {CONFIG}` -> open {FACE_DIR}/face_calib.png: eyebrows, eyes, mouth, chin inside the white box; eyes inside the green band; mouth inside the blue band. If not, re-run with --center-z / --scale (normalized units) and write the final values into config face.center_z / face.ortho_scale.
+2. Expressions are painted by a separate image job on {FACE_DIR}/face_front.png (already done when expr-*.png exist). Run `py -3 {SKILL}/scripts/face_atlas.py --config {CONFIG}`. Any FAIL = list it; do not edit pixels by hand.
+3. `{BLENDER} -b --python {SKILL}/scripts/blender/face_swap.py -- --config {CONFIG}` then `py -3 {SKILL}/scripts/face_qa_sheet.py --config {CONFIG} --qa {RIG_DIR}/face_qa`.
+4. OPEN {RIG_DIR}/face_swap_qa.png at full size. Fail if: any white sclera / lash / old mouth pixels remain in closed-eye cells (look at the 2x eye crops), a seam ring around the face in neutral, hair paint on forehead/cheeks in 3/4, atlas paint on the back of the head (headback.png), eyes/mouth not on the right geometry.
+   If eye-corner leftovers remain: re-run face_swap.py with --grow 5. Do not add any depth-based "back of head" filter (it removed the eye corners on Wren).
+REPORT {FACE_DIR}/FACE_SWAP.md: selected polygon count, rejected counts, uv space, every check with what you saw. Factual only.

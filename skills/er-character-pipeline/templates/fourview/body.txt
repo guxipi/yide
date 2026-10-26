@@ -1,0 +1,22 @@
+PURPOSE: this is a model-sheet view to be fed into Tripo multiview image-to-3D (views front, left, back, right). It is NOT a splash illustration and NOT a character sheet. The only test: can a 3D reconstruction tool rebuild a top-down-readable model with painterly texture from it, cleanly, so that it stands next to our already-built hero models without clashing.
+
+THE CHARACTER: "{NAME}", an original character for our original game. {AGE}, {ONE_LINE} {SKIN_EYES_HAIR}
+
+PROPORTIONS (modelling ratio, NOT the illustration ratio): head from hair crown to chin (NOT counting hair tails, hats brims or anything sticking up) = {HEAD_RATIO_LO}-{HEAD_RATIO_HI} of total figure height, i.e. about {HEADS} heads tall (this character's own ratio; do NOT copy the head size of the format-template image unless it matches). Not a 3.5-head chibi: limbs keep normal adult proportions for this character. {PROPORTION_NOTES} In this sheet the character fills the frame like any other character; real height is set in the engine.
+
+POSE (hard rule): standard A-pose. Both arms straight, angled 35-40 degrees away from the torso, palms facing the thighs, fingers together and relaxed slightly open; hands do NOT touch the body and hold NOTHING. Legs straight, shoulder-width apart, toes pointing straight forward. Head straight, not tilted, not turned. Mouth CLOSED (NO grin, NO teeth), eyes open looking level. Fully symmetric except the named asymmetric parts below. No contrapposto, no weight shift. Figure centered, fills about 90% of the image height, feet near the bottom.
+
+PROJECTION (hard rule): strict orthographic projection, camera at chest height, zero perspective, zero pitch.
+
+BACKGROUND AND LIGHT (hard rule): the whole canvas is one perfectly flat #8A8A8A grey (RGB 138,138,138). No gradient, no vignette, no ground line, no grid, NO shadow under the feet, no text, no labels. Lighting is fully enveloping soft light: no directional cast shadows, no terminator line, no rim light, no specular highlights. Volume only from very light ambient-occlusion-style darkening, small in amplitude. Anything that glows must NOT light the body: zero bloom, zero halo, zero light spill; a glow exists only as the painted colour of that part.
+
+PAINT TECHNIQUE (important): soft light on the forms, but the COLOURS THEMSELVES carry hand-painted thick-paint brushwork like our original art: every colour area is not a flat fill but 2-3 close tones laid in as big hand-painted patches (like mo.co albedo textures). Skin shadows lean redder and more saturated. Hair in 3 tone steps, no individual hair strands. Keep the few local dark accent lines of the original art (upper eyelid line, one jaw stroke, nose stroke, mouth line). Do NOT use a uniform black outline, NO cel shading, NO smooth plastic 3D render look, NO facets or low-poly planes, NO camouflage, NO fabric weave texture, NO skin pores, NO blush stickers. Goal: "the texture itself looks painted, the geometry is clean".
+
+FACE (critical): our hero face family: a normal human head with a soft rounded face shape, full cheeks below the cheekbones, a U-shaped jaw and a short round chin (NO pointed V chin, NO narrow anime V-line), eyes on the FRONT plane of the face, one thick upper-eyelid line and NO long lashes, small nose drawn with one small shadow, small mouth, one soft eyebrow stroke each. Character-specific face notes (age, beard, eyelids) take priority over these family defaults: {FACE_NOTES} NOT a gacha/anime face: no stacked eye sparkles, no glossy eye rendering, no blush.
+
+SIMPLIFIED SHAPES (for reconstruction). "Their left/right" always means the character's own left/right. Simplify ONLY dangling or thin parts; every identity item keeps the exact shape of the approved design:
+{CHARACTER_BLOCK}
+
+- REMOVE: anything held in the hands, any loose gun or holster (unless listed above as an identity item worn on the body), the floor shadow, anything hanging or swinging freely.
+
+IDENTITY MARKERS that must be present (when the angle shows them): {IDENTITY_MARKERS}

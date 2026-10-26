@@ -1,0 +1,13 @@
+You are working in {WORKSPACE}. Blender: {BLENDER} (headless: `{BLENDER} -b --python script.py -- args`, ABSOLUTE output paths only). Python: `py -3` (PIL, numpy, scipy, cv2). Do not ask questions. Do not touch files outside {OUT_DIR} and {CONFIG}. Do not git commit. Do not open Unity.
+
+GOAL: a clean game rig for {NAME} using the skill scripts in {SKILL}/scripts. You may ONLY change the "rig" section of {CONFIG} (chain points, regions, skirt ring, rigid parts, straps). Do not edit the scripts.
+
+LOOP (max 5 iterations):
+1. `{BLENDER} -b --python {SKILL}/scripts/blender/rig_build.py -- --config {CONFIG}`
+2. `{BLENDER} -b --python {SKILL}/scripts/blender/rig_audit.py -- {RIG_DIR}/{SLUG}_rig.blend {RIG_DIR}/audit.json`
+3. `py -3 {SKILL}/scripts/deform_sheet.py --dir {RIG_DIR}/deform --out {RIG_DIR}/deform_sheet.png --crops {RIG_DIR}/deform_crops.png`
+4. OPEN deform_crops.png at full size and look. Fail if you see: black/white stripes or spikes, a boot shaft separating from the thigh, a skirt hem tearing open, sleeve shards when arms move, a backpack/strap stretching with the arms, hair chains that do not move the whole hair mass, the back of the head not turning with the head.
+5. Read the printed DEMOTED_UNWEIGHTED_DEFORM_BONES: a demoted chain bone means the chain is longer than the hair/cloth - shorten the points. Read COUNTS: a chain/skirt count of 0 means the region missed the mesh.
+Adjust ONLY the config and repeat.
+
+REPORT (write {RIG_DIR}/REPORT.md, English, factual): every config change per iteration and why; the final RIG_AUDIT line and every FAIL gate; the METRICS line; what you SAW in deform_crops.png per pose (one line each). Never write "pass" for something you did not open and look at. If a gate still fails, say which and why.

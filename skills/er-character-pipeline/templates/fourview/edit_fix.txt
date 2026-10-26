@@ -1,0 +1,7 @@
+Image 1 is the {VIEW} orthographic model-sheet view of our original character {NAME} (flat #8A8A8A background, A-pose, soft shadowless light, painted texture). Redraw it IDENTICAL to image 1 in every respect (same character, same face, same hair, same clothing and gear, same A-pose arm angle, same figure height and framing, same feet position, same flat grey background with no shadow) EXCEPT these corrections:
+
+{FIXES}
+
+Everything else stays exactly as image 1. Strict orthographic, no perspective. Flat #8A8A8A background, NO shadow under the feet, no text, no labels. Mouth closed, no teeth. Hands empty.
+
+HOW TO WRITE {FIXES} (delete this paragraph before sending): one numbered item per correction, each with the concrete target ("head from crown to chin becomes 0.21 of figure height, enlarge the head by about 10-12 percent", "remove the two chest pocket flaps", "replace the backpack with the one in image 2"). Name what must NOT change next to it. If a second reference is attached say exactly what it is used for and what to ignore in it. Changing the head size: ask for 10-12 percent at a time - asking for 25 percent overshoots.

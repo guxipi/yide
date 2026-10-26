@@ -1,0 +1,7 @@
+The FIRST attached image is the front orthographic model-sheet view of our original character {NAME} (for image-to-3D). The SECOND attached image is the approved character design sheet: use it ONLY as the reference for the FACE SHAPE (the close-up of the face).
+
+Redraw image 1 IDENTICAL in every respect (same A-pose, same body, same clothes, same hair, same gear, same flat #8A8A8A grey background, same framing, same head size, same painted texture style, same colours, same shadowless light) EXCEPT the face:
+1. Lower half of the face ROUNDER and SOFTER, like the design sheet close-up: fuller rounded cheeks below the cheekbones, a gentle U-shaped jaw, a shorter round chin. Absolutely no pointed V-shaped jaw, no sharp chin tip, no narrow "anime V-line".
+2. Eyes: same size, colour and position, rounder softer eye shape; any outer eyeliner flick becomes a small soft tip (no long wing). One thick upper-eyelid line, no long lashes.
+3. Same closed mouth, same small nose, same brows, same skin colour. {FACE_NOTES}
+Nothing below the neck changes. Do not change the hair.

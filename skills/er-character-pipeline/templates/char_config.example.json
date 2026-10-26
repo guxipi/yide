@@ -1,0 +1,501 @@
+{
+ "_comment": "Wren 的真实参数(2026-10-07 跑通的那一套)。新角色复制一份改成 <slug>.json,放在 {workspace}/configs/ 下。坐标全部是 Blender 归一化空间:Z 朝上、身高 1.0、脚底 z=0、x 居中、角色面朝 -Y、角色自己的左边在 +X。值为 null 的项由脚本自动推算。",
+ "name": "Wren",
+ "slug": "wren",
+ "workspace": "C:/Users/kryst/character-art-lab",
+ "out_dir": "C:/Users/kryst/character-art-lab/out/wren-tripo",
+ "blender": "F:/Apps/blender.exe",
+ "vault_char_dir": "I:/My Drive/Obsidian/ExtractionRaider/01 - 星际拓荒重构/013 美术/角色手册",
+ "design": {
+  "handbook": "Wren角色手册.html",
+  "design_sheet": "img/expedition_人物设计板Wren_活力版B_v2_1672x941.png",
+  "topdown": "img/expedition_Wren俯视图_1672x941.png",
+  "expression_sheet": "img/expedition_Wren表情表_1672x941.png",
+  "format_template_front": "I:/My Drive/Obsidian/ExtractionRaider/01 - 星际拓荒重构/013 美术/角色手册/img/建模四视图/expedition_Wren建模四视图_front_1024x1536.png",
+  "age": "18-year-old young woman",
+  "one_line": "the smallest person in the roster, a lab-raised runaway who now catalogs jungle wildlife. Cute, clever.",
+  "skin_eyes_hair": "Warm tan skin, brown eyes, pink-to-purple twin-tails."
+ },
+ "identity_items": [
+  "双马尾+彩色电线圈(四面都见)",
+  "荧光绿短外套(敞开、袖子卷成厚环)",
+  "圆柱玻璃罐背包+炮口盖+底环(背面正对镜头)",
+  "无字耳标(只 front 可见)",
+  "她右胯的工具包(front 画面左、right 视图正对镜头、left 视图看不到)",
+  "过膝靴+护膝+两道扣带"
+ ],
+ "asymmetric_items": "tool pouch on HER RIGHT hip (= IMAGE LEFT in the front view)",
+ "fourview": {
+  "_comment": "build_prompts.py 用。character_block 是英文的逐件简化描述(照 templates/fourview/character_block.wren.txt 写);相对路径相对 workspace。",
+  "character_block": "prompts/wren-character-block.txt",
+  "proportion_notes": "Shoulder width about 2.0x face width. Hand width 0.5x face width. Thick-soled boots: boot length about 1.0x head height, sole thickness about 0.12x head height. She is the shortest in the roster.",
+  "face_notes": "Brown eyes, warm tan skin.",
+  "identity_markers_en": "twin-tails with wire-coil ties, fluoro-green open jacket, cylindrical glowing canister backpack with muzzle cap, blank ear tag, tool pouch on her right hip, over-knee boots with knee pads",
+  "view_notes": {
+   "front": "Both twin-tails visible left and right of the head, hanging outside the shoulders. The canister shows behind EACH shoulder with the muzzle cap rising above the shoulder line, plus the two dark straps on the chest. The ear tag is centered on the upper chest. The tool pouch is on HER RIGHT hip = IMAGE LEFT. Knee pads on both knees.",
+   "left": "Her LEFT twin-tail is the one fully visible, hanging beside the head in front of the canister, not overlapping it. The tool pouch is on her right hip, so it is NOT visible here. The canister sticks out toward the IMAGE RIGHT: round cylinder side, dark muzzle cap on top, base ring, strap over the shoulder.",
+   "right": "Her RIGHT twin-tail is the one fully visible. The tool pouch on her right hip faces the camera. The canister sticks out toward the IMAGE LEFT: round cylinder side, muzzle cap on top, base ring.",
+   "back": "The canister faces the camera squarely in the middle of the back: glass cylinder with glowing plants, muzzle cap with dark hollow on top, base ring, both straps. The twin-tails hang left and right of the canister without covering it. The tool pouch edge shows on the IMAGE RIGHT hip. No ear tag visible."
+  },
+  "volume_list": "skirt pleats, boots and the cylindrical backpack canister",
+  "eye_style": "brown irises with two small white catchlights",
+  "personality_note": ""
+ },
+ "sheet": {
+  "size": [
+   1024,
+   1536
+  ],
+  "bg": 138,
+  "mask_thresh": 18,
+  "target_h_ratio": 0.88,
+  "top": 92,
+  "head_ratio": [
+   0.2,
+   0.22
+  ],
+  "hue_fix": null
+ },
+ "tripo": {
+  "geometry": {
+   "tab": "HD Model",
+   "model": "H3.1 - Best Quality",
+   "ultra_mesh": true,
+   "texture": false,
+   "topology": "Triangle",
+   "polycount": 60000,
+   "expect_cost": 30
+  },
+  "texture": {
+   "resolution": "4K",
+   "remove_lighting": false,
+   "style": "None",
+   "expect_cost": 20
+  },
+  "rig": {
+   "type": "Humanoid",
+   "preset": "Mixamo",
+   "expect_cost": 20
+  },
+  "animations": [
+   "idle",
+   "standing_relax",
+   "walk",
+   "run",
+   "swagger",
+   "jump",
+   "jump_down",
+   "shoot",
+   "fire",
+   "fall",
+   "defeat",
+   "defeat_02",
+   "angry_01",
+   "angry_02",
+   "frustrated_01",
+   "complain_01",
+   "fold_arms",
+   "cheer",
+   "laugh_01",
+   "clap",
+   "greet_01",
+   "wave_goodbye_01",
+   "depressed",
+   "sob",
+   "hit_to_body_01",
+   "look_around"
+  ]
+ },
+ "files": {
+  "_comment": "相对 out_dir。每个阶段完成后把真实文件名填回来,后面的脚本都从这里读。",
+  "sheet_final_dir": "final",
+  "struct_dir": "struct",
+  "geo_glb": "tripo-web/gen-2/geo.glb",
+  "tex_glb": "tripo-web/gen-2/wren_gen2_tex.glb",
+  "rig_glb": "tripo-web/rig-2/wren_rig2.glb",
+  "anim_fbx": "anim-g3/Wren_Anims.fbx",
+  "rig_dir": "rig-g3",
+  "face_dir": "face-g3",
+  "unity_dir": "unity"
+ },
+ "rig": {
+  "head_bones": [
+   "mixamorig:Head",
+   "mixamorig:HeadTop_End",
+   "mixamorig:Neck"
+  ],
+  "toe_ball_fraction": 0.7,
+  "straighten_spine": true,
+  "straighten_legs": true,
+  "chains": [
+   {
+    "name": "Hair_{S}",
+    "mirror": true,
+    "bones": 4,
+    "parent": "mixamorig:Head",
+    "mode": "full",
+    "points": [
+     [
+      0.115,
+      0.035,
+      0.88
+     ],
+     [
+      0.14,
+      0.045,
+      0.79
+     ],
+     [
+      0.155,
+      0.055,
+      0.69
+     ],
+     [
+      0.16,
+      0.06,
+      0.59
+     ],
+     [
+      0.155,
+      0.06,
+      0.49
+     ]
+    ],
+    "region": {
+     "x": [
+      0.085,
+      9
+     ],
+     "z": [
+      0.48,
+      0.91
+     ],
+     "y": [
+      -0.005,
+      9
+     ]
+    },
+    "require": {
+     "bones": "head_bones",
+     "min": 0.05
+    },
+    "spring": {
+     "stiffness": 18,
+     "drag": 0.34,
+     "radius": 0.018,
+     "colliders": []
+    }
+   },
+   {
+    "name": "Hair_F",
+    "mirror": false,
+    "bones": 2,
+    "parent": "mixamorig:Head",
+    "mode": "partial",
+    "parent_weight": 0.82,
+    "points": [
+     [
+      0,
+      -0.105,
+      0.91
+     ],
+     [
+      0,
+      -0.125,
+      0.84
+     ],
+     [
+      0,
+      -0.12,
+      0.77
+     ]
+    ],
+    "region": {
+     "x": [
+      -0.07,
+      0.07
+     ],
+     "z": [
+      0.76,
+      9
+     ],
+     "y": [
+      -9,
+      -0.07
+     ]
+    },
+    "require": {
+     "bones": "head_bones",
+     "min": 0.2
+    },
+    "spring": {
+     "stiffness": 22,
+     "drag": 0.38,
+     "radius": 0.014,
+     "colliders": []
+    }
+   }
+  ],
+  "skirt": {
+   "name": "Skirt",
+   "sectors": 8,
+   "parent": "mixamorig:Hips",
+   "center_xy": [
+    0,
+    -0.035
+   ],
+   "ring_radius_xy": [
+    0.105,
+    0.085
+   ],
+   "ring_z": [
+    0.555,
+    0.455,
+    0.34
+   ],
+   "flare": [
+    1.0,
+    1.12,
+    1.22
+   ],
+   "band_z": [
+    0.4,
+    0.58
+   ],
+   "radial_min": 0.065,
+   "colour_rule": {
+    "v_min": 0.16,
+    "sat_max": 0.32,
+    "r_minus_b_min": -0.03
+   },
+   "vote_iters": 4,
+   "hips_weight": 0.45,
+   "spring": {
+    "stiffness": 55,
+    "drag": 0.58,
+    "radius": 0.022,
+    "colliders": [
+     "mixamorig:LeftUpLeg",
+     "mixamorig:RightUpLeg",
+     "mixamorig:LeftLeg",
+     "mixamorig:RightLeg"
+    ]
+   }
+  },
+  "rigid": [
+   {
+    "bone": "Tank_01",
+    "parent": "mixamorig:Spine2",
+    "head": [
+     0,
+     0.1,
+     0.74
+    ],
+    "tail": [
+     0,
+     0.105,
+     0.5
+    ],
+    "region": {
+     "z": [
+      0.48,
+      0.77
+     ],
+     "y": [
+      0.082,
+      9
+     ],
+     "absx": [
+      0,
+      0.092
+     ]
+    },
+    "max_head": 0.2,
+    "spring": {
+     "stiffness": 180,
+     "drag": 0.82,
+     "radius": 0.018,
+     "colliders": []
+    }
+   }
+  ],
+  "straps": {
+   "rigid": "Tank_01",
+   "region": {
+    "z": [
+     0.48,
+     0.82
+    ],
+    "y": [
+     0.035,
+     9
+    ],
+    "absx": [
+     0,
+     0.145
+    ]
+   },
+   "max_arm": 0.3,
+   "max_head": 0.2,
+   "weights": {
+    "mixamorig:Spine2": 0.45,
+    "rigid": 0.35,
+    "clavicle": 0.2
+   },
+   "clav_ramp_z": [
+    0.55,
+    0.24
+   ],
+   "shell_region": {
+    "z": [
+     0.4,
+     0.84
+    ],
+    "y": [
+     0.025,
+     9
+    ],
+    "absx": [
+     0,
+     0.18
+    ]
+   },
+   "shell_min_torso": 0.12,
+   "shell_weights": {
+    "mixamorig:Spine2": 0.55,
+    "rigid": 0.45
+   }
+  },
+  "prop_bone": "Prop_R",
+  "add_chain_tips": true,
+  "export_deform_only": false,
+  "stretch_gate": {
+   "body_p99_max": 1.75,
+   "min_rest_edge_frac": 0.25
+  }
+ },
+ "face": {
+  "center_z": 0.88125,
+  "ortho_scale": 0.1629,
+  "hair_hue_ranges": [
+   [
+    0.72,
+    0.985
+   ]
+  ],
+  "expressions": [
+   {
+    "id": "neutral",
+    "eyes_closed": false,
+    "desc": null
+   },
+   {
+    "id": "blink",
+    "eyes_closed": true,
+    "desc": "EYES fully closed: each eye becomes one thick soft downward-curved dark lid line along the same position as the current upper lid, lashes merged into it. Eyebrows relaxed. Mouth: same small closed smile as input."
+   },
+   {
+    "id": "half",
+    "eyes_closed": true,
+    "desc": "EYES half closed: the upper lids come down to cover the top half of the irises, relaxed sleepy look. Eyebrows relaxed. Mouth: same small closed smile as input."
+   },
+   {
+    "id": "grin",
+    "eyes_closed": false,
+    "desc": "Big open toothy grin: mouth wide open showing the upper teeth, corners pulled up. Eyes open and bright, slightly squinted by the smile. Eyebrows raised."
+   },
+   {
+    "id": "happy",
+    "eyes_closed": true,
+    "desc": "Pure joy: EYES closed into upward happy arcs (^ ^ shape, thick dark lines). Mouth: big open laughing smile showing upper teeth. Eyebrows raised high. Cheeks slightly lifted."
+   },
+   {
+    "id": "smug",
+    "eyes_closed": false,
+    "desc": "Smug: eyes half-lidded looking slightly sideways, one eyebrow raised, mouth a lopsided closed smirk."
+   },
+   {
+    "id": "jealous",
+    "eyes_closed": false,
+    "desc": "Jealous pout: cheeks puffed, lips pushed into a small pout, eyes narrowed sideways, eyebrows pulled down at the inner ends."
+   },
+   {
+    "id": "angry",
+    "eyes_closed": false,
+    "desc": "Angry: eyebrows pulled down hard into a V, eyes narrowed, mouth a tight downturned line."
+   },
+   {
+    "id": "sad",
+    "eyes_closed": false,
+    "desc": "Sad: eyebrows raised at the inner ends, eyes looking down, mouth a small downturned wobbly line."
+   },
+   {
+    "id": "focus",
+    "eyes_closed": false,
+    "desc": "Focused aiming: both eyes narrowed and intent, one slightly more squinted, eyebrows lowered and level, small tongue tip at the mouth corner."
+   },
+   {
+    "id": "ko",
+    "eyes_closed": true,
+    "desc": "Knocked out: both eyes squeezed shut as dizzy X-like lines, eyebrows slanted in distress, mouth a small open wavy line."
+   }
+  ]
+ },
+ "emission": {
+  "hue_deg": [
+   140,
+   185
+  ],
+  "s_min": 0.3,
+  "v_min": 0.35,
+  "color": [
+   0.12,
+   0.42,
+   0.32
+  ],
+  "size": 1024
+ },
+ "unity": {
+  "project": "F:/GitManagedUnityProjects/Extraction",
+  "asset_dir": "Assets/Art/3DModelsfromGu/0_Characters/Wren",
+  "hero_prefab": "Assets/Prefabs/Heroes/Hero.prefab",
+  "height_vs_old_hero": 0.9,
+  "toon": {
+   "_ShadowColor": [
+    0.85,
+    0.8,
+    0.85,
+    1
+   ],
+   "_ShadowThreshold": 0.5,
+   "_ShadowSmoothing": 0.25,
+   "_OutlineWidth": 0,
+   "_RimThreshold": 0.9,
+   "_BaseColor": [
+    0.95,
+    0.95,
+    0.95,
+    1
+   ]
+  },
+  "spring_manager": {
+   "simulationFrameRate": 60,
+   "dynamicRatio": 0.75,
+   "gravity": [
+    0,
+    -0.08,
+    0
+   ],
+   "enableCollision": true,
+   "enableLengthLimits": false,
+   "collideWithGround": false
+  },
+  "collider_radius": {
+   "mixamorig:LeftUpLeg": 0.09,
+   "mixamorig:RightUpLeg": 0.09,
+   "mixamorig:LeftLeg": 0.075,
+   "mixamorig:RightLeg": 0.075
+  },
+  "grip_reference_clip": "Assets/Art/3DModelsfromGu/1_Animation/Humanoid/Breathing Idle.fbx"
+ }
+}

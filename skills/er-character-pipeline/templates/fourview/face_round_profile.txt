@@ -1,0 +1,10 @@
+The FIRST attached image is a close-up crop of our character {NAME}'s head in exact SIDE PROFILE (facing the IMAGE {FACING}), from a 3D model reference sheet (flat grey background, flat shadowless light, painted texture). The SECOND attached image is the NEW approved front view of the same head: the face is ROUND with soft full cheeks and a short round chin. Make the profile match that face.
+
+Redraw image 1 at exactly the same framing, size and facing direction, keeping the hair, the ear, the collar, the background and the painted style IDENTICAL, but RESHAPE THE FACE PROFILE so it reads as a normal human head in 3D:
+- A soft rounded cheek that visibly bulges forward and down from under the eye toward the mouth corner, so the face has volume, not a flat plane.
+- A small but clearly visible nose tip and nose bridge sticking out of the profile, a small closed mouth with soft lips.
+- A short ROUND chin that does NOT jut forward; the jaw line under the chin curves smoothly back to the neck, no sharp V jaw angle.
+- The eye sits on the FRONT of the face: in profile only a narrow sliver of the eye near the front edge, not a big eye on the side of the head.
+- Keep the forehead and the hair fringe as they are.
+
+(Workflow: crop the head box from the side view with crop_compare.py --save-crop, edit the crop at 1024x1024, then paste it back with sheet_paste.py and re-run sheet_finalize.py.)

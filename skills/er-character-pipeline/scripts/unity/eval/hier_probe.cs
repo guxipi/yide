@@ -1,0 +1,5 @@
+string log = ""; foreach (var p in "{{ASSETS}}".Split(';')) { var go = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(p); log += p + "\n";
+  System.Action<UnityEngine.Transform, int> walk = null; walk = (t, d) => { if (d > 3) return; log += new string(' ', d * 2) + t.name + " pos=" + t.localPosition.ToString("F3") + " rot=" + t.localRotation.eulerAngles.ToString("F1") + " scl=" + t.localScale.ToString("F3") + " children=" + t.childCount + "\n"; if (d < 3) for (int i = 0; i < t.childCount && i < 2; i++) walk(t.GetChild(i), d + 1); };
+  walk(go.transform, 0);
+  var imp = (UnityEditor.ModelImporter)UnityEditor.AssetImporter.GetAtPath(p); var sk = imp.humanDescription.skeleton; log += "  skeleton[0..2]: "; for (int i = 0; i < System.Math.Min(3, sk.Length); i++) log += sk[i].name + "(rot " + sk[i].rotation.eulerAngles.ToString("F0") + ") "; log += " useFileScale=" + imp.useFileScale + " fileScale=" + imp.fileScale + " bakeAxis=" + imp.bakeAxisConversion + "\n"; }
+return log;
