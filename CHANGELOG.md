@@ -2,6 +2,10 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.68.0 — 2026-10-26 角色保脸减面换算法:身体 meshoptimizer、头 collapse
+- 衣服正背侧逐方向查出纯 collapse 把马甲包边、扣环、衬衫揉软后,第三轮比了缩小手保护、折痕保护权重、meshoptimizer 属性感知简化、65k 四条路。胜出:身体用 meshoptimizer simplifyWithAttributes(硬边结构线不被揉软)、头用 Blender collapse(圆形不出锯齿)、脸前部和手(0.45 头高)锁定。Coda 对 20 万原模:上身白模 SSIM 0.884→0.938、下身 0.912→0.943、脸 0.9745,背面扣环拖影消失。折痕保护权重全面变差(星状长条三角),纯 meshoptimizer 脸 0.928 不过门。
+- meshoptimizer 1.3.0 简化器(MIT)vendored 进 er-character-pipeline/scripts/blender/vendor,只要 node;--method collapse 保留旧做法。
+
 ### v0.67.0 — 2026-10-26 角色管线:头小的角色改走"整身 20 万面 + 保脸减面",不再默认分头
 - 诊断(Wren 与之后 6 个角色逐阶段对照):Wren 之后人物精度掉下来,根因是 6.5 头身角色整身 6 万面生成时头只分到 3~6 千面,于是改走分头换头,而领口碎片、脸岛、耳洞、颈断口、长发融壳、鸟嘴下巴大多出在换头这一步。10-24 写进 SKILL 的"head_ratio ≤ 0.17 直接分头"来自 LOG 把一句条件句记成了定论。
 - 新做法:阶段 3 整身一次生成 200,000 面(网页价格仍是 30 点),上贴图后跑新脚本 scripts/blender/protect_decimate.py:焊 UV 缝 → 几何圈脸前部+双手硬保护 → DECIMATE collapse 到 58,000 → 投原模法线 → validate 去重复面。Coda 实测 194,895 → 57,997,头 11,113 面(6 万直出 6,205)、脸前部 2,468(直出 782,Wren 1,710),脸特写对 20 万原模 SSIM 0.973,无拼缝。只验证到模型阶段,绑骨/换脸/入库待跑;剩下与 Wren 的差距在 Tripo 烘进脸部皮肤的明暗斑,靠 tex_clean 和脸图集。
