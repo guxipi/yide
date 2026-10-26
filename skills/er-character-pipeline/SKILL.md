@@ -17,6 +17,7 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 - **头小的角色:整身高面数生成 + 保脸减面,不分头(10-26 Coda 验证,取代 10-24 的"直接分头")**:`sheet.head_ratio` ≤ 0.17(约 6 头身及以上)的角色,整身 6 万面生成头只分到 3~6 千面,脸前部几百面,这是 Wren 之后人物精度掉下来的根因;以前的解法是分头换头,而 Rook2/Vesper2/Harrow/Coda 的领口碎片、脸岛、耳洞、颈断口、长发融壳、鸟嘴下巴大多出在换头这一步。现在的做法:阶段 3 **整身一次生成 200,000 面**(H3.1、Ultra、贴图关、Triangle,其余照 03 章),上贴图后用 `scripts/blender/protect_decimate.py` 焊 UV 缝 → 圈脸前部+双手锁定 → 身体 meshoptimizer、头 collapse,合计减到 58,000 → 投原模法线。Coda 实测(导出文件回读):194,895 → 58,000,头 11,213 面(6 万直出版 6,205)、脸前部 2,470(直出版 782,Wren 1,710),脸特写对 20 万原模 SSIM 0.9745,没有拼缝。**减面算法(10-26 第三轮定案)**:身体用 meshoptimizer `simplifyWithAttributes`(只保留原顶点、按法线和 UV 误差挑,硬边和衣服结构线不被揉软),头用 Blender collapse(会重新摆顶点,卷发、下颌、耳朵这类圆形不出锯齿),脸前部和手(半径 0.45 头高)锁定不减。对比 Coda 20 万原模:上身白模 SSIM 0.884→0.938、下身 0.912→0.943、脸 0.9745,马甲包边、扣环、袋盖边和原模一样利落,不比 6 万直出软;旧做法(纯 collapse)留下的衬衫斑驳和背面扣环拖影消失。试过不行的:按折痕加保护权重(collapse 把预算从平面抽走,出星状长条三角,全部变差);纯 meshoptimizer(头发轮廓和下颌变锯齿,脸 0.928)。65k 面能再好一点(上身 0.949),不是必需。meshoptimizer 1.3.0 简化器已放在 `scripts/blender/vendor/`,要 node,不用 npm 安装;`--method collapse` 保留旧做法。头部预算占比 `--head-share 0.193` 只在 Coda 上标定过,双马尾、长发角色用前先看头部三角数是否合理。**只验证到模型阶段**:绑骨、换脸、Unity 入库还没在这条路线上跑过,跑到哪步出问题照"先回看 Wren"的规矩补。剩下和 Wren 的差距在贴图(Tripo 把明暗斑烘进了脸部皮肤),靠阶段 4 的 tex_clean 和阶段 7 的脸图集解决,不是几何问题。head_ratio ≥ 0.20 的角色(Wren)照旧 6 万面单体直出。分头换头降为备选,只在整身路线实测走不通时用,用前读 05 的 assemble 段和坑 93/94/110/111/119/127。
 - **长发角色万一要分头,身体必须用去长发的四视图生成(10-25 Vesper 定)**:整身生成的长发会和上背/臀部做成一体壳,背面没有独立表面,换头后删发=洞,压平/成膜/切平五轮都救不回;正确做法是 sol edit 把定稿四视图的长发剪成下颌长度短 bob(背面补衬衫/背心)再出结构参考重生成身体(Tripo 约 1 小时),头单独生成后换头只做领口切平+脖子收进+材质合一(坑 119/120)。
 - **四视图头身比用 mock 法,不靠 sol 多轮(10-24 Vesper 定)**:sol 文生图默认立绘 8 头身,edit 改头身比每轮只给目标差的 1/3(0.108→0.124→0.131),写百分比或写目标数字都一样;正确做法=选一张 → PIL 以领口顶为轴把身体缩小到目标头身比做 mock(头不动)→ sol edit 只融合领口处接缝,一轮到位。侧/背视图同样:以领口顶(背面以肩甲/肩线)对齐 front 做 mock 再融缝;**侧背视图禁喂立绘比例的转面图**当图 3(会把头做小 30%)。量头高用 `character-art-lab/tools/vesper_cur_headmeasure.py`,不用肤色宽度门槛。
+- **皮肤按部件换,底模冻结(10-26 Coda 验证)**:Tripo 每次整身重生成脸都会变,而且按总高归一化身体会缩放,所以皮肤不能整身重生成。每个英雄冻结一个底模(定稿脸 + 打底衣 + 寸头,头皮完整),新皮肤的发型/帽子/上衣/下装/鞋各自从新的整身生成里拆出来、相似变换对齐、适配到底模上。新英雄一开始就把寸头底模当定稿做;老英雄用 `head_shave.py` 剃头,脸一个顶点不动。全套做法、Coda 实测数字和没实测的部分见 `references/10-部件换装.md`。
 - **一副骨架铁律(10-24 Rook2 定)**:模型 FBX 和所有动作 FBX 必须来自**同一副最终骨架**。绑骨阶段任何改静止姿势的操作(rig_build 的镜像/roll 归零/脊柱拉直、换头、归一化)之后,Tripo 预设/文生动作都要用 `scripts/blender/anim_bake_to_rig.py` 按世界空间重新烘到最终骨架上,再用 `anim_verify.py` 过门(逐骨世界方向误差 <1°,注意 FBX 读回从第 1 帧起要 +1 帧对齐),Unity 里动作 FBX 一律 `CopyFromOther` 模型 avatar(`eval/anim_import_shared.cs`)。**禁止**动作 FBX 自建第二份 avatar 再靠 enforce/canon T-pose 去凑;禁止看到交叉腿/点脚尖/后仰就去改 avatar、加 leg_fix 常量——先量 Blender 源和 Unity 同一时刻的数字(`eval/knee_t.cs`、`eval/foot_probe.cs`),差在哪修哪。
 - **验收看全身四视图不看数字**:每个在用动作 `eval/fullbody.cs` 出正/侧/背/3/4,与 Wren 同机位并排,逐条列出不自然的点(脚掌俯仰、膝距、手臂贴身、手腕、头倾、朝向),派子 agent 修,再出同一组图复验;膝盖数值只能当辅助。改过 avatar 或骨架后,所有派生 .anim(裁剪待机、求解敬礼、舱内握把)全部作废重生成。
 - **门只认证据**:脚本打印的 PASS/FAIL 和 Opus 亲眼看过的对照板/裁图。sol 或任何报告里写的"pass"不算。每次修改都和上一版裁同一区域并排看,不对着 prompt 打勾。
@@ -70,6 +71,11 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 | `blender/deform_gates.py` | 形变数字门:手臂钻躯干 + 小幅度姿势拉伸(10-26,见 05 章 6.4 第 3 条) |
 | `blender/protect_decimate.py` | 整身高面数模型保脸保手减面到预算(焊 UV 缝 → 几何圈脸前部+手锁定 → 身体 meshoptimizer、头 collapse → 投原模法线);只吃未绑骨的生成件,要 node(10-26,见总纪律"头小的角色") |
 | `blender/meshopt_simplify.mjs` + `blender/vendor/meshoptimizer-1.3.0/` | protect_decimate 调用的 meshoptimizer 简化器(MIT,vendored) |
+| `blender/part_align.py` | 皮肤部件来源整身 → 底模 ICP(默认相似变换)(10-26,见 10 章) |
+| `blender/part_pick.py` | 从 Tripo Detailed 拆件挑部件、清罗纹、抠头发带,出掩码和部件 glb |
+| `blender/part_graft.py` | 上衣/下装类部件贴回底模(删被盖面、留裙边、边界吸附、推穿模) |
+| `blender/part_fit.py` | 发型/帽子类部件适配底模(只推不拉、焊接平滑、补推) |
+| `blender/head_shave.py` | 老英雄剃头:定稿模型只把头发区换成寸头头皮,脸不动 |
 | `blender/face_render.py` | 脸底图 + 投影 json + 标定图 |
 | `blender/face_swap.py` | 脸面选面、格子空间 UV、表情材质、QA 渲染、FBX |
 | `blender/export_fbx.py` | 从 blend 重新导出 FBX 并回读校验 |

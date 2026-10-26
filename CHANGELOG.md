@@ -2,6 +2,12 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.69.0 — 2026-10-26 角色皮肤按部件换:底模冻结 + 拆件对齐适配
+- Coda 实测:Tripo 每次整身重生成脸都会变(寸头版脸前部对定稿 mean 2.95 mm),并按总高归一化缩放身体(寸头版大 1.65%),所以皮肤不能整身重生成。改为每个英雄冻结一个底模(定稿脸 + 打底衣 + 寸头),发型/帽子/上衣/下装/鞋各自从新生成里用 Detailed 拆件挑出来,相似变换对齐后适配到底模。槽位五个(勾哥定)。
+- 上衣(夹克):贴回后四条边界环最大缝 ≤ 0.154%H,穿模 789→10。发型(卷发):只推不拉 + 焊接平滑 + 补推,头发在头皮里 0%,剪影 IoU 0.97~0.999。
+- 老英雄剃头:定稿模型沿光滑场等值线切掉头发、桥接寸头头皮,脸一个顶点不动,开放边 0;六轮弯路(锯齿洞边、位置焊接、钳制区定错、桥面 UV 跨缝)写进 10 章。老英雄发型槽不能空。
+- 新增 references/10-部件换装.md 和 scripts/blender/part_align、part_pick、part_graft、part_fit、head_shave;四个 part 脚本在 Coda 上复跑和实验逐项对上。没实测:下装/鞋/帽子、绑骨后形变、Unity 槽位挂件。
+
 ### v0.68.0 — 2026-10-26 角色保脸减面换算法:身体 meshoptimizer、头 collapse
 - 衣服正背侧逐方向查出纯 collapse 把马甲包边、扣环、衬衫揉软后,第三轮比了缩小手保护、折痕保护权重、meshoptimizer 属性感知简化、65k 四条路。胜出:身体用 meshoptimizer simplifyWithAttributes(硬边结构线不被揉软)、头用 Blender collapse(圆形不出锯齿)、脸前部和手(0.45 头高)锁定。Coda 对 20 万原模:上身白模 SSIM 0.884→0.938、下身 0.912→0.943、脸 0.9745,背面扣环拖影消失。折痕保护权重全面变差(星状长条三角),纯 meshoptimizer 脸 0.928 不过门。
 - meshoptimizer 1.3.0 简化器(MIT)vendored 进 er-character-pipeline/scripts/blender/vendor,只要 node;--method collapse 保留旧做法。
