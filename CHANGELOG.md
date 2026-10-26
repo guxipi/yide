@@ -2,6 +2,12 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.65.0 — 2026-10-26 tripo-blender-stylize 扩成 er-blender;er-character-pipeline 迁入本仓
+- tripo-blender-stylize 改名扩成 er-blender:ER 所有非角色 Blender 活的总入口。references 分 01 通道(官方 Blender Lab MCP v1.0.3,社区版已卸)/02 bpy 5.1 坑表/03 道具风格化/04 验收门/05 导出 Unity/06 离线件;scripts/blender 带公共库 _er_bl.py 和评审台 stage.py(V5 46° 镜头 + 正交 + 128px 游戏尺寸,lablit/white 两模式)。
+- 03 改口:10-26 两把通用枪两轮 A/B,十个变体没有一个全面赢过 Tripo 原模,旧"减面→平滑→倒角→色彩归并"五步不再默认跑;改成生成端先做对、Unity importer 零成本层、Blender 只按症状修。
+- Tripo 只用网页版(10-26 勾哥定),actions/polish.md 里 10-06 的"用 tripo cli"原话后补了改口。
+- er-character-pipeline 从 kryst 机本地迁入本仓(三机同步、可回退),绑骨阶段新增 deform_gates.py:手臂钻躯干 ≤15% + 小幅度姿势拉伸两道数字门,Tuba 坑 77 能抓到,Wren/Rook2 不误报。
+
 ### v0.64.0 — 2026-10-26 新 skill er-icon-gen:icon 走 gemini 工具箱 CLI
 - ER 所有 icon 需求改走勾哥本机的 gemini 生图工具箱(`F:\AI\Claude\ER\er_icon_cli.py`,工具本身不在本仓):先入队攒批,一张网格出 9~12 件,程序抠框切图、自动 QA,对照板在 Claude 窗口给勾哥点选,点过的才入 Unity。
 - skill 写死了这几条:队列只收勾哥原话要的;默认参考 v4 母版样张;每批 1K 约 $0.067,已授权按批出;同件两轮不对就停;一物多图由勾哥选;装备/枪械/glyph/buff 还在 GUI,CLI 没接。

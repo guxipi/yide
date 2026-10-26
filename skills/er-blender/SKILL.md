@@ -1,56 +1,48 @@
 ---
-name: tripo-blender-stylize
-description: Take a Tripo-generated 3D model from "AI 肉感/塑料感/细碎噪点/low quality" to Extraction’s mo.co painted toon standard (smooth chunky forms, clean painted colour areas, NO faceting, NO outline) — Tripo prompt recipe + Blender clean-up pipeline + Unity intake handoff. Upstream of gaoguang-3d. Trigger on "tripo 模型精修" / "blender 处理模型" / "模型肉感" / "模型太高模/太碎" / "tripo 怎么生成才好看" / "stylize this model". NOT for in-Unity fixes alone — normals-only "肉感" often needs NO Blender (importer normals 就够), check first.
+name: er-blender
+description: ER(Extraction)所有非角色的 Blender 活的总入口——Tripo 道具/武器/HOME 家具/POI 件的清理与风格化、评审台出对照图、数字验收门、导出进 Unity、VFX mesh 和圆润石头这类离线件;附 Blender 5.1 bpy 坑表和官方 Blender Lab MCP 的用法。Trigger on "blender 处理模型" / "tripo 模型精修" / "模型肉感" / "模型太高模/太碎" / "看得出刻面" / "减面" / "道具风格化" / "blender 出图/渲染对照" / "导出 FBX 进 Unity" / "blender mcp" / "bpy 报错" / "stylize this model"。角色从设计图到入库走 er-character-pipeline;只在 Unity 里修材质/法线/pivot 走 gaoguang-3d;树、草、崖、地块这类程序化地编走 Unity 生成器,不进 Blender。
 ---
 
-# Tripo → mo.co 风格化流水线（Tripo prompt / Blender 精修 / Unity 交接）
+# ER Blender 总入口
 
-**目标水准和验收以 ER 美术规范为准**:vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 游戏内画面的质量和质感,2026-10-11 起取代旧的 Brawl Stars / Synty 低模口径),建筑道具植被看它第 7 节。读起来要是**平滑饱满的大形体 + 大块干净色面 + 两阶明暗 + 没有写实高光**,3D 世界里看不到黑描边。
+这份 skill 管 ER 里所有不是角色的 Blender 活。结果按 ER 美术规范验收(vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`,对标 mo.co,建筑道具看第 7 节):平滑饱满的大形体、大块干净色面、两阶明暗、没有写实高光,3D 世界里不描黑边。**禁区**:看得出刻面或低多边形、flat shaded、写实材质纹理、细碎凹凸,任何一项都打回。
 
-**结果禁区**(总纲红线和参考资料第 7 节):画面上读出硬刻面、低多边形感(玩家能数出面就是失败)、flat shaded、写实材质纹理、细碎凹凸,任何一项都打回。旧版本这份 skill 让 prompt 写 `low poly, flat shaded, faceted` 并在 Blender 里 Shade Flat,那套已作废,别照旧笔记做。
+## 先判断走哪条路
 
-下面三层是验证过的一种做法,不是唯一做法;别的路线也行,结果过总纲门槛即可。AI 模型(Tripo)默认输出 = 高模平滑 + PBR 贴图 → "肉感/塑料感"。修复分三层,**从便宜的做起**:
-
-## 0. 先试零成本层:Unity importer(多数"肉感"到这就好了)
-Tripo 的软塌感多半来自法线,不是网格本身。先在 Unity 里:
-- ModelImporter → `importNormals = Calculate`,smoothing angle 从大往小试,**以截图看不出多边形面为准**(减过面的模型角度太小会出刻面,这是禁区)
-- 材质走 `gaoguang-3d`(ToonLit remap,矿塔案例:材质早就对了,纯法线问题)
-- 底部融合差 → 给件加土色底盘 + 低岩环(原 planet-dressing 的 FoundationRing 思路;该 skill 已随战役退役)
-**只有剪影/面数/比例本身不行,才进 Blender。**
-
-## 1. Tripo 生成侧:prompt 就把风格钉住
-- **常用正向关键词**:`stylized cartoon game asset, smooth rounded chunky forms, large clean colour areas, simple two-tone painted shading, minimal surface texture, mobile game asset`
-- **反向排除**:`low poly, faceted, flat shaded, hard facets, black outline, realistic, high detail, PBR, weathered, greebles, noisy texture`(细碎凹凸 = 肉感之源,刻面 = 画风禁区)
-- 比例口径:矮胖 > 瘦高(顶视角识别),大形体 2-3 个就够,别让它堆小细节
-- 出图先看**剪影缩略图**:顶视角认不出的直接重 roll,别指望后期救
-- 角色不走这份 skill:角色从定稿设计图到游戏走 `er-character-pipeline`(四视图 → Tripo → 绑骨 → 入库),长相和头身以角色手册为准
-
-## 2. Blender 精修(Blender 官方 MCP 驱动,Claude 直接执行)
-> 前置:用 **Blender 官方 MCP**(Blender Lab 维护,仓库 https://projects.blender.org/lab/blender_mcp ,文档 https://www.blender.org/lab/mcp-server/ ,要 Blender ≥ 5.1)。`ahujasid/blender-mcp`(PyPI `mcp-for-blender`)是个人社区项目,不是官方,不再用。
-> 装法(2026-10-23 验证过):①winget 装 uv;②`git clone https://projects.blender.org/lab/blender_mcp.git C:lender_mcp` 并 checkout 最新 tag,`cd mcp && uv sync`;③从发布页下 `mcp-<ver>.zip`,`blender.exe --command extension install-file -r user_default -e <zip>`;④`claude mcp add -s user blender -- <uv.exe 全路径> --directory C:lender_mcp\mcp run blender-mcp`(裸 `uv` 会因 PATH 未刷新 CONNECTION_CLOSED)。
-> 启动条件:Blender 偏好 System → Network → **Allow Online Access 必须开**,否则 add-on 静默不起 socket(localhost:9876);GUI 模式才自启,`-b` 后台不自启。会话里没有 `mcp__blender__*` 就先确认 Blender GUI 已开、`claude mcp get blender` 为 Connected,再重启会话。
-> 工作法:`get_objects_summary`/`get_object_detail_summary` 先读场景 → `execute_blender_code` 改 → `get_screenshot_of_area_as_image` 或 `render_viewport_to_path` 回看 → 迭代;写 bpy 拿不准先 `search_api_docs`。勾哥可以随时在同一个窗口里手动选中/拖动,Claude 接着改。
-
-对每个 Tripo 模型(GLB/FBX)常用这五步,全部可用 execute_blender_code 驱动(顺序和参数按模型调,不是死流程):
-1. **Decimate 减面**:Modifier `DECIMATE` ratio 起手 0.1(道具目标 800-3000 面);剪影垮了就升到 0.2。**面数只为预算服务,不是画风**——减完必须靠第 2 步把面藏住
-2. **Shade Smooth**:全模型 `shade_smooth`(配 auto smooth / weighted normal),只在真正的结构转折处留硬边。这步决定"看不看得出多边形",看得出就回头调
-3. **Bevel 大边**:Modifier `BEVEL` width 8-15%(视觉元素做法库 mo.co 岩石条)、segments 1-2——边缘圆润不刀刻,剪影变 chunky 圆润(mo.co 岩石/道具 = 大倒角块状体)
-4. **色彩归并**:扔掉 AI 自带的 PBR 贴图和纹理噪点。每块东西的固有色控制在两三个以内(总纲红线和参考资料第 7 节),体积靠"顶部亮、底部暗"的渐变(顶点色写 world-Y AO)和边缘提亮出,不靠纹理。可以烘一张小调色板贴图(每个色块一格,UV 挪进对应格子),Unity 侧 ToonLit 直接吃
-5. **导出**:Apply 所有 modifier → 原点放**底部中心**(省 Unity 侧 pivot 补偿) → FBX(`apply transform`, Z-up→Y-up 自动) → 落 `Assets/Art/3DModelsfromGu/<Name>/`
-
-## 3. Unity 交接(→ gaoguang-3d)
-- 进项目走 `gaoguang-3d`:ToonLit remap(matte:rim alpha=0)+ LightSet 真光验证
-- importer 法线按 §0 设,以看不出刻面为准
-- 是地图 hero 件 → 加底盘 / 岩环种进地里(远征地编走 vault 016 的施工手册)
-- 描边:结果要求是 3D 世界里看不到黑描边(角色也一样,总纲红线第 1 条);用 ToonLit 的话 `_OutlineWidth` 显式设 0(新建材质默认 1.5 纯黑)
-
-## 判断表:走哪条路
-| 症状 | 路径 |
+| 要做的事 | 去哪 |
 |---|---|
-| 肉感/软塌但剪影 OK | §0 importer 法线,不进 Blender |
-| 灰暗/塑料高光 | gaoguang-3d 材质 remap |
-| 看得出刻面/多边形 | §0 加大 smoothing angle,不行再 §2 第 2 步 |
-| 面数过高/剪影糊/比例差 | §2 Blender 五步 |
-| 表面细碎噪点、像写实贴图 | §2 第 4 步色彩归并 |
-| 跟地面像"摆上去的" | 加土色底盘 / 低岩环,或埋低一点 |
-| 生成侧就丑 | §1 重写 prompt 重 roll,别硬修 |
+| 角色(四视图 → Tripo → 绑骨 → 表情 → 入库) | er-character-pipeline(它的 Blender 坑同样以本 skill 的 02 为准) |
+| 模型进了 Unity 发灰、塑料感、pivot 歪、只是法线软塌 | gaoguang-3d;先试 Unity importer 法线,多数"肉感"不用进 Blender |
+| Tripo 道具/武器/家具/POI 件:减面、刻面、色块、尺寸、挂点 | 本 skill `references/03-道具风格化.md` |
+| 出评审对照图、量数字、判过没过 | `references/04-验收门.md` |
+| 导出 FBX、挂点 Empty、回读核对、交给 Unity | `references/05-导出Unity.md` |
+| VFX mesh(斩击弧/环/冲击波/拖尾)、flipbook、圆润石头单元库 | `references/06-离线件.md`(做法已调研、未在 ER 实测,先做 pilot) |
+| 树、草、崖、台地、沙被、散布 | 不进 Blender。走 Unity 自写生成器(记忆里松树/莲座树/崖体做法卡);Blender 做树叶在 10 月被放弃过 |
+
+## 通道:live 用 MCP 迭代,出货用 blender -b
+
+本机用官方 Blender Lab MCP(2026-10-26 换装,社区版已卸)。MCP 只用来边改边看;导入、修改器、烘焙、导出、验收门、批处理一律写成脚本后台跑:`F:/Apps/blender.exe -b --factory-startup -P <脚本> --python-exit-code 1 -- <参数>`。**证据只认后台渲到文件的对照板加数字**,MCP 截图只算迭代过程。工具清单、开工检查、Online Access、回退备份见 `references/01-通道与工具.md`。
+
+写 bpy 之前先读 `references/02-bpy51坑.md`:枚举运行时读(5.1 的 EEVEE 是 `BLENDER_EEVEE`)、节点按 type 找、5.x 删掉的 API、后台没有视口上下文要 temp_override、operator 返回 FINISHED 不等于生效。这些坑在 2026-07~10 的 38 个 Blender 会话里反复踩过。
+
+Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo-cli、不直接调 API;操作和验身见 er-character-pipeline `references/03-Tripo网页操作.md`,点数不记。
+
+## 脚本库
+
+`scripts/blender/` 下的脚本都是"一个 `main(argv)`、参数在 `--` 之后、打一行 JSON、失败退出码非 0",后台和 MCP(`importlib.reload` 后调)两用。先用库里的,别在会话里再写一份:2026-07~10 的会话写了 389 个脚本名,375 个不在 skill 里,出图脚本另写了 49 个、体检脚本 87 个,大半只用过一次。
+
+| 脚本 | 干什么 |
+|---|---|
+| `_er_bl.py` | 公共库:`ops_ctx`(统一 temp_override)、`import_any`(焊点、应用变换、原点底部中心,焊点时保住原法线)、`inspect`(三角/开放边/非流形/材质/UV/尺寸)、`make_lablit_preview`(纯 Emission 两阶明暗,近似 Unity LabLit) |
+| `stage.py` | 评审台:V5 46° 游戏镜头、正交俯视、正/侧/3/4、128px 游戏尺寸图,lablit / white(只看明暗)两种模式,另存掩码 |
+
+## 工作纪律
+
+- 动手前先看参考:对标 mo.co 的件走 reference-replicate 的观察-测量流程;两轮不中换方法,不在一条路上盲调。
+- 一件东西的固有色两三个,体积靠顶亮底暗和边缘提亮,不靠纹理;面数只为预算服务,减完要把面藏住。
+- 改了别人开着的 .blend 前先确认;不关别人的 Blender GUI;重要 .blend 不只放 scratchpad。
+- 做完交给 Unity 后,在真光照下再截一次和 Blender 评审图并排;模型在引擎里和在 Blender 里不是一回事。
+
+## 前沿雷达
+
+2026-10-26 做过一轮八个方向的调研(人物、Rig、动作、物品、环境、材质、光效、agent 驱动 Blender),142 条带出处和 ER 采用判断,结论表在 Google Sheet「ER Blender 建模前沿调研」。新工具先查那张表有没有判过,再决定要不要试。
