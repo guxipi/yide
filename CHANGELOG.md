@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.67.0 — 2026-10-26 角色管线:头小的角色改走"整身 20 万面 + 保脸减面",不再默认分头
+- 诊断(Wren 与之后 6 个角色逐阶段对照):Wren 之后人物精度掉下来,根因是 6.5 头身角色整身 6 万面生成时头只分到 3~6 千面,于是改走分头换头,而领口碎片、脸岛、耳洞、颈断口、长发融壳、鸟嘴下巴大多出在换头这一步。10-24 写进 SKILL 的"head_ratio ≤ 0.17 直接分头"来自 LOG 把一句条件句记成了定论。
+- 新做法:阶段 3 整身一次生成 200,000 面(网页价格仍是 30 点),上贴图后跑新脚本 scripts/blender/protect_decimate.py:焊 UV 缝 → 几何圈脸前部+双手硬保护 → DECIMATE collapse 到 58,000 → 投原模法线 → validate 去重复面。Coda 实测 194,895 → 57,997,头 11,113 面(6 万直出 6,205)、脸前部 2,468(直出 782,Wren 1,710),脸特写对 20 万原模 SSIM 0.973,无拼缝。只验证到模型阶段,绑骨/换脸/入库待跑;剩下与 Wren 的差距在 Tripo 烘进脸部皮肤的明暗斑,靠 tex_clean 和脸图集。
+- 改动:SKILL 总纪律、00 章第 3 步、03 章面数设置与贴图页换图步骤、pitfalls 116。分头换头降为备选。
+
 ### v0.65.0 — 2026-10-26 tripo-blender-stylize 扩成 er-blender;er-character-pipeline 迁入本仓
 - tripo-blender-stylize 改名扩成 er-blender:ER 所有非角色 Blender 活的总入口。references 分 01 通道(官方 Blender Lab MCP v1.0.3,社区版已卸)/02 bpy 5.1 坑表/03 道具风格化/04 验收门/05 导出 Unity/06 离线件;scripts/blender 带公共库 _er_bl.py 和评审台 stage.py(V5 46° 镜头 + 正交 + 128px 游戏尺寸,lablit/white 两模式)。
 - 03 改口:10-26 两把通用枪两轮 A/B,十个变体没有一个全面赢过 Tripo 原模,旧"减面→平滑→倒角→色彩归并"五步不再默认跑;改成生成端先做对、Unity importer 零成本层、Blender 只按症状修。

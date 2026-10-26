@@ -26,10 +26,11 @@ Tripo Studio:`https://studio.tripo3d.ai/workspace/generate`(还有 /texture、/r
    | Ultra Mesh Quality | 开 |
    | Texture | **关** |
    | Topology | Triangle |
-   | Polycount | 60000 |
+   | Polycount | head_ratio ≥ 0.20(Wren)填 60000;≤ 0.17(6.5 头身)填 **200000**,之后保脸减面到 58,000(SKILL 总纪律) |
    | Generate in Parts | 关 |
-   按钮价格应显示 **30**。不是 30 说明还有别的开关开着,先找出来。
-4. Generate,约 4 分钟。
+   按钮价格应显示 **30**(10-26 Coda 填 200000 也是 30)。不是 30 说明还有别的开关开着,先找出来。
+4. Generate,约 4 分钟(Coda 200k 实测约 1 分钟出白模)。
+   - 上贴图时,贴图页会自动带入生成时用的结构参考,要按垃圾桶清掉四张,再按槽名传平光定稿四视图;分辨率选 4K,Remove Lighting 关(10-26 Coda 照此做)。
 5. 导出 GLB(带不带贴图都行),下载落在本机 `C:\Users\kryst\Downloads`。按时间找最新文件(`ls -t ~/Downloads | head`),拷到 `out/<slug>-tripo/tripo-web/gen-N/`,文件名写进 config `files.geo_glb`。
 6. **每个下载文件先过 `inspect_model.py`**:10-07 拿到过一个"迟到落盘"的旧导出(时间戳 16:09,没有骨骼),差点当成新文件用。
 7. 进阶段 5 的形状门(clay)。不过就重试:**改选项不改图**,最多 3 次,每次记选项。
