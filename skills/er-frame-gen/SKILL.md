@@ -59,8 +59,11 @@ PYTHONUTF8=1 py -3 "$CLI" cut "<批次目录>" [--face <头像.png>]
 
 写 .cs 前查 playMode、拿 `Tools/cargo_lock.sh` 的 compile 锁;进 Play 拿 play 锁。资料卡(`UIHomeScreenPanel.OpenSelfProfile()`)上的 `UIAvatarFrame` 可以 eval 调 `SetFrameById("<id>")` 临时换框看效果(只改显示不改存档);衣柜头像框页 `ShowPanel<UICosmeticWardrobePanel>().SelectTab(1)`。`capture_game_view --save_path` 会存进 `Assets/Temp/`,看完挪走并删 .meta。测完 stop、放锁。
 
+## 外框上限(10-26 晚)
+
+`UIAvatarFrame.MaxFootprint`(框 : 头像面,默认 1.45):框的 ref 超过上限时,头像面连框等比缩小,占位不超「面 × 上限」,新框 ref 再大也不会压到旁边的字和格子。窄位单设:主页 CrewTag 1.35、资料卡 1.33、衣柜格子 1.2。所以出图时 ref 偏大不挡入库,代价是头像面变小(ref 2.36 的 deep_diver 在资料卡只剩 0.56),对照板的橙旗要写清这一点。
+
 ## 已知现状(10-26)
 
-- CARGO 主页左上头像钮(CrewTag Porthole)的 `_avatarFrameImage` 在 HomeScreen.unity 里是空引用,装备的框在主页看不到;Porthole 带 Mask,框要挂在 Mask 外。
 - 衣柜头像框页只列 BP 来源的框,商店/周榜/深潜/图鉴框不在列表。
-- 衣柜格子比框小,ref ≥1.56 的框会压到相邻格。
+- BP 奖励预览 RewardIcons 仍指旧 Frame_S1_01~03。
