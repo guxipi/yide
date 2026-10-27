@@ -2,6 +2,9 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.70.3 — 2026-10-27 er-shop-mkt:丰富度第三轮意见 + codex brief
+- 勾哥对 v2:品阶仍走模切描边;带描边 item 可以不放格子;勾不能灰;不是所有纯色都换渐变+底纹,要写清纯色/渐变/mix 的使用逻辑;不要折角丝带;字标不立细规范;列头行要和内容分开;7 日方向对了。写进 SKILL 第 1 节和检查单第 7 条;v3 交 codex,brief 在 vault `UI_CARGO/handoff_2026-10-27/research/BRIEF_codex_cargo_rich_2026-10-27.md`。
+
 ### v0.70.2 — 2026-10-27 er-shop-mkt:丰富度方向定为"贴纸 flat + 底纹/渐变/半透明/投影"
 - 勾哥否了 v1 丰富度提案的厚度按钮、高光弧、立体勾章:"之前的贴纸、flat 风格很好,我希望通过底纹、渐变、半透明、drop shadow 来做出不同"。SKILL 第 1 节口径和检查单第 7 条改成这个方向;样张改指 `research/cargo_rich_proposal_v2_2026-10-27.html`。
 
