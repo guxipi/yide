@@ -2,6 +2,9 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.70.2 — 2026-10-27 er-shop-mkt:丰富度方向定为"贴纸 flat + 底纹/渐变/半透明/投影"
+- 勾哥否了 v1 丰富度提案的厚度按钮、高光弧、立体勾章:"之前的贴纸、flat 风格很好,我希望通过底纹、渐变、半透明、drop shadow 来做出不同"。SKILL 第 1 节口径和检查单第 7 条改成这个方向;样张改指 `research/cargo_rich_proposal_v2_2026-10-27.html`。
+
 ### v0.70.1 — 2026-10-27 er-shop-mkt 补勾哥第二轮意见:组件要有材质
 - 勾哥看 First Extract 改版 mock:"修改后依然不够有游戏感""背景都有 pattern 和装饰,不是平面色""每一个 component 或每一行都有一个 visual"。写进 SKILL 第 1 节口径和第 3 节检查单第 7 条;12 个组件的提案在 vault `UI_CARGO/handoff_2026-10-27/research/cargo_rich_proposal_2026-10-27.html`,未拍板前不当规范。
 
