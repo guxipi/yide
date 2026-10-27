@@ -1,0 +1,83 @@
+---
+name: er-shop-mkt
+description: ER(Extraction)商店礼包营销视觉(MKT visual)和商业化 UI 的固定做法——礼包弹窗、gacha 卡包/挂墙点数卡、通行证 BP、月卡/免广告这类横版充值卡、7 日/成长基金、新手礼包。写死了勾哥历次改稿口径、每类礼包的版式配方、codex 出图管线(人物 KV 一套、物件包装一套,防画风漂移)、交付格式(HTML 评审稿)。Trigger on "做礼包" / "礼包弹窗" / "商店礼包 visual" / "mkt visual" / "营销图" / "卡包" / "gacha 包装" / "充值卡" / "月卡" / "免广告卡" / "通行证/BP 屏" / "7 日礼包" / "成长基金" / "新手礼包" / "礼包 KV" / "商业卡" / "W4 商业化屏",或任何 ER 付费/领奖屏要出 key art 或改版式。只出 icon 走 er-icon-gen;头像框走 er-frame-gen;Unity 接线走 ui-placement;非商业屏的整屏改版走 ui-visual-rework。
+---
+
+# ER 商店礼包 MKT visual + UI
+
+这个 skill 解决一件事:勾哥不想每次重新 prompt、重新给一轮意见。2026-10-27 W4 商业卡 9 屏迭代到 v4,每一轮勾哥指出的问题都整理在下面第 1 节,做任何礼包、卡包、充值卡、通行证屏之前先把这一节当验收单过一遍,不要等他再说一次。
+
+先读的真源(都在 vault `I:\My Drive\Obsidian\ExtractionRaider\01 - 星际拓荒重构\` 下,换机按 yide-brain charter「跨盘路径」找盘符):
+
+- `013 美术/UI_CARGO/CARGO_tokens.md` 第十、十五、十六节:验收清单、底色层级、可读性五通道。UI 部分必过。
+- `013 美术/UI_CARGO/handoff_2026-10-27/design/board_w4_v4.html` + `v3_parts.js` + `v4_parts.js`:W4 现行稿,版式和 CSS 写法直接抄(`foilPack`、`stk` 白边+品阶外描、`kvOof` 人物出框)。
+- `013 美术/UI_CARGO/handoff_2026-10-27/design/refs_gouge_2026-10-27/` 1~24:勾哥给的参考和标注截图。
+- `013 美术/UI_CARGO/handoff_2026-10-27/research/game_feel_2026-10-27.html`:Pinterest 板学习 + CARGO 为什么不像游戏的报告,第 3 节"像游戏"检查单从这里来。
+- 本机 Claude 记忆:`feedback-codex-object-art-icon-style`、`er-kv-style-drift-to-realism`、`codex-sol-er-art-skill-hijack`、`er-character-sheet-ssot`、`feedback-design-review-as-html`。和本文冲突以记忆里更新的日期为准,并回写本文。
+
+## 1. 设计口径(勾哥 10-27 前后历次改稿,保留原意)
+
+**MKT visual 不是 KV,也不受旧 UI 规制限制。** 礼包包装、卡包、充值卡卡面是营销画面,目标是"一眼看出买到什么、值多少"。CARGO tokens 里"禁渐变、禁深底霓虹、禁发光"这类条款管的是信息纸面,不管包装皮和卡面;包装上可以有放射底、炫彩、光。UI 外壳(弹窗、价签、按钮、字阶、底色层级)仍然按 CARGO 现行节走。
+
+**gacha 不要宝箱。** 做成卡包(铝箔袋)或挂墙点数卡,包装皮上印礼包的完整内容(档位名、保底、当周 UP)。宝箱图是旧做法,不再用。
+
+**包装上不能是"贴纸加一把枪"。** 要做成以枪为主的营销画面:当周 UP 枪是主角,占包装正面大部分。纯剪影实测糊(10-27 v4 试过),现行做法是彩色枪本体 + 白边 + 品阶色外描 + 深色错位影子,底下垫放射底,枪转 -12~-18°。CSS 见 `references/02-版式配方.md` 的 gun badge。
+
+**物件和包装用 codex 出,但画风必须对上 er-icon-gen 的 v4 样张。** 只喂 v4 母版一张参考图,prompt 照抄 icon 风格句,禁材质词(holographic、glossy、chrome、specular、foil 这类)。喂 KV 场景图会漂成通用手游光滑 3D(10-27 v3 第一轮翻车,勾哥:"卡画风有偏移啊")。人物 KV 是另一套参考,两套不能混喂。
+
+**有 key art 的屏都要有 key art。** 7 日、成长基金、新手礼包弹窗、BP 相关所有屏都要配礼包 marketing key art;能放人物就放人物(10-12 勾哥:"所有 KV 礼包皮,能放人物的还是放个人物")。人物可以出框(头和肩越过卡片上沿),人物、道具、背景要同一个光。
+
+**能用图说的不用字。** 新手礼包选弹药类型时直接展示三把枪的图,不做 SMG / SHELLS / SNIPER 文字按钮。任务行要有代表具体行动的图标(撤离=飞船+上箭头、击杀=准星+怪头、采矿=镐+矿,现成件在 W4 `a/t/t_*.png`)。
+
+**BP 竖排三列。** 左免费、中档位脊柱、右付费,每档 free 和 premium 各得什么横向一眼对齐。付费列必须明显不同:炫彩底、格子更大。图标底统一、大小统一、图要裁边(不留 icon 自带的透明大边)。付费档名 PLUS 改名 MAX。BP 相关所有屏(主屏、购买弹窗、奖励详情)都带当期英雄(12 月期是 Coda)的 MKT visual。
+
+**月卡、免广告这类做成横版充值卡。** 卡面是人物 MKT 插画(人物居左约 55%,右 40% 留平静底给大字);卡面写明价值,句式照 "60 gems a day for 30 days, plus 300 free gems right now";必须有类似 "LEGEND GUARANTEE" 的角标(右上角,斜切色带 + 两行小字 + 一个小图标,参考 refs 22/24 日本"陣営レジェンドカードパック");**不要黄色描边**(v4 月卡的金边被勾哥圈掉)。
+
+**7 日和成长基金** 参考 ZZZ 城市基金的横列(refs 6:等级列横排,FREE / 付费两行,终点列换色放大)和 Seasonal Fair 的竖脊柱(refs 9:左侧节点轴,右侧奖励卡,底部"总价值"条),两屏都要带 key art 头图。
+
+**人物按手册定稿。** 参考图只认 `013 美术/角色手册/img/` 的定稿板和表情表(路径表在 `references/03-出图管线.md`);Vesper 认 10-22 之后的当前造型;Tuba 是鳄鱼。不写自编外貌描述。
+
+## 2. 每类礼包的版式配方
+
+细节、尺寸、CSS 都在 `references/02-版式配方.md`,这里只列每类的骨架,开工先对上骨架再动手:
+
+| 类型 | 骨架 | 主参考 |
+|---|---|---|
+| gacha 卡包 | 铝箔袋包装(v4 母版画风)+ 当周 UP 枪 gun badge + 放射底 + 档位名带 + 保底一行;三档并排挂在 Supply Rack 挂板上,主推档放大 | refs 1、10、12;Pinterest Soul shop |
+| 挂墙点数卡 | 吊卡 + 金属挂钩 + 卡面大数字;用于低档/免费档 | refs 3、4、20 |
+| 横版充值卡(月卡/免广告/终生) | 1672×941 人物插画卡面 + 右侧价值大字 + 一句价值说明 + 右上 GUARANTEE 角标 + 白价签;无黄描边 | refs 22~24、8 |
+| 新手礼包弹窗 | 人物 KV 头图(出框)+ 礼包名 lockup + 主奖励物件 + "ALSO INSIDE" 格 + 选枪三卡(图不是字)+ 价值贴纸 + 一个 BUY | refs 13、14;Pinterest Newbie's Week |
+| BP 主屏/购买/详情 | 当期英雄横版 KV 头 + 竖排三列(FREE / 档位脊柱 / PREMIUM·MAX)+ 付费列炫彩底大格 | refs 7、16~19;Pinterest 任务通行证 |
+| 7 日 | key art 头 + 左侧 Day 1~7 书脊页签 + 今日行展开 + 进度轨里程碑 | refs 6、9;Pinterest Newbie's Week |
+| 成长基金 | key art 头 + 竖脊柱等级节点 + 每级 FREE/付费两格 + 底部总价值条 | refs 6、9 |
+
+## 3. "像游戏"检查单(每张稿交付前自查,来自 Pinterest 板学习)
+
+1. 这屏有没有"人"在场:店主、当期英雄、礼包代言人。商店屏没有人物 = 不过。
+2. 容器是不是物件:卡包、吊牌、票根、充值卡、货箱、夹板,有挂孔、撕口、胶带、钉子这类实物细节;全是平面矩形 = 不过。
+3. 一屏至少一处动势:人物或主物件出框、主卡倾斜 -4~-8°、斜切色带。全部水平垂直 = 不过。
+4. 每条信息先问能不能用图说:任务行、选项、奖励都配行动图或物件图;按钮上只剩动词和价格。
+5. 价值说清楚:保底一行(GUARANTEE)、价值贴纸(x8 VALUE / 1500%)、"立刻得 + 每天得"两段式。买前就知道值多少。
+6. 主次有尺寸差:主推卡/付费列/终点格比同类大一档,换底色;同质格连续超过 6 个就拆。
+7. 礼包名是 lockup 不是排版字:活动名、礼包名做成带描边/倾斜的字标图(Saira 底,双色,2~4° 倾斜),屏标题仍用 CARGO T1。
+
+## 4. 出图管线
+
+完整命令、prompt 模板、验收门在 `references/03-出图管线.md`,脚本在 `scripts/`。三条硬规矩:
+
+- **两套参考不混。** 人物 KV/卡面插画:2 张定稿 KV 当画法基准 + 该角色手册定稿板 + 表情表,写 TIME AND LIGHT。物件/包装:只喂 v4 icon 母版,抄 icon 风格句,禁材质词,纯绿 #00FF00 底。
+- **codex 必须关 host skill 并点名参考图。** `codex exec --skip-git-repo-check --enable skip_host_skill_discovery -m gpt-6.1-sol`;prompt 第一句"不读 skill、call image_gen with referenced_image_paths set to EXACTLY [绝对路径]";跑完 `scripts/check_rollout.py` 查 rollout 里 image_gen 真带了几张参考,对不上判失败重跑。
+- **出人物图前先实看 mo.co。** 打开 `013 美术/UI_CARGO/ui_qa_2026-10-26/competitor/shop_moco_1.jpg`(商店卡)和 `013 美术/mo.co截图/` 里一张,写两三行提取(人物与底同光、暗部冷紫、无描边、人物占卡高 70~85%),记在本次工作目录的 NOTES 里再出图。
+
+## 5. 交付格式
+
+- 评审稿交 **HTML**(勾哥 10-27 定),不交截图拼图;图片素材相对路径放同目录 `a/`,用 SendUserFile `display: render` 发完整绝对路径。无头截图只给自己自查。
+- 一屏一张手机框(1080×2340 画布按 0.5 缩放显示),每屏标题下写一行"这一屏按哪几条口径改的";每轮改稿在页头列"本轮改了什么 / 勾哥上轮意见逐条对应"。
+- 版本另存(`board_<x>_v5.html`),旧版不覆盖;生成图进 `a/`,prompt 脚本和 log 留在会话 scratchpad,交付说明里写脚本路径。
+- 出图花了几次 codex 调用、哪几张两轮没过,汇报里写清。同一件两轮不中就停,换 approach(改构图或换参考),不再盲调第三轮。
+
+## 6. 不做的事
+
+- 不改 Unity 工程、不接线(那是 ui-placement 的活;UI 分工是勾哥手摆、我接线)。
+- 不给信息纸面加炫彩/渐变(炫彩只在包装皮、卡面、付费列底)。
+- 不自造数值。卡面上的 gems、天数、价格从 Config Hub / BP 表 / 礼包表读;没读到就写占位并在页头标"待真源"。

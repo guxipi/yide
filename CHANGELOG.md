@@ -2,6 +2,12 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.70.0 — 2026-10-27 新 skill er-shop-mkt:商店礼包 MKT visual + 商业化 UI
+- 起因:W4 商业卡 9 屏迭代到 v4,勾哥每轮都要重新给意见。把历次改稿口径写死:gacha 不要宝箱改卡包/点数卡、包装是以当周枪为主的营销画面(彩色枪 + 白边 + 品阶外描 + 错位影子 + 放射底,剪影实测糊)、物件图只喂 v4 icon 母版禁材质词、有 key art 的屏都要人物、选项用图不用字、BP 竖排三列付费列炫彩大格 PLUS 改 MAX、充值卡横版人物卡面 + 价值句 + GUARANTEE 角标且不要黄描边。
+- references/02 版式配方:七类屏(卡包、点数卡、横版充值卡、新手礼包、BP、7 日、成长基金)的骨架和 W4 现行 CSS 函数(foilPack / stk / giftCard / kvOof / peg)。03 出图管线:KV、卡面、物件、抠人物四类模板分开喂参考。
+- scripts:mkprompt.py(jobs.json → codex prompt,拦材质词、kv 必填 TIME AND LIGHT、参考图存在性检查)、run_codex.sh(关 host skill 跑 image_gen)、check_rollout.py(查 rollout 里 image_gen 真带的参考张数、是否打开过全局 ER 美术 skill;W4 四份真 log 回测通过)、key.py(收紧阈值抠绿)。
+- 配套报告 vault `UI_CARGO/handoff_2026-10-27/research/game_feel_2026-10-27.html`:Pinterest ui_reference 板 50 张学习 + CARGO 为什么不像游戏;SKILL 第 3 节"像游戏检查单"七条由此来。
+
 ### v0.69.0 — 2026-10-26 角色皮肤按部件换:底模冻结 + 拆件对齐适配
 - Coda 实测:Tripo 每次整身重生成脸都会变(寸头版脸前部对定稿 mean 2.95 mm),并按总高归一化缩放身体(寸头版大 1.65%),所以皮肤不能整身重生成。改为每个英雄冻结一个底模(定稿脸 + 打底衣 + 寸头),发型/帽子/上衣/下装/鞋各自从新生成里用 Detailed 拆件挑出来,相似变换对齐后适配到底模。槽位五个(勾哥定)。
 - 上衣(夹克):贴回后四条边界环最大缝 ≤ 0.154%H,穿模 789→10。发型(卷发):只推不拉 + 焊接平滑 + 补推,头发在头皮里 0%,剪影 IoU 0.97~0.999。
