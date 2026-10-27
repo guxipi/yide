@@ -78,6 +78,14 @@ PLATE = ("Remove {remove} completely (including the shadow cast). Fill the area 
 
 BANNED = ['holographic', 'glossy', 'chrome', 'specular', 'foil shimmer', 'iridescent', 'metallic sheen', 'impasto', 'brushstroke', 'realistic', 'photoreal']
 
+def allow_text(body, job):
+    """job['text'] = the only words allowed in the picture (e.g. "30", "AD"); STORY must name them and say they stay complete."""
+    if not job.get('text'):
+        return body
+    if job['text'] not in job.get('story', ''):
+        sys.exit(f"{job['name']}: STORY must name the allowed text {job['text']!r} and say it stays complete and unobstructed")
+    return body.replace('lens blur, text, logos, UI,', 'lens blur, logos, UI, any writing other than the exact text named in STORY,')
+
 def build(job):
     k, n = job['kind'], job['name']
     if k == 'object':
@@ -96,11 +104,14 @@ def build(job):
     f = dict(job, name=job['hero'])
     f.setdefault('keep', 'face, hair, outfit, colours and accessories exactly as in the bible')
     if k == 'card':
-        return head(refs, n, SIZE['landscape']) + CARD.format(**f)
+        body = CARD.format(**f)
+        if job.get('prop'):  # the product must read at a glance: key prop centred, ~45% card height, overlapping the hero
+            body = body.replace('not a detailed scene.', 'not a detailed scene. ' + job['prop'] + ' This key prop sits near the centre of the card, about 45% of the card height, overlapping the character.')
+        return head(refs, n, SIZE['landscape']) + allow_text(body, job)
     if k == 'kv':
         if not job.get('light'):
             sys.exit(f"{n}: kv jobs must state TIME AND LIGHT ('light') from the story")
-        return head(refs, n, SIZE[job.get('size', 'landscape')]) + KV.format(**f)
+        return head(refs, n, SIZE[job.get('size', 'landscape')]) + allow_text(KV.format(**f), job)
     sys.exit(f"{n}: unknown kind {k}")
 
 if __name__ == '__main__':
