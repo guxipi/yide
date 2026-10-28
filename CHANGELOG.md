@@ -2,6 +2,12 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.71.4 — 2026-10-28 session-relay mod 并进翼德:冷 session 不唤醒,自动开续篇
+- 原先只装在一台机器(`~/.claude/mods/session-relay`,靠 `settings.json` 的 `env.CLAUDE_CODE_PLUGIN_DIRS` 加载),现在源码放 `mods/session-relay/`,由 `hooks/hooks.json` 的 `modules` 加载,三台机器装翼德就带上。
+- 两件事:闲置 ≥1h(缓存已过期)的 session 收到子会话 / 子 agent / 任务通知这类自动回报时不唤醒它,用它最后一条汇报 + 这条回报自动开一个续篇 session(开完 detach,回报 drop);上下文 ≥400K 时输入框上方出「开新 session 续」按钮,`/relay-now` 同效。
+- state 归属从 `session-relay` 改成 `yide`(`types` 契约同步),行为不变;测试文件补正类型(`claude plugin test` 5 个全过,tsc 零错)。
+- 已经用 `CLAUDE_CODE_PLUGIN_DIRS` 装过旧 mod 的机器,要把那一项从 `settings.json` 删掉,否则两份都加载、按钮和续篇会重复。
+
 ### v0.71.3 — 2026-10-27 er-shop-mkt:skill 不再规定具体某一屏
 - 勾哥:"skill 不需要规定具体某一屏幕是什么,整理 skill 所有对某一屏幕细节的规定都删除"。删掉 SKILL 第 2 节每类礼包版式表和 BP / 7 日 / 成长基金 / 充值卡 / 新手礼包的屏级口径;02 章只留跨屏复用的部件(gun badge、角标、价值贴纸、两段式价值句、人物出框、挂板、任务行)和人物插画画面规则;03 章模板用途改成通用说法。屏级拍板改记项目记忆和评审稿。
 
