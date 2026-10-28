@@ -16,6 +16,7 @@ const FAT_CTX = 400_000 // 勾哥 10-24 定的收尾线
 const HANDOVER_CHARS = 6000
 const EVENT_CHARS = 6000
 
+const PLUGIN = 'yide' // state 和 tool.check 的 origin 都按插件名归属
 const relay = atom({ plugin: 'yide', key: 'relay' } as const, null as Relay | null)
 const fat = atom({ plugin: 'yide', key: 'fat' } as const, 0)
 const isHidden = atom({ plugin: 'yide', key: 'isHidden' } as const, false)
@@ -168,6 +169,15 @@ export const register: Register = on => {
     }
     return next(e)
   })
+
+  // 本 mod 自己发的 ccd_session 调用不是模型回复里的工具调用,auto mode 的服务端 classifier 没有 verdict
+  // (server_not_requested)会直接拒;只放行 origin 是本插件的那几个调用,模型自己的调用照旧走 classifier。
+  on(
+    'tool.check',
+    { tool: ['mcp__ccd_session__start_session', 'mcp__ccd_session_mgmt__get_session', 'mcp__ccd_session_mgmt__detach_session'] },
+    ($, e, next) =>
+    next.origin.plugin === PLUGIN ? { decision: 'allow', reason: 'session-relay 自己开续篇' } : next(e),
+  )
 
   on('command.run', { command: 'relay-now' }, async $ => {
     try {

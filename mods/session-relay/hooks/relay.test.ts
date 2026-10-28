@@ -94,3 +94,11 @@ test('a continuation of a continuation counts up', async ($, on) => {
 
   expect(calls.find(c => c.tool === 'start_session')?.args.title).toBe('修HUD·续2')
 })
+
+test("the model's own start_session is not waved through by the relay's grant", async ($, on) => {
+  on('tool.check', () => ({ decision: 'ask' }))
+
+  const v = await $.tool.check({ tool: 'mcp__ccd_session__start_session', input: {} })
+
+  expect(v.decision).toBe('ask')
+})

@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.71.5 — 2026-10-28 session-relay:auto mode 下开续篇被拒的修复
+- 真机报错:`$.mcp.call(ccd_session, start_session) refused: The server-side auto mode classifier gave no verdict ... the request that produced this action did not ask for one`(原因码 `server_not_requested`)。mod 自己发的调用不在任何模型回复里,auto mode 的服务端审核没有结论,一律拒;冷 session 自动续篇、按钮、`/relay-now` 全受影响,和 `initiation` 填什么无关。
+- 勾哥拍板:mod 用 `tool.check` 放行自己发起的 `start_session` / `get_session` / `detach_session` 三个调用,只限 `next.origin.plugin === 'yide'`;模型自己发的这三个调用照旧走审核(加了一条测试守住)。
+- 离线测试工具里 `$.mcp.call` 不经过 `tool.check`,放行这一半只能在真 session(auto mode)里验。
+
 ### v0.71.4 — 2026-10-28 session-relay mod 并进翼德:冷 session 不唤醒,自动开续篇
 - 原先只装在一台机器(`~/.claude/mods/session-relay`,靠 `settings.json` 的 `env.CLAUDE_CODE_PLUGIN_DIRS` 加载),现在源码放 `mods/session-relay/`,由 `hooks/hooks.json` 的 `modules` 加载,三台机器装翼德就带上。
 - 两件事:闲置 ≥1h(缓存已过期)的 session 收到子会话 / 子 agent / 任务通知这类自动回报时不唤醒它,用它最后一条汇报 + 这条回报自动开一个续篇 session(开完 detach,回报 drop);上下文 ≥400K 时输入框上方出「开新 session 续」按钮,`/relay-now` 同效。
