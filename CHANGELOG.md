@@ -2,6 +2,13 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.71.7 — 2026-10-29 session-relay:400K 自动压缩真正生效,堵住乱开续篇
+- 审计发现:10-26~10-29 有 32 个会话超过 400K(最高 811K),一次自动压缩都没有;10-28/29 夜里一个仍在干活的 lead 被连开 3~4 条「·续」,双 lead 互相覆盖。根因:10-28 晚的「≥400K 原地压缩 + 退役闸 + 一条续篇」只改在单机副本 `~/.claude/mods/session-relay`,从没并回本仓;那份副本又因为 v0.71.4 删了 `CLAUDE_CODE_PLUGIN_DIRS` 而不再加载。三台机器实际跑的一直是只有按钮、没有闸的旧版。
+- 并回本仓:≥400K 回合结束自动 `/compact`(带保留清单),turn 还没收尾被拒就 5 秒后再试一次,还不成下一回合结束再来;按钮去掉。退役闸、一条续篇 + 转发都并回来。`tool.check` 放行加上 `send_message`(转发用)。
+- 新闸:①主回合正在跑时绝不判冷(之前长回合里「距上次回合结束 >1h」就误判);②开续篇前先在 store 占位,同一时刻到的多条回报串行判、排队,开完转给那一条续篇;③开过续篇后原 session 视为退役,之后的自动回报不论冷热都转给续篇,直到勾哥亲手在原 session 说话。判定出错一律放行,不丢回报。
+- 续篇 brief 加一步:先 `ListAgents` 看原 session 是否还 busy,还在干活就只留注记。
+- `claude plugin test` 25 个全过(新增 9 个),tsc 零错,validate 通过。单机副本 `~/.claude/mods/session-relay` 已作废,别再改它。
+
 ### v0.71.6 — 2026-10-29 gemini 工具箱入 git,duck center 也能出 icon/头像框
 - 工具箱 `F:\AI\Claude\ER` 建私有仓 `guxipi/er-imagegen`(只收 .py 和文档,产物/队列/key 不进)。CLI 里写死的 vault `I:` 和 Unity `F:` 路径改为先认 `ER_VAULT` / `ER_UNITY_PROJECT`,否则扫盘。
 - er-icon-gen / er-frame-gen:工具目录改读 `ER_IMAGEGEN_DIR`(默认 `F:/AI/Claude/ER`),开工先 pull;er-icon-gen 加第 0 节新机器安装。key 由勾哥自己在每台机 setx。
