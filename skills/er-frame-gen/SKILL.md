@@ -12,7 +12,7 @@ description: ER(Extraction)出头像框(avatar frame)的管线——调本机 ge
 - **不描黑边**,轮廓用本色压暗(ER 美术规范 + CARGO 物件画法)。旧 `Frame_S1_01~03`、旧 `frame_s2_*` 就是因为黑描边被重做。
 - 手机可读:每个框最多两三个装饰,不要细纹、小雕刻、文字。
 
-工具在 `F:\AI\Claude\ER\er_frame_cli.py`(只在 kryst 这台机器,不在 git;复用同目录 er_icon_cli / er_enemy_engine 的 key、限流和模型调用)。开工先确认文件在;不在就告诉勾哥,不换别的生图通道。命令一律 `PYTHONUTF8=1 py -3 "F:/AI/Claude/ER/er_frame_cli.py" ...`,走 Bash。
+工具是私有仓 `guxipi/er-imagegen` 里的 `er_frame_cli.py`(复用同目录 er_icon_cli / er_enemy_engine 的 key、限流和模型调用),目录 = `${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}`,下文记作 `$T`,每条 Bash 命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。开工先 `git -C "$T" pull --ff-only`;目录不在就按 er-icon-gen 第 0 节装,不换别的生图通道。默认头像样张从 Unity 工程里取(`ER_UNITY_PROJECT` 或扫盘找 `<盘>:\GitManagedUnityProjects\Extraction`)。命令一律 `PYTHONUTF8=1 py -3 "$T/er_frame_cli.py" ...`,走 Bash。
 
 ## 1. 先定需求再出图
 
@@ -20,11 +20,11 @@ description: ER(Extraction)出头像框(avatar frame)的管线——调本机 ge
 
 ## 2. 出一批(1 次调用)
 
-spec 例子见 `F:\AI\Claude\ER\spec_frames_1026.json`。每项 `[文件名, 显示名, 英文描述, 英文配色]`,描述只写形状和装饰(画风约束 CLI 自带),不写中文。一批 ≤12 个,默认 2K($0.101/批,勾哥已授权按批出,不逐批问)。
+spec 例子见 `$T/spec_frames_1026.json`(仓里带的样例)。每项 `[文件名, 显示名, 英文描述, 英文配色]`,描述只写形状和装饰(画风约束 CLI 自带),不写中文。一批 ≤12 个,默认 2K($0.101/批,勾哥已授权按批出,不逐批问)。
 
 ```bash
-CLI="F:/AI/Claude/ER/er_frame_cli.py"
-PYTHONUTF8=1 py -3 "$CLI" gen "F:/AI/Claude/ER/spec_<set>.json" --yes   # 打印批次目录
+T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"; CLI="$T/er_frame_cli.py"
+PYTHONUTF8=1 py -3 "$CLI" gen "$T/spec_<set>.json" --yes   # 打印批次目录
 ```
 
 gen 完先把 grid.png 缩到 1200 看一眼:个数、顺序、开口是不是空白、有没有字、非 BP 框有没有混进金色。

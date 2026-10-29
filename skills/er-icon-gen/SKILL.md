@@ -7,14 +7,24 @@ description: ER(Extraction)出 icon 的唯一管线——攒批调本机 gemini 
 
 勾哥 2026-10-26 拍板:以后所有 icon 都走他自己调的 gemini 工具箱,不走 codex image_gen(他原话:"它的画风一致性调教比 codex 好")。画风以仓库物品图标为准,母版是 vault `01 - 星际拓荒重构/011_基地星/art/基地星icon_v4_style_reference.png`,默认参考就用它(勾哥 10-26 定 v4 样张)。可读性标准也是勾哥原话:"过于复杂了,放在手机屏幕上会花"——单一粗轮廓主体、少零件、不要细纹/网格/电路线。
 
-工具在 `F:\AI\Claude\ER\`(只在 kryst 这台机器上,不在 git)。CLI 是 `er_icon_cli.py`,同目录 `HANDOFF_生图工具箱.md` §0.0 记着每条设计的实测依据。开工先确认这个文件存在;不存在就告诉勾哥这台机器没装工具箱,不要改用别的生图通道。所有命令用 `PYTHONUTF8=1 py -3 "F:/AI/Claude/ER/er_icon_cli.py" ...`(Bash,不走 PowerShell 管道喂中文)。
+工具箱是私有仓 `guxipi/er-imagegen`(10-29 起入 git,kryst 和 duck center 两台机共用)。目录 = 环境变量 `ER_IMAGEGEN_DIR`,没设就是 `F:/AI/Claude/ER`;下文命令里的 `$T` 都指它,Bash 状态不跨调用,每条命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。CLI 是 `$T/er_icon_cli.py`,同目录 `HANDOFF_生图工具箱.md` §0.0 记着每条设计的实测依据。开工先 `git -C "$T" pull --ff-only`;目录不存在就按第 0 节装,不要改用别的生图通道。所有命令用 `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" ...`(Bash,不走 PowerShell 管道喂中文)。
+
+## 0. 新机器装一次
+
+1. `git clone https://github.com/guxipi/er-imagegen.git F:/AI/Claude/ER`;没 F 盘就克隆到别处,再 `setx ER_IMAGEGEN_DIR <目录>`(setx 只对之后新开的进程生效,要重开 Claude)。
+2. `py -3 -m pip install -r "$T/requirements.txt"`(google-genai / pillow / numpy / scipy)。
+3. Gemini key 勾哥自己在那台机 `setx GEMINI_API_KEY`(或在 GUI 里填,存进 `~/.er_enemy_creator.json`),AI 不经手 key。只查有没有:`py -3 -c "import os;print(bool(os.environ.get('GEMINI_API_KEY')))"`。
+4. 自检路径:`cd "$T" && PYTHONUTF8=1 py -3 -c "import er_icon_cli as c;print(c.VAULT, c.UNITY_PROJECT)"`。CLI 先认环境变量 `ER_VAULT` / `ER_UNITY_PROJECT`,没设就扫 C~Z 盘找 `<盘>:\My Drive\Obsidian\ExtractionRaider` 和 `<盘>:\GitManagedUnityProjects\Extraction`;打出 None 就让勾哥 setx 对应变量。v4 母版在 vault 里,VAULT 是 None 时不许出图。
+5. `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" queue list` 能跑就算装好。
+
+两台机各管各的:队列 `icon_queue.json`、spec、批次产物都不进 git,在哪台机攒的就在哪台机出。图入 Unity 后跟着 Extraction 仓走正常 git 同步。改工具代码在工具仓 commit,push 前照红线问勾哥。
 
 ## 1. 先攒,不当场出
 
 收到 icon 需求先入队,不花钱:
 
 ```bash
-PYTHONUTF8=1 py -3 "F:/AI/Claude/ER/er_icon_cli.py" queue add Ammo_T2 "three rifle cartridges bundled together, silver casings with blue bands" --play item --note "勾哥 10-26 要"
+PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" queue add Ammo_T2 "three rifle cartridges bundled together, silver casings with blue bands" --play item --note "勾哥 10-26 要"
 ```
 
 队列只收勾哥原话说要生成的东西。AI 自己觉得"该补图"的放进汇报让他点,不进队列;"未选""一物多图"也不等于要生成。名字用 ASCII(会成为文件名 `玩法_名称_WxH.png`),play 是命名第一段(item / ui / weapon …,同类沿用已有前缀)。
@@ -31,9 +41,9 @@ PYTHONUTF8=1 py -3 "F:/AI/Claude/ER/er_icon_cli.py" queue add Ammo_T2 "three rif
 ## 2. 出一批(一条命令一步,每步最多一次调用)
 
 ```bash
-CLI="F:/AI/Claude/ER/er_icon_cli.py"
+T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"; CLI="$T/er_icon_cli.py"
 PYTHONUTF8=1 py -3 "$CLI" queue take --play item --n 12          # 写出 spec_<set>.json,默认 style_ref=v4、sizes=[256]
-PYTHONUTF8=1 py -3 "$CLI" gen "F:/AI/Claude/ER/spec_<set>.json" --yes   # 1 次调用,打印批次目录
+PYTHONUTF8=1 py -3 "$CLI" gen "$T/spec_<set>.json" --yes   # 1 次调用,打印批次目录
 ```
 
 勾哥已授权这条管线按批出图,每批 1K 网格工具内置估价 $0.067(2K $0.101),不必逐批问;汇报里写这批花了几次调用。要 512 导出就在 spec 的 sizes 里写,CLI 会自己判断要不要上 2K。一批最多 12 件。
