@@ -2,6 +2,10 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.71.6 — 2026-10-29 gemini 工具箱入 git,duck center 也能出 icon/头像框
+- 工具箱 `F:\AI\Claude\ER` 建私有仓 `guxipi/er-imagegen`(只收 .py 和文档,产物/队列/key 不进)。CLI 里写死的 vault `I:` 和 Unity `F:` 路径改为先认 `ER_VAULT` / `ER_UNITY_PROJECT`,否则扫盘。
+- er-icon-gen / er-frame-gen:工具目录改读 `ER_IMAGEGEN_DIR`(默认 `F:/AI/Claude/ER`),开工先 pull;er-icon-gen 加第 0 节新机器安装。key 由勾哥自己在每台机 setx。
+
 ### v0.71.5 — 2026-10-28 session-relay:auto mode 下开续篇被拒的修复
 - 真机报错:`$.mcp.call(ccd_session, start_session) refused: The server-side auto mode classifier gave no verdict ... the request that produced this action did not ask for one`(原因码 `server_not_requested`)。mod 自己发的调用不在任何模型回复里,auto mode 的服务端审核没有结论,一律拒;冷 session 自动续篇、按钮、`/relay-now` 全受影响,和 `initiation` 填什么无关。
 - 勾哥拍板:mod 用 `tool.check` 放行自己发起的 `start_session` / `get_session` / `detach_session` 三个调用,只限 `next.origin.plugin === 'yide'`;模型自己发的这三个调用照旧走审核(加了一条测试守住)。
