@@ -2,7 +2,7 @@
 //  1. 冷 session(闲置 ≥1h,1h prompt cache 已过期)收到子会话 / 子 agent / 任务通知这类自动回报时,
 //     不唤醒它(唤醒 = 整段上下文按缓存写价重写),而是用它的最后一条汇报 + 这条回报自动开一个续篇
 //     session(start_session,fresh),开完 detach,让续篇不再往冷 session 回报;回报本身 drop 掉。
-//  2. 上下文 ≥ FAT_CTX 时自动 /compact 原地继续,不开新 session、没有按钮、不等人(勾哥 10-28)。
+//  2. 上下文 ≥ FAT_CTX(lead 是 LEAD_FAT_CTX)时自动 /compact 原地继续,不开新 session、没有按钮、不等人(勾哥 10-28)。
 //     宿主规则:turn 还在跑时 session.compact 会被拒,所以回合结束先试一次,被拒就隔几秒再试;
 //     还不成就下一回合结束再来。最坏引擎自己到 97% 也会压。/relay-now 仍可手动开续篇。
 //  3. 闸(10-28 / 10-29 四次误触发的复盘):
@@ -19,7 +19,8 @@ import type { Relay } from '../types'
 
 const IDLE_MS = 60 * 60 * 1000 // 1h prompt-cache TTL
 const MIN_CTX = 50_000 // 比这小的上下文重写不值得折腾
-const FAT_CTX = 400_000 // 勾哥 10-24 定的收尾线
+const FAT_CTX = 400_000 // 勾哥 10-24 定的压缩线
+const LEAD_FAT_CTX = 200_000 // lead(开过子会话的 session)上限 200K(10-25 定),到了原地压,不换 lead
 const COMPACT_MIN_GAP_MS = 2 * 60 * 1000 // 两次压缩至少隔这么久
 const COMPACT_RETRY_MS = 5_000 // 回合结束时被拒(turn 还没完全收尾),隔这么久再试一次
 const RUNNING_STALE_MS = 6 * 60 * 60 * 1000 // 回合开始超过这么久还没结束,当作残留标记不信
@@ -31,7 +32,7 @@ const PLUGIN = 'yide' // state 和 tool.check 的 origin 都按插件名归属
 
 // 交给引擎压缩器的保留清单:压完要能原地接着干。
 export const COMPACT_INSTRUCTIONS =
-  '这是上下文过 400K 的例行压缩,压完必须能原地接着干,不开新 session。必须保留:' +
+  '这是上下文过线(普通 400K / lead 200K)的例行压缩,压完必须能原地接着干,不开新 session。必须保留:' +
   '1) 当前任务目标、勾哥拍板的口径和决策(尽量原话);' +
   '2) 正在做的切片、做到哪一步、下一步是什么;' +
   '3) 涉及的文件路径、记忆文件名、工地 HANDOVER / 看板 / spec 的位置;' +
@@ -77,10 +78,20 @@ function serially<T>(fn: () => Promise<T>): Promise<T> {
 
 type CompactOutcome = 'done' | 'not-fat' | 'too-soon' | 'skipped' | 'failed'
 
-// 上下文 ≥ FAT_CTX 就原地压缩;除 done 外都不记时间,之后会再试。
+const LEAD_TOOLS = new Set(['mcp__ccd_session__start_session', 'mcp__ccd_session__hand_off_to_session'])
+
+// 开过子会话的就是 lead:它会被子会话回报反复唤醒,上限更低。
+async function isLead($: Engine): Promise<boolean> {
+  const msgs = await $.session.messages()
+  return msgs.some(m => m.role === 'assistant' && m.toolUses.some(u => LEAD_TOOLS.has(u.tool)))
+}
+
+// 上下文过线就原地压缩;除 done 外都不记时间,之后会再试。
 async function compactIfFat($: Engine, sid: string): Promise<CompactOutcome> {
   const tokens = (await $.session.usage()).context.tokens ?? 0
-  if (tokens < FAT_CTX) return 'not-fat'
+  if (tokens < LEAD_FAT_CTX) return 'not-fat'
+  const line = (await isLead($)) ? LEAD_FAT_CTX : FAT_CTX
+  if (tokens < line) return 'not-fat'
   const now = await $.clock.now()
   const last = (await $.store.get(compactedKey(sid))) as number | undefined
   if (last !== undefined && now - last < COMPACT_MIN_GAP_MS) return 'too-soon'
@@ -89,7 +100,7 @@ async function compactIfFat($: Engine, sid: string): Promise<CompactOutcome> {
     if ('skip' in r && r.skip) return 'skipped'
     await $.store.set(compactedKey(sid), now)
     const after = 'tokensAfter' in r && r.tokensAfter ? ` → ${Math.round(r.tokensAfter / 1000)}K` : ''
-    $.ui.toast(`[session-relay] 上下文 ${Math.round(tokens / 1000)}K ≥ 400K,已自动压缩${after},原地继续。`, { timeoutMs: 8000 })
+    $.ui.toast(`[session-relay] 上下文 ${Math.round(tokens / 1000)}K ≥ ${line / 1000}K${line === LEAD_FAT_CTX ? '(lead)' : ''},已自动压缩${after},原地继续。`, { timeoutMs: 8000 })
     return 'done'
   } catch {
     return 'failed' // turn 还在跑或别的原因被拒

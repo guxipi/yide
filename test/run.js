@@ -576,6 +576,44 @@ t('0.4 MCP allow 整词匹配:forget/budget 不因含 get 被误放', () => {
   assert(preToolDecision({ tool_name: 'mcp__coplay__get_game_object_info', tool_input: {} }) === 'allow', 'get_game_object_info 应放行');
 });
 
+t('0.5 前台轮询闸:长等待循环/长 sleep deny;后台跑、短重试、普通命令不受影响', () => {
+  const bash = (command, extra) => preToolDecision({ tool_name: 'Bash', tool_input: Object.assign({ command }, extra || {}) });
+  const ps = (command, extra) => preToolDecision({ tool_name: 'PowerShell', tool_input: Object.assign({ command }, extra || {}) });
+  const pollT = 't=0; while [ $t -lt 570 ]; do n=$(ls D:/out/*.png | wc -l); echo $n; [ $n -ge 9 ] && break; sleep 15; t=$((t+15)); done';
+  const pollSeq = 'for i in $(seq 1 57); do [ -f G:/x/CODE_FACTS.md ] && break; sleep 10; done';
+  assert(bash(pollT) === 'deny', '$t -lt 570 × sleep 15 应 deny');
+  assert(bash(pollSeq) === 'deny', 'seq 1 57 × sleep 10 应 deny');
+  assert(bash(pollT, { run_in_background: true }) !== 'deny', 'run_in_background 应放行');
+  assert(bash(pollSeq, { run_in_background: true }) !== 'deny', 'run_in_background 应放行');
+  assert(bash('until [ -f done.flag ]; do sleep 5; done') === 'deny', '估不出上限的 until 应 deny');
+  assert(bash('while true; do curl -s x; sleep 2; done') === 'deny', 'while true 应 deny');
+  assert(bash('for f in {1..120}; do sleep 1; done') === 'deny', '{1..120} × 1 = 120 秒应 deny');
+  assert(bash('for ((i=0;i<20;i++)); do sleep 5; done') === 'deny', 'for(( )) 20×5 应 deny');
+  assert(bash('for i in 1 2 3 4 5; do x && break; sleep $d; done') === 'deny', 'sleep 时长估不出的循环应 deny');
+  assert(bash('sleep 45') === 'deny', '单条 sleep 45 应 deny');
+  assert(bash('sleep 1m && ls') === 'deny', 'sleep 1m 应 deny');
+  assert(bash('sleep 3') !== 'deny', 'sleep 3 应放行');
+  assert(bash('for i in 1 2 3; do cmd && break; sleep 2; done') !== 'deny', '三次短重试应放行');
+  assert(bash('for i in $(seq 1 5); do cmd && break; sleep 10; done') !== 'deny', '5×10=50 秒短重试应放行');
+  assert(bash('for f in *.png; do echo $f; done') !== 'deny', '无 sleep 的循环不管');
+  assert(bash('git status') === 'allow', 'git status 照常放行');
+  assert(bash("git commit -m \"fix: while loop used sleep 60\"") !== 'deny', '提交说明里写 sleep 不算');
+  assert(bash("cat > poll.sh <<'EOF'\nwhile true; do sleep 10; done\nEOF") !== 'deny', 'heredoc 正文里写循环不算');
+  assert(ps('Start-Sleep -Seconds 120') === 'deny', 'PS Start-Sleep -Seconds 120 应 deny');
+  assert(ps('Start-Sleep 40') === 'deny', 'PS Start-Sleep 40 应 deny');
+  assert(ps('Start-Sleep -Milliseconds 45000') === 'deny', 'PS -Milliseconds 45000 应 deny');
+  assert(ps('Start-Sleep -Milliseconds 500') !== 'deny', 'PS 500ms 应放行');
+  assert(ps('Start-Sleep -Seconds 120', { run_in_background: true }) !== 'deny', 'PS 后台应放行');
+  assert(ps('while (-not (Test-Path x)) { Start-Sleep -Seconds 5 }') === 'deny', 'PS while 等文件应 deny');
+  assert(ps('$i = 0; do { $i++; Start-Sleep 10 } while ($i -lt 30)') === 'deny', 'PS do-while 30×10 应 deny');
+  assert(ps('for ($i=0; $i -lt 3; $i++) { try { x; break } catch { Start-Sleep 2 } }') !== 'deny', 'PS 三次短重试应放行');
+  assert(ps('foreach ($n in 1..100) { Start-Sleep 1 }') === 'deny', 'PS foreach 1..100 × 1 应 deny');
+  assert(ps('1..3 | ForEach-Object { Start-Sleep 2 }') !== 'deny', 'PS 1..3 × 2 应放行');
+  assert(ps('timeout /t 60') === 'deny', 'timeout /t 60 应 deny');
+  assert(ps('Get-ChildItem') === 'defer', 'PS 普通命令行为不变');
+  assert(preToolDecision({ tool_name: 'Write', tool_input: { file_path: '/a.sh', content: 'while true; do sleep 60; done' } }) === 'defer', 'Write 写脚本不归这条管');
+});
+
 // === 9. Stop/SubagentStop 收尾审计(完成声明 vs 验证证据)===
 // 跑 stop-audit.js:构造临时 transcript + hook 输入,返回 'block'|'pass'(pass=空输出放行)。
 function stopAudit(hookInput) {
@@ -757,6 +795,103 @@ t('11.12 scope CLI 端到端(set → check → status)', () => {
   run(['check', '--session', 's-cli']);
   const st = JSON.parse(run(['status', '--session', 's-cli']));
   assert(st.items.length === 1 && st.items[0].state === 'pass', 'CLI 走完应为 pass,实为 ' + JSON.stringify(st.items));
+});
+
+// attest 证据闸门(2026-10-29:没验就说做完 → 证据里的路径要真实存在、玩家可见条目要附本轮新截图、空话拒绝)
+const EV = path.join(TMP, 'evidence');
+fs.mkdirSync(EV, { recursive: true });
+function evFile(name, ageMs) {
+  const p = path.join(EV, name);
+  fs.writeFileSync(p, 'x');
+  if (ageMs) { const t = (Date.now() - ageMs) / 1000; fs.utimesSync(p, t, t); }
+  return p;
+}
+function attestThrows(sid, id, ev) { try { scope.mark(sid, id, 'attested', ev, '证据'); return null; } catch (e) { return e.message; } }
+t('11.13 extractPaths:盘符/反斜杠//c/~/空格路径识别,URL 与裸文件名不算', () => {
+  const ps = scope.extractPaths('截图 D:/shots/a.png,dump 在 C:\\tmp\\x.json。另见 https://x.com/b.png 和 Editor.log');
+  assert(ps.map(p => p.raw).join('|') === 'D:/shots/a.png|C:\\tmp\\x.json', '实为 ' + JSON.stringify(ps));
+  const home = scope.extractPaths('~/b.jpg')[0];
+  assert(home && home.abs === path.join(os.homedir(), 'b.jpg'), '~ 应展开到 home,实为 ' + JSON.stringify(home));
+  if (process.platform === 'win32') {
+    const gb = scope.extractPaths('见 /c/Users/x.PNG')[0];
+    assert(gb && gb.abs === 'C:/Users/x.PNG', '/c/ 应换成 C:/,实为 ' + JSON.stringify(gb));
+  }
+  assert(scope.extractPaths('I:/My Drive/013 美术/x.md')[0].raw === 'I:/My Drive/013 美术/x.md', '带空格和中文的路径应整段识别');
+  assert(scope.extractPaths('D:/shots/v31 和 C:/x.png').map(p => p.raw).join('|') === 'C:/x.png', '不该把两段路径吞成一段');
+});
+t('11.14 attest:证据里的路径不存在 → 拒绝并点名;存在 → 通过', () => {
+  scope.register('s-path', [{ what: '跑脚本出报告' }, { what: '再出一份' }], true);
+  const ghost = path.join(EV, 'ghost.json');
+  const msg = attestThrows('s-path', '1', '报告 ' + ghost + ' 里 42 条全对');
+  assert(msg && msg.includes(ghost), '不存在的路径应拒绝并点名,实为 ' + msg);
+  assert(scope.getScope('s-path').items[0].state === 'open', '被拒后状态不该变');
+  const real = evFile('report.json');
+  assert(attestThrows('s-path', '1', '报告 ' + real + ' 里 42 条全对') === null, '存在的路径应通过');
+  const msg2 = attestThrows('s-path', '2', '报告 ' + real + ' 和 ' + ghost);
+  assert(msg2 && msg2.includes(ghost) && !msg2.includes('report.json'), '只点名不存在的那个,实为 ' + msg2);
+});
+t('11.15 attest:只剩空话 → 拒绝(带不带路径、有没有 gate 都一样)', () => {
+  scope.register('s-filler', [{ what: '无 gate' }, { what: '有 gate', gate: 'visual' }], true);
+  const img = evFile('filler.png');
+  for (const ev of ['已完成', '完成。', 'Done!', 'OK ok', 'Play 验过', '测试通过', '已验证,没问题', '。。。。', '已完成 ' + img]) {
+    assert(attestThrows('s-filler', '1', ev), '空话应拒绝:' + ev);
+    assert(attestThrows('s-filler', '2', ev), 'gate 条目空话也应拒绝:' + ev);
+  }
+  assert(attestThrows('s-filler', '1', 'npm test 退出码 0,42/42 通过') === null, '具体证据应通过');
+});
+t('11.16 gate=visual:没图/旧图拒绝,本轮新截图通过(可加 dump)', () => {
+  const old = evFile('old.png', 3600 * 1000);
+  scope.register('s-vis', [{ what: 'HUD 按钮可点', gate: 'visual' }], true);
+  const it = scope.getScope('s-vis').items[0];
+  assert(it.gate === 'visual' && it.setAt && !Number.isNaN(Date.parse(it.setAt)), '登记应记 gate 和 setAt,实为 ' + JSON.stringify(it));
+  const dump = evFile('state.json');
+  const m1 = attestThrows('s-vis', '1', 'state dump ' + dump + ' 里 btnStart.interactable=true');
+  assert(m1 && m1.includes('本轮新截图'), '只有 dump 没图应拒绝,实为 ' + m1);
+  const m2 = attestThrows('s-vis', '1', 'Play 点 START 进简报页,截图 ' + old);
+  assert(m2 && m2.includes('早于'), '旧截图应拒绝,实为 ' + m2);
+  const fresh = evFile('fresh.png');
+  assert(attestThrows('s-vis', '1', 'Play 点 START 进简报页,截图 ' + fresh + ',dump ' + dump) === null, '新截图应通过');
+  assert(scope.unresolved('s-vis').length === 0, '通过后应收敛');
+});
+t('11.19 gate=visual:verify 命令过了也不收敛,仍要 attest 截图', () => {
+  scope.register('s-vischeck', [{ what: 'HUD 换枪', gate: 'visual', verify: 'node -e "process.exit(0)"' }], true);
+  scope.check('s-vischeck');
+  const it = scope.getScope('s-vischeck').items[0];
+  assert(it.state !== 'pass', 'visual 条目不能只靠 check 收敛,实为 ' + it.state);
+  assert(scope.unresolved('s-vischeck').length === 1, '应仍未收敛');
+  scope.register('s-plaincheck', [{ what: '编译', verify: 'node -e "process.exit(0)"' }], true);
+  scope.check('s-plaincheck');
+  assert(scope.getScope('s-plaincheck').items[0].state === 'pass', '普通条目 check 照旧 pass');
+});
+t('11.17 向后兼容:旧条目无 gate 照旧;gate 条目无 setAt 跳过 mtime;非法 gate 拒绝;waive 不受影响', () => {
+  scope.register('s-old', [{ what: '旧式条目' }], true);
+  assert(scope.getScope('s-old').items[0].gate === null, '没写 gate 应为 null');
+  assert(attestThrows('s-old', '1', 'Editor.log 第 88 行 [WaveDone] 计数 3/3') === null, '无路径的具体文字应照旧通过');
+  // 模拟老版本存下来的数据:有 gate 但没有 setAt
+  scope.register('s-legacy', [{ what: '老数据', gate: 'visual' }], true);
+  const file = path.join(process.env.YIDE_LOCAL, 'scope.json');
+  const all = JSON.parse(fs.readFileSync(file, 'utf8'));
+  delete all['s-legacy'].items[0].setAt;
+  fs.writeFileSync(file, JSON.stringify(all));
+  const old = evFile('legacy.png', 3600 * 1000);
+  assert(attestThrows('s-legacy', '1', '老截图 ' + old + ' 里按钮亮着') === null, '没 setAt 时不做 mtime 检查');
+  let threw = false;
+  try { scope.register('s-badgate', [{ what: 'x', gate: 'visul' }], true); } catch { threw = true; }
+  assert(threw, '拼错的 gate 应拒绝(防静默绕过)');
+  scope.register('s-waive', [{ what: '不做了', gate: 'visual' }], true);
+  scope.mark('s-waive', '1', 'waived', '勾哥说这轮不做');
+  assert(scope.unresolved('s-waive').length === 0, 'waive 不需要截图');
+});
+t('11.18 attest CLI:不存在的路径 → 非 0 退出,stderr 点名;help 里写了 gate', () => {
+  const sp = path.join(SCRIPTS, 'scope.js');
+  execFileSync('node', [sp, 'set', '--session', 's-cli2', '--json', JSON.stringify([{ what: 'UI', gate: 'visual' }])], { encoding: 'utf8', env: process.env });
+  const ghost = path.join(EV, 'nope.png');
+  let code = 0, err = '';
+  try { execFileSync('node', [sp, 'attest', '--session', 's-cli2', '--id', '1', '--evidence', '截图 ' + ghost], { encoding: 'utf8', env: process.env, stdio: ['ignore', 'pipe', 'pipe'] }); }
+  catch (e) { code = e.status; err = String(e.stderr); }
+  assert(code !== 0 && err.includes(ghost), '应非 0 并点名路径,实为 code=' + code + ' ' + err);
+  const help = execFileSync('node', [sp, 'help'], { encoding: 'utf8' });
+  assert(help.includes('gate') && help.includes('visual'), 'help 应说明 gate 字段');
 });
 
 // === 12. 会话命名(SessionStart 底标 + 首句粗取 + 模型 set 下一句生效 + resume 保留)===

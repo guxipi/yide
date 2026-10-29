@@ -2,6 +2,13 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.71.8 — 2026-10-29 速度/质量审计第二批:交付门、拦前台轮询、lead 原地压缩、派单少一跳
+- **scope 交付门**:`attest --evidence` 里写的本地路径必须真实存在;只写「已完成 / 验过 / done」这类空话直接拒;条目登记时加 `"gate":"visual"`(玩家可见的改动)后,收尾必须附本条登记之后新截的图,`check` 过了也不算收敛。存储只追加 `gate` / `setAt`,旧数据照旧。简报的 scope 契约段落同步说明。
+- **拦前台轮询**:pre-tool-use 对 Bash / PowerShell 里前台的长等待(循环 + sleep 估算总等待 > 60 秒或估不出、单条 sleep ≥ 30 秒)直接 deny,提示改用 `run_in_background` 或 Monitor;后台跑的、短重试、提交说明里出现的 sleep 都不拦。审计里前台轮询累计约 10 小时。耗时不变(~37ms)。
+- **session-relay**:开过子会话的 session 视为 lead,到 200K 就原地压缩(普通 session 仍 400K),不再写 handover 换 lead。
+- **lead-orchestration skill**:8c「到 200K 写交接收尾」「lead 已大就换 lead」改为原地压缩 + 不主动换 lead;巡检加「等结果用后台通知,不写 sleep 轮询」「能一跳做完的不拆两跳」。
+- 测试:`node test/run.js` 85/0(新增前台轮询闸 31 条断言、scope 证据门 7 个用例),`claude plugin test` 27/27,tsc 零错。
+
 ### v0.71.7 — 2026-10-29 session-relay:400K 自动压缩真正生效,堵住乱开续篇
 - 审计发现:10-26~10-29 有 32 个会话超过 400K(最高 811K),一次自动压缩都没有;10-28/29 夜里一个仍在干活的 lead 被连开 3~4 条「·续」,双 lead 互相覆盖。根因:10-28 晚的「≥400K 原地压缩 + 退役闸 + 一条续篇」只改在单机副本 `~/.claude/mods/session-relay`,从没并回本仓;那份副本又因为 v0.71.4 删了 `CLAUDE_CODE_PLUGIN_DIRS` 而不再加载。三台机器实际跑的一直是只有按钮、没有闸的旧版。
 - 并回本仓:≥400K 回合结束自动 `/compact`(带保留清单),turn 还没收尾被拒就 5 秒后再试一次,还不成下一回合结束再来;按钮去掉。退役闸、一条续篇 + 转发都并回来。`tool.check` 放行加上 `send_message`(转发用)。

@@ -129,7 +129,8 @@ try {
     `\`node "${path.join(PLUGIN_ROOT, 'scripts', 'scope.js')}" set --session ${SESSION_ID} --json '[{"what":"做什么","verify":"能判定成败的命令(可省)"}]'\`\n` +
     `(本会话 sid = \`${SESSION_ID}\`,所有子命令都带上它)\n` +
     `干完跑 \`check\` 让退出码写状态(0 才算 pass);没命令可跑的走 \`attest --evidence "<具体证据>"\`;真不做了走 \`waive --reason "<理由>"\`。` +
-    `别自己在心里打勾——状态只认命令退出码和写下来的证据。单步小活不用登记。\n`;
+    `别自己在心里打勾——状态只认命令退出码和写下来的证据。单步小活不用登记。\n` +
+    `玩家看得到的改动(UI / 画面 / 手感 / 交互)登记时加 \`"gate":"visual"\`:收尾必须真在 Play 里点过,attest 写清点了什么、看到什么,贴本条登记之后新截的图(可再附 state dump);check 过了也不算收敛。证据里的路径必须真实存在,只写「已完成 / 验过」会被拒。\n`;
 
   // 随手记 inbox:只报未整理条数(手机扔进来的笔记)
   let nInbox = 0;

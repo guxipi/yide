@@ -46,6 +46,120 @@ function rewriteSize(command, cwd) {
   return out;
 }
 
+// 前台轮询闸参数:单条 sleep ≥ POLL_SINGLE_SECS 或「循环 + sleep」估算总等待 > POLL_LOOP_OK_SECS 算前台长等待。
+const POLL_SINGLE_SECS = 30;
+const POLL_LOOP_OK_SECS = 60;
+const POLL_REASON = '前台轮询会卡住整个会话。改用 run_in_background: true 跑这条命令(完成会自动通知),或用 Monitor 等条件;等的时候先做别的活。';
+
+// 去掉不会被执行的文本(heredoc 正文、PS here-string、-m "提交说明"),免得提交说明里写了 sleep 被误拦。
+function stripInert(cmd) {
+  return cmd
+    .replace(/<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n[ \t]*\2[ \t]*(?=\r?\n|$)/g, '<<EOF')
+    .replace(/@'[\s\S]*?\n'@/g, "''").replace(/@"[\s\S]*?\n"@/g, '""')
+    .replace(/(\s-m\s+)("(?:[^"\\]|\\.)*"|'[^']*')/g, '$1""');
+}
+
+// 文本里所有 sleep 的秒数:[{secs}],secs=null 表示估不出(sleep $x 之类)。
+// 认 sleep N[smhd] / Start-Sleep [-Seconds|-Milliseconds] N / timeout /t N。
+function sleepsIn(text) {
+  const out = [];
+  let m;
+  const SLEEP_RE = /(^|[^\w.-])(start-sleep|sleep)\b([^;&|\r\n})]*)/gi;
+  while ((m = SLEEP_RE.exec(text))) {
+    const a = m[3].trim();
+    let secs = null, x;
+    if ((x = a.match(/^-m\w*[\s:]+(\d+(?:\.\d+)?)(?!\S)/i))) secs = parseFloat(x[1]) / 1000;
+    else if ((x = a.match(/^-s\w*[\s:]+(\d+(?:\.\d+)?)(?!\S)/i))) secs = parseFloat(x[1]);
+    else if ((x = a.match(/^(\d+(?:\.\d+)?)([smhd]?)(?!\S)/i))) secs = parseFloat(x[1]) * { '': 1, s: 1, m: 60, h: 3600, d: 86400 }[x[2].toLowerCase()];
+    out.push({ secs });
+  }
+  const TIMEOUT_RE = /\btimeout(?:\.exe)?\s+\/t\s+(-?\d+)/gi;
+  while ((m = TIMEOUT_RE.exec(text))) out.push({ secs: +m[1] < 0 ? Infinity : +m[1] });
+  return out;
+}
+
+// 计数器循环的迭代次数:条件里 `$t -lt 570` / `i<60`,循环里 t=$((t+15)) / t+=15 / $t = $t + 15 / i++;估不出返回 null。
+function counterIters(cond, body, before) {
+  const c = cond.match(/\$?\{?([A-Za-z_]\w*)\}?\s*(-lt|-le|-ne|-gt|-ge|<=|>=|<|>)\s*(\d+)/i);
+  if (!c) return null;
+  const v = c[1], limit = +c[3], hay = cond + '\n' + body;
+  let step = null, x;
+  if ((x = hay.match(new RegExp(`\\b${v}\\s*=\\s*\\$\\(\\(\\s*\\$?${v}\\s*([+-])\\s*(\\d+)\\s*\\)\\)`)))
+    || (x = hay.match(new RegExp(`\\$?\\b${v}\\s*=\\s*\\$?${v}\\s*([+-])\\s*(\\d+)`)))
+    || (x = hay.match(new RegExp(`\\$?\\b${v}\\s*([+-])=\\s*(\\d+)`)))) step = (x[1] === '-' ? -1 : 1) * +x[2];
+  else if ((x = hay.match(new RegExp(`\\$?\\b${v}(\\+\\+|--)|(\\+\\+|--)\\$?${v}\\b`)))) step = (x[1] || x[2]) === '--' ? -1 : 1;
+  if (!step) return null;
+  const inits = [...(before + '\n' + cond).matchAll(new RegExp(`\\$?\\b${v}\\s*=\\s*(-?\\d+)(?![\\d.])`, 'g'))];
+  const init = inits.length ? +inits[inits.length - 1][1] : 0;
+  const n = (limit - init) / step;
+  return n > 0 ? Math.ceil(n) + (/^(-le|-ge|<=|>=)$/i.test(c[2]) ? 1 : 0) : null;
+}
+
+// for x in LIST 的元素个数:$(seq ..) / {a..b} / 纯字面词表;含通配或变量估不出返回 null。
+function listIters(list) {
+  let x;
+  if ((x = list.match(/\$\(\s*seq\s+(-?\d+)(?:\s+(-?\d+))?(?:\s+(-?\d+))?\s*\)/))) {
+    const [a, b, c] = [x[1], x[2], x[3]].map(s => (s === undefined ? undefined : +s));
+    const n = c !== undefined ? Math.floor((c - a) / b) + 1 : b !== undefined ? b - a + 1 : a;
+    return n > 0 ? n : null;
+  }
+  if ((x = list.match(/\{(-?\d+)\.\.(-?\d+)(?:\.\.(\d+))?\}/))) return Math.floor(Math.abs(+x[2] - +x[1]) / (+x[3] || 1)) + 1;
+  const words = list.replace(/;\s*$/, '').trim();
+  if (!words || /[$`*?[{]/.test(words)) return null;
+  return words.split(/\s+/).length;
+}
+
+// 前台长等待判定。Bash 用 do…done 配循环体,PowerShell 用 {…}。任何异常 → false(宁可漏拦,不误伤)。
+function isForegroundWait(cmd, isPs) {
+  try {
+    if (!cmd || typeof cmd !== 'string' || !/sleep|timeout/i.test(cmd)) return false;
+    const text = stripInert(cmd);
+    if (sleepsIn(text).some(s => s.secs !== null && s.secs >= POLL_SINGLE_SECS)) return true;
+    const LOOP_RE = /\b(?:while|until)\b|\bfor\s+[A-Za-z_]\w*\s+in\b|\bfor\s*\(|\bforeach\b|\bdo\s*\{/gi;
+    let m;
+    while ((m = LOOP_RE.exec(text))) {
+      const kw = m[0].toLowerCase();
+      const kwEnd = m.index + m[0].length;
+      let head = text.slice(kwEnd), body = '', tail = '';
+      if (!isPs) {
+        const re = /\b(do|done)\b/g; re.lastIndex = kwEnd;
+        let depth = 0, at = -1, d;
+        while ((d = re.exec(text))) {
+          if (d[1] === 'do') { if (at < 0) at = d.index; depth++; }
+          else if (depth > 0 && --depth === 0) { body = text.slice(at, d.index); break; }
+        }
+        if (at >= 0) { head = text.slice(kwEnd, at); if (!body) body = text.slice(at); }
+      } else {
+        const open = text.indexOf('{', kw.startsWith('do') ? m.index : kwEnd);
+        if (open >= 0) {
+          let depth = 0, i = open;
+          for (; i < text.length; i++) {
+            if (text[i] === '{') depth++;
+            else if (text[i] === '}' && --depth === 0) break;
+          }
+          head = text.slice(kwEnd, open);
+          body = text.slice(open + 1, i);
+          tail = text.slice(i + 1).split(/[;\r\n]/)[0];
+        }
+      }
+      const sleeps = sleepsIn(head + '\n' + body + '\n' + tail);
+      if (!sleeps.length) continue;
+      if (sleeps.some(s => s.secs === null)) return true;
+      const per = sleeps.reduce((a, s) => a + s.secs, 0);
+      const before = text.slice(0, m.index);
+      let iters = null;
+      if (/^for\s+\w+\s+in$/.test(kw)) iters = listIters(head);
+      else if (kw === 'foreach') {
+        const seg = before.slice(Math.max(before.lastIndexOf(';'), before.lastIndexOf('\n')) + 1);
+        const r = (head.match(/(-?\d+)\s*\.\.\s*(-?\d+)/) || seg.match(/(-?\d+)\s*\.\.\s*(-?\d+)/));
+        if (r) iters = Math.abs(+r[2] - +r[1]) + 1;
+      } else iters = counterIters(kw.startsWith('do') ? tail : head, body, before);
+      if (iters === null || iters * per > POLL_LOOP_OK_SECS) return true;
+    }
+    return false;
+  } catch { return false; }
+}
+
 const META = path.join(brainDir(), '.meta');
 const RULES = path.join(META, 'hook-rules.json');
 const ALLOW = path.join(META, 'allow-rules.json');
@@ -182,6 +296,13 @@ try {
           '确实需要推倒,停下来向用户说明现有逻辑哪里不能沿用、打算怎么改,等用户同意后再动。');
       }
     }
+  }
+
+  // 1c) 前台轮询闸:Bash/PowerShell 前台跑「循环 + sleep」或长 sleep 会卡死整个会话(10-26~29 审计约 600 分钟耗在这)。
+  //     run_in_background: true 的一律放行;估算总等待 ≤ 60 秒的短重试放行。
+  if ((tool === 'Bash' || tool === 'PowerShell') && ti.run_in_background !== true
+    && isForegroundWait(ti.command, tool === 'PowerShell')) {
+    emit('deny', '🗡️ 翼德拦截:' + POLL_REASON);
   }
 
   // 2) 自动放行(只读/导航;拿不准就 defer)

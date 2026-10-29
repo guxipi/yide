@@ -17,6 +17,7 @@ type Opts = {
   sendFails?: boolean
   compactSkips?: boolean
   compactThrowsOnce?: boolean
+  lead?: boolean
 }
 type Compact = { instructions?: string }
 
@@ -47,7 +48,11 @@ function engine(on: On, opts: Opts) {
   on('session.messages', () => ({
     value: [
       { role: 'user', text: '继续做 HUD mockup', toolUses: [] },
-      { role: 'assistant', text: opts.lastAssistant ?? 'HANDOVER:三张图已出,下一步是贴进 Sheet。', toolUses: [] },
+      {
+        role: 'assistant',
+        text: opts.lastAssistant ?? 'HANDOVER:三张图已出,下一步是贴进 Sheet。',
+        toolUses: opts.lead ? [{ tool_use_id: 'tu1', tool: 'mcp__ccd_session__start_session', input: {} }] : [],
+      },
     ],
   }))
   on('session.append', (_, e, next) => next(e))
@@ -350,4 +355,20 @@ test('a compaction refused at the turn end is retried a few seconds later', asyn
 
   expect(compacts.length).toBeGreaterThanOrEqual(1)
   expect(timers).toContain(5000)
+})
+
+test('a lead (it started side sessions) is compacted in place from 200K', async ($, on) => {
+  const { compacts } = engine(on, { idleMs: 60 * 1000, tokens: 230_000, lead: true })
+
+  await $.turn.complete(TURN)
+
+  expect(compacts.length).toBe(1)
+})
+
+test('an ordinary session at 230K is left alone', async ($, on) => {
+  const { compacts } = engine(on, { idleMs: 60 * 1000, tokens: 230_000 })
+
+  await $.turn.complete(TURN)
+
+  expect(compacts.length).toBe(0)
 })
