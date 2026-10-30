@@ -63,7 +63,8 @@ def main():
         open(os.path.join(W, "p_%s.txt" % n), "w", encoding="utf-8").write(txt)
         names.append(n)
     os.makedirs(os.path.join(W, "img"), exist_ok=True)
-    open(os.path.join(W, "joblist_%s.txt" % cfg["set"]), "w").write("\n".join(names) + "\n")
+    # LF only: xargs on Git Bash keeps the trailing \r of CRLF lines -> every job name breaks
+    open(os.path.join(W, "joblist_%s.txt" % cfg["set"]), "w", newline="\n").write("\n".join(names) + "\n")
     print("\n".join(names))
 
 

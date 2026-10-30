@@ -54,6 +54,7 @@ mo.co 近景参考存在 vault `013 美术/mo.co截图/裁切/expedition_mocoref
 | 多个物件在 blend 里重叠 | 遗址互相"挡住" | 遮挡只在同一组内判 |
 | 前台 shell 里 `cmd &` 起 codex | 任务被杀,没出图 | 并行一律放进一个 `run_in_background` 命令里,用 `xargs -P 4` |
 | 打包只填当前行 | 45 张 sheet | first-fit 打包后 24 张 |
+| joblist 写成 CRLF 换行 | xargs 拿到"名字\r",找不到提示词,全部 REJECT | po_prompts 改成只写 LF(10-31 第一次复用时踩到) |
 | 底稿画了方向光 | 进游戏明暗算两遍 | 底稿只有固有色乘柔和 AO;提示词禁方向光和投影 |
 
 ## 已知不足
