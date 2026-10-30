@@ -2,6 +2,12 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.75.0 — 2026-10-31 er-blender:部件化建模 + paint-over 手绘质感管线
+- 勾哥 10-30/31:J01 POI 建筑和小件"建模非常棒","painter over 的把控尤其好,需要未来根据不同的场景不断复用"。
+- er-blender 新增 `07-建筑部件拼装`(先做墙、门框、屋顶、壳段再按设计坐标拼,不做地板,Claude 直接做)和 `08-手绘paintover`(底稿 → sol 手绘 → 配准 → 投影回 UV → 图集;游戏镜头固定所以只画 G 视角 + E/W 侧视;三道门 + 10 条实测坑)。
+- 新脚本:`scripts/kit/`(J01 有顶屋 / 母舱 / 遗址 / 16 种小件 / 家具生成器)、`scripts/paintover/po_*.py`(配置驱动,换场景只写一个 JSON;`examples/` 有 J01 三份)。在 J01 props 上复跑,打包布局与原版一致,投影和评审图正常。
+- 03 道具风格化:自建件那条从"未实测"改为指向 07/08。
+
 ### v0.74.0 — 2026-10-30 skill / agent 去冲突与合并
 - 勾哥 10-30 让盘点翼德全部 skill 和 agent。按他的拍板:Fable/Opus 分工不再写进 skill / agent(他每次对话自己说);红线⑥加 Tripo 生成免前置拉 mo.co;图标头像框走 gemini 工具箱;Planyway 默认发不问。
 - 合并:`unstuck-playbook` 并进 `feature-development` 附录;项目 skill `ui-design-match` 并进 `ui-visual-rework/references/design-match-parity.md`;个人 skill `codex-executor` 挪进插件(三台机同步)。

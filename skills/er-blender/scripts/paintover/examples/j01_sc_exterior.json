@@ -1,0 +1,29 @@
+{
+ "set": "sc_ext",
+ "groups": {
+  "SC": [
+   "SC_ExtWalls_Low",
+   "SC_ExtWalls_Up",
+   "SC_Roof_Skin",
+   "SC_Roof_Ribs",
+   "SC_Roof_Gables"
+  ]
+ },
+ "views": [
+  "G",
+  "E",
+  "W"
+ ],
+ "ppm": 80,
+ "side_ratio": 0.6,
+ "prompt": {
+  "what": "a federal barrel-vault workshop house",
+  "card": "D:/screenshots/ER_jungle_concept_v2_20261029/J01/img/J01_PS_card_v2.png",
+  "card_desc": "the approved concept painting of this same building",
+  "style_refs": [
+   "I:/My Drive/Obsidian/ExtractionRaider/01 - 星际拓荒重构/013 美术/mo.co截图/裁切/expedition_mocoref_石墙块近景_paintover参考_440x440.png",
+   "I:/My Drive/Obsidian/ExtractionRaider/01 - 星际拓荒重构/013 美术/mo.co截图/裁切/expedition_mocoref_衣柜近景_paintover参考_352x300.png"
+  ],
+  "colors": "white shell #C6CFDD, slate frames and ribs #606F84, dark feet and skirts #465C6D, the small cyan glow #8DFCF5 (keep it small)"
+ }
+}

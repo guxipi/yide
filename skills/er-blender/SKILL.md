@@ -1,6 +1,6 @@
 ---
 name: er-blender
-description: ER(Extraction)所有非角色的 Blender 活的总入口——Tripo 道具/武器/HOME 家具/POI 件的清理与风格化、评审台出对照图、数字验收门、导出进 Unity、VFX mesh 和圆润石头这类离线件;附 Blender 5.1 bpy 坑表和官方 Blender Lab MCP 的用法。Trigger on "blender 处理模型" / "tripo 模型精修" / "模型肉感" / "模型太高模/太碎" / "看得出刻面" / "减面" / "道具风格化" / "blender 出图/渲染对照" / "导出 FBX 进 Unity" / "blender mcp" / "bpy 报错" / "stylize this model"。角色从设计图到入库走 er-character-pipeline;只在 Unity 里修材质/法线/pivot 走 gaoguang-3d;树、草、崖、地块这类程序化地编走 Unity 生成器,不进 Blender。
+description: ER(Extraction)所有非角色的 Blender 活的总入口——POI 建筑与联邦小件的部件化建模和按设计坐标拼装、给模型加 mo.co 手绘质感的 paint-over 管线(sol 手绘 + 配准投影回 UV,换场景只换配置)、Tripo 道具/武器/HOME 家具/POI 件的清理与风格化、评审台出对照图、数字验收门、导出进 Unity、VFX mesh 和圆润石头这类离线件;附 Blender 5.1/5.2 bpy 坑表和官方 Blender Lab MCP 的用法。Trigger on "blender 建模" / "建筑建模" / "拆成墙再组合" / "POI 建模" / "做部件库" / "paint over" / "painter over" / "手绘质感" / "加 mo.co 笔触" / "模型太 basic" / "blender 处理模型" / "tripo 模型精修" / "模型肉感" / "模型太高模/太碎" / "看得出刻面" / "减面" / "道具风格化" / "blender 出图/渲染对照" / "导出 FBX 进 Unity" / "blender mcp" / "bpy 报错" / "stylize this model"。角色从设计图到入库走 er-character-pipeline;只在 Unity 里修材质/法线/pivot 走 gaoguang-3d;树、草、崖、地块这类程序化地编走 Unity 生成器,不进 Blender。
 ---
 
 # ER Blender 总入口
@@ -11,6 +11,8 @@ description: ER(Extraction)所有非角色的 Blender 活的总入口——Tripo
 
 | 要做的事 | 去哪 |
 |---|---|
+| POI 建筑(有顶屋、母舱、遗址残壳)和联邦硬表面小件:先做部件再按设计坐标拼,不做地板 | 本 skill `references/07-建筑部件拼装.md` + `scripts/kit/`(10-30 勾哥定 Claude 直接做) |
+| 给任何模型加 mo.co 手绘质感和笔触(paint-over):底稿 → sol 手绘 → 配准 → 投影回 UV → 图集 | 本 skill `references/08-手绘paintover.md` + `scripts/paintover/`;换场景只写一个配置 JSON |
 | 角色(四视图 → Tripo → 绑骨 → 表情 → 入库) | er-character-pipeline(它的 Blender 坑同样以本 skill 的 02 为准) |
 | 模型进了 Unity 发灰、塑料感、pivot 歪、只是法线软塌 | gaoguang-3d;先试 Unity importer 法线,多数"肉感"不用进 Blender |
 | Tripo 道具/武器/家具/POI 件:减面、刻面、色块、尺寸、挂点 | 本 skill `references/03-道具风格化.md` |
@@ -35,6 +37,8 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 |---|---|
 | `_er_bl.py` | 公共库:`ops_ctx`(统一 temp_override)、`import_any`(焊点、应用变换、原点底部中心,焊点时保住原法线)、`inspect`(三角/开放边/非流形/材质/UV/尺寸)、`make_lablit_preview`(纯 Emission 两阶明暗,近似 Unity LabLit) |
 | `stage.py` | 评审台:V5 46° 游戏镜头、正交俯视、正/侧/3/4、128px 游戏尺寸图,lablit / white(只看明暗)两种模式,另存掩码 |
+| `scripts/kit/*` | 部件化建模生成器(kitlib 拼装器 + 有顶屋 / 母舱 / 遗址 / 小件 / 家具),见 07 |
+| `scripts/paintover/po_*.py` | paint-over 五步:canvas → prompts → register → project → review(+ po_board 对照板),配置样例在 `paintover/examples/`,见 08 |
 
 ## 工作纪律
 

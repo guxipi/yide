@@ -1,0 +1,23 @@
+{
+ "set": "props",
+ "group_prefixes": [
+  "J01P_"
+ ],
+ "views": [
+  "G",
+  "E",
+  "W"
+ ],
+ "ppm": 110,
+ "side_ratio": 0.6,
+ "prompt": {
+  "what": "federal sci-fi props (cargo port, crates, cabinets, pump, benches, weighing platform, plank bundle, broken mast, docking cradle)",
+  "card": "D:/screenshots/ER_jungle_concept_v2_20261029/J01/img/J01_PN_card_v3.png",
+  "card_desc": "an approved concept painting of a federal hull from the same game",
+  "style_refs": [
+   "I:/My Drive/Obsidian/ExtractionRaider/01 - 星际拓荒重构/013 美术/mo.co截图/裁切/expedition_mocoref_石墙块近景_paintover参考_440x440.png",
+   "I:/My Drive/Obsidian/ExtractionRaider/01 - 星际拓荒重构/013 美术/mo.co截图/裁切/expedition_mocoref_衣柜近景_paintover参考_352x300.png"
+  ],
+  "colors": "white shell #C6CFDD, slate frames and ribs #606F84, dark feet and skirts #465C6D, the small cyan glow #8DFCF5 (keep it small), orange wood planks #C8743A, olive straps #7D8A6A, red-brown ore lumps #B8665A"
+ }
+}
