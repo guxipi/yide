@@ -38,11 +38,11 @@
 > **可选**(勾哥要才加):需要确认交互态时,在手机框下方补一条**状态条**,把关键件各态画一遍(normal/pressed/disabled/空态/极端值)。默认**不加**,保持纯净。
 
 #### 1B. 同步产出 spec sidecar(2026-07-07 起硬规:无 sidecar 的 mockup 不得交付)
-mockup 是"长什么样",sidecar 是"每块干什么/怎么交互/复用什么/套哪条范式"——实施方(`ui-design-match`)按它落地,parity 流水线按它逐条核销。
+mockup 是"长什么样",sidecar 是"每块干什么/怎么交互/复用什么/套哪条范式"——实施方(`ui-visual-rework` 的 `references/design-match-parity.md`,原 `ui-design-match`)按它落地,parity 流水线按它逐条核销。
 - **一 mockup 一 sidecar**:与 HTML **同名** `.md`,同目录(草稿期 `QA/`,确认后随确认稿一起归档到确认线稿文件夹)。
 - **内容 = 逐区域一行**:从框内每个 `yd-region` 的 `data-*` 抽出 —— 区域 → 功能 / 交互路由(点了去哪·目标·反馈·失败态·返回路径)/ 状态清单 / 复用件 / 套哪条 `Pattern_Catalog/` 范式。套不上范式的区域标出来,提示先扩范式库问勾哥。
 - **产出方式**:HTML 写完后遍历 `yd-region` 的 `data-*` 直接生成 sidecar 初稿(可在 §3 自验证时用同一 headless 浏览器 `javascript` 读 DOM 导出);勾哥确认闭环(§5)时连 sidecar 一起勾错。
-- **交付门**:没有对应 sidecar 的 mockup **不交付、不得作 `ui-design-match` 的实施依据**。
+- **交付门**:没有对应 sidecar 的 mockup **不交付、不得作 parity 流程(`ui-visual-rework` → `design-match-parity.md`)的实施依据**。
 
 ### 2. 嵌入批注层(给勾哥点选留言用)
 把 `${CLAUDE_SKILL_DIR}/templates/mockup/annotate.html` 的内容**原样**贴到 `</body>` 之前——勾哥点某组件就弹框写意见、边打边自动保存、一键复制反馈。这是**反馈通道**,与"框内零备注"不冲突。
@@ -86,5 +86,5 @@ mockup 是"长什么样",sidecar 是"每块干什么/怎么交互/复用什么/�
 - **kit 实物是标准,IA 也算**:布局/放哪几个/谁凸起/进 nav 还是侧 rail 都照 kit 实物核,别用设计规范文档清单或想当然;内容来自现游戏,布局来自 kit。
 - **摆完用 producer 眼睛再扫一遍**:不只"像不像 kit",还要信息层级/留存钩子/变现入口/拇指区经济站不站得住;拿不准的产品取舍摊给勾哥。
 - **状态按需**:默认纯净;勾哥要确认交互态时才在框下补状态条。
-- **一 mockup 一 sidecar**(§1B):每张 mockup 必配同名 spec sidecar(区域→功能/交互路由/状态/复用件/范式);**无 sidecar 不交付**、不得作 `ui-design-match` 的实施依据。
+- **一 mockup 一 sidecar**(§1B):每张 mockup 必配同名 spec sidecar(区域→功能/交互路由/状态/复用件/范式);**无 sidecar 不交付**、不得作 parity 流程(`ui-visual-rework` → `design-match-parity.md`)的实施依据。
 - **诚实**:真实美术资源、动效细节画不了就说画不了,只用风格到位的占位示意位置。

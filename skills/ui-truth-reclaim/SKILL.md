@@ -19,9 +19,9 @@ description: 把一个 Extraction UI 屏从"四个作者抢着写同一批 RectT
 
 **先跑 Audit,看这个屏的五个数。** 没有这五个数就动手 = 盲改。代码写坐标数决定要删多少方法,场景 override 净数决定 Revert 的规模,嵌套 prefab 那列决定要不要 unpack,LayoutGroup 数决定有几个打架点,活 builder 菜单数决定收完之后谁还会来冲掉你(退役的 builder 带 `(retired)` 前缀,不算)。
 
-**画布口径:HomeScreen 主 canvas(`UICanvasLayerManager`)是 ScaleWithScreenSize / 1440×2560 / MatchWidthOrHeight / match = 0**,不是 0.5。match 0 是纯跟宽,所以 1080×2400 实机上 scaleFactor 0.75、画布逻辑尺寸是 1440×3200 而不是 1440×2560。任何写死的绝对 y 坐标在不同屏比例下都不等价——这是"同一批数在不同机器上对不齐"的结构性原因。开 UI prefab 单独编辑前确认 `ProjectSettings/EditorSettings.asset` 的 `m_PrefabUIEnvironment` 指着同口径的环境场景(`Assets/Scenes/Editor/PrefabUIEnvironment.unity`),否则 prefab 里量的坐标是假的。
+**画布口径:HomeScreen 主 canvas(`UICanvasLayerManager`)是 ScaleWithScreenSize / 1440×2560 / MatchWidthOrHeight / match = 0**(2026-10-30 实读 YAML 复核;别的场景另有 match 0.5 的 canvas,收别的屏先实读)。match 0 是纯跟宽,所以 1080×2400 实机上 scaleFactor 0.75、画布逻辑尺寸是 1440×3200 而不是 1440×2560。任何写死的绝对 y 坐标在不同屏比例下都不等价——这是"同一批数在不同机器上对不齐"的结构性原因。开 UI prefab 单独编辑前确认 `ProjectSettings/EditorSettings.asset` 的 `m_PrefabUIEnvironment` 指着同口径的环境场景(`Assets/Scenes/Editor/PrefabUIEnvironment.unity`),否则 prefab 里量的坐标是假的。
 
-**看不见就别猜:Coplay 的 `capture_ui_canvas` / `capture_scene_object` 对 screen space canvas 出黑图。** 截图两条路:Screen Space - Camera 的 canvas 在 Play 里用 `execute_script` 把 `canvas.worldCamera` 渲到 RenderTexture 再 `ReadPixels` 落盘;Overlay 的只能让人按 F8。
+**看不见就别猜:Coplay 的 `capture_ui_canvas` / `capture_scene_object` 对 screen space canvas 出黑图。** 截图首选 `unity command capture game_view -- --source screen`(Play 中,含 Overlay UI,见 `playmode-verify-iterate`);CLI 不可用时,Screen Space - Camera 的 canvas 用脚本把 `canvas.worldCamera` 渲到 RenderTexture 再 `ReadPixels` 落盘,Overlay 的让人按 F8。
 
 ## 流程
 

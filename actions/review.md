@@ -18,7 +18,7 @@
    > ③ **验收标准或红线被违背**。
    > **不要报**:命名、格式、风格、"可以更优雅"——不归你管。
    > 每条按 `严重度(高/中/低) · 文件:行 · 问题 · 为什么是真问题 · 怎么验证或修` 给。没十足把握标"待确认",**别凑数**;真挑不出就直说"未发现正确性/耦合问题",别硬编。
-3. **有 Unity MCP** → 评审员可调 `get_unity_logs` / `check_compile_errors` / `play_game`(Coplay 没有 `run_tests`),把"我觉得会崩"变成"我看到它崩",以引擎真值为准。
+3. **有 Unity CLI / MCP** → 评审员可读 Console、看编译状态、跑测试或进 Play(CLI:`unity command console get` / `console status` / `test run`;MCP:`get_unity_logs` / `check_compile_errors` / `play_game`),把"我觉得会崩"变成"我看到它崩",以引擎真值为准。
 4. **汇总给勾哥**:按严重度列出;**高**的建议改完再交付。翼德只摆问题,不替勾哥拍板改不改。
 
 ## 原则

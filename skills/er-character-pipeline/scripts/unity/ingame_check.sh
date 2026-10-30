@@ -8,7 +8,7 @@
 #            (default "Sprint:0:0.35,HeroPistolRecoil:WeaponHold:0.35,death:0:0.55" - death last, see below; layer = index or name)
 # Prerequisites: `ucli.sh guard` OK; Hero.prefab locally swapped (hero_swap.cs); nobody else is using Play.
 # Output: OUTDIR/{home,gear,briefing,expedition,expedition_hi,state_*}.png + ingame.log. A missing capture or "no <name>"
-# in the log = FAIL. Then Opus crops/looks at: gear (size, faces camera, gun in hand, no giant objects),
+# in the log = FAIL. Then the main session crops/looks at: gear (size, faces camera, gun in hand, no giant objects),
 # expedition (top-down readability, feet on ground, hair/skirt not exploding, HP bar position).
 set -uo pipefail
 NAME="${1:?avatar name substring}"; OUT="${2:?outdir}"; mkdir -p "$OUT"

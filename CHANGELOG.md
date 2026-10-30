@@ -2,6 +2,14 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.74.0 — 2026-10-30 skill / agent 去冲突与合并
+- 勾哥 10-30 让盘点翼德全部 skill 和 agent。按他的拍板:Fable/Opus 分工不再写进 skill / agent(他每次对话自己说);红线⑥加 Tripo 生成免前置拉 mo.co;图标头像框走 gemini 工具箱;Planyway 默认发不问。
+- 合并:`unstuck-playbook` 并进 `feature-development` 附录;项目 skill `ui-design-match` 并进 `ui-visual-rework/references/design-match-parity.md`;个人 skill `codex-executor` 挪进插件(三台机同步)。
+- 去冲突:Unity 通道统一 CLI 为主、Coplay 兜底(ui-placement / ui-visual-rework / ui-truth-reclaim / feature-development / gaoguang-3d / vfx-production / cloud-code-deploy / plan / ui / qa / review);临时脚本落点对齐 CLAUDE.md 锁协议;UI 改动先判轨(已 prefab 化改 prefab、禁重跑退役 builder);画布 Match 按 YAML 实读(HomeScreen 主 canvas = 0);polish 删掉 10-06 作废的美术分工和 Brawl Stars 标尺;er-character-pipeline / lead-orchestration 去掉写死的模型名。
+- plan(闭环造鸭):检查点改成里程碑原子 commit + `git revert` 回滚,不再 stash、不再建分支。
+- er-icon-gen / er-frame-gen:bash 里读不到 `ER_IMAGEGEN_DIR` 时从注册表补读。
+- 测试断言 1 条跟随 plan 新行为。
+
 ### v0.73.0 — 2026-10-30 去掉让模型变慢、不按指令、过度设计的几处
 - 勾哥 10-30 让查本机翼德。会话记录里的证据:每条用户消息平均外包 0.53~0.72 次(9 月前 0.19),sleep 轮询 10-24 后一周 378 次;scope 收尾闸累计拦了约 160 次;关键词推荐模板 84 次,多数和当下任务无关。
 - 派活(大脑 charter):改成主会话自己执行,只有能并行的大批量活和出图才派,派单带原话和参考图,等结果走后台通知。

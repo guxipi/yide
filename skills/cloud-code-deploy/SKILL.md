@@ -104,7 +104,7 @@ public async Task<CompleteRaidResult> CompleteRaid(IExecutionContext context, st
 
 ## 第二步:两个会咬人的硬坑(实战踩过)
 
-1. **客户端缺 wrapper 方法 → 卡死整个 Unity 编译**。客户端别处(如 ClanService)调了 `cloudCode.FooAsync()` 但 CloudCodeManager 没这方法 → CS1061 → 整个项目编译红 → Play 进不去。**改服务端前先 `check_compile_errors`**,有这种残留先补齐 wrapper(可先写本地 fallback 占位)。
+1. **客户端缺 wrapper 方法 → 卡死整个 Unity 编译**。客户端别处(如 ClanService)调了 `cloudCode.FooAsync()` 但 CloudCodeManager 没这方法 → CS1061 → 整个项目编译红 → Play 进不去。**改服务端前先看客户端编译(`unity command console status` + grep `error CS`)**,有这种残留先补齐 wrapper(可先写本地 fallback 占位)。
 
 2. **客户端/服务端 model 字段必须全对齐**。服务端 `LoadBaseDataAsync → mutate → SaveBaseDataAsync` 是**整对象 round-trip**。服务端 model 缺了客户端 `PlayerBaseData` 的某个字段(如 `OwnedCores`/`DefenseLog`/`ProductionSlots`),反序列化丢字段 → save 回去时**静默清空玩家数据**。加端点前先比对两边 model,服务端要镜像客户端**每一个**字段。
 
@@ -148,9 +148,9 @@ ugs deploy . -e development --json    # Result 里 path 是 .sln 才对
 - **验证 server-authoritative 副作用真发生**:donate 后看 GOLD 真的被**服务端** Economy 扣了(不是客户端扣)、fund 真加了。
 - 端点写死一个可识别特征字符串,进游戏看到它 = 新代码在跑(不是旧版/fallback)。
 
-**MCP(Coplay)驱动 play 验证 cloud 的坑**:
-- play 必须从 **Boot** 起,否则 services 全 null。Coplay `play_game` 不保证从 active scene 起——先 `EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>("Assets/Scenes/Meta/Boot.unity")` 再 `play_game`;写个一次性脚本查 `SceneManager.GetActiveScene().name` + `GameObject.Find("ServiceRoot")` 确认真从 Boot 起来了(`activeScene=HomeScreen` + `ServiceRoot=null` = 没从 Boot 起)。
-- **domain reload 会杀掉 play session 的 services**(跑外部命令让 Unity 失焦 / asset refresh 都可能触发,ClanService 突然变 NULL)。别分多次 `execute_script` 慢慢测——用**一个自等待脚本**一口气跑完:`for(int i=0;i<50;i++){ svc=ClanService.Instance; if(svc!=null&&svc.IsReady) break; await Task.Delay(400);}` 然后顺着 create→donate→leave,在一个稳定窗口内做完。
+**驱动 play 验证 cloud 的坑**(Unity CLI 主路,Coplay 兜底):
+- play 必须从 **Boot** 起,否则 services 全 null。进 Play(`unity command editor.playmode start` / Coplay `play_game`)不保证从 active scene 起——先确认 `playModeStartScene` 指向 Boot(持久层是 EditorPrefs 键 `PlayModeSceneSelector.StartScenePath.<dataPath>`,改了要还原成开工实读的原值);写个一次性脚本查 `SceneManager.GetActiveScene().name` + `GameObject.Find("ServiceRoot")` 确认真从 Boot 起来了(`activeScene=HomeScreen` + `ServiceRoot=null` = 没从 Boot 起)。
+- **domain reload 会杀掉 play session 的 services**(跑外部命令让 Unity 失焦 / asset refresh 都可能触发,ClanService 突然变 NULL)。别分多次脚本调用慢慢测——用**一个自等待脚本**一口气跑完:`for(int i=0;i<50;i++){ svc=ClanService.Instance; if(svc!=null&&svc.IsReady) break; await Task.Delay(400);}` 然后顺着 create→donate→leave,在一个稳定窗口内做完。
 - 完整 Play 验证纪律见 `playmode-verify-iterate`。
 
 ---
@@ -171,7 +171,7 @@ ugs deploy . -e development --json    # Result 里 path 是 .sln 才对
 | **CloudSave 写** | `new SetItemBody(key, JsonHelper.Serialize(obj))`(string,**别** `SerializeToElement` JsonElement) |
 | **🚫 数据安全红线** | 改 Cloud Save 端点绝不能丢玩家数据:model 字段与客户端全对齐(round-trip 缺字段=静默清空)、改结构向后兼容、写前自问会不会盖掉没加载的字段。备份/snapshot 回滚见记忆 `server-data-safety`,建前先对齐方案 |
 | 编译服务端 | `cd CloudCode/src && dotnet build ExtractionCloudCode.sln -c Release` |
-| 客户端编译 | Coplay `check_compile_errors` + grep logs `error CS` |
+| 客户端编译 | `unity command console status` + grep 日志 `error CS` |
 | 部署 | `cd CloudCode/src && ugs deploy . -e development`(先删 src 里手动 zip 的 .ccm) |
 | 强制重部署 | `ugs cloud-code modules delete ExtractionCloudCode -e development` 再 `ugs deploy .` |
 | **核实部上了** | `ugs cloud-code modules list -e development --json` 看 DateModified(**别信 "Up to date"**) |

@@ -13,7 +13,7 @@ neutral by phase correlation on the crop box:
   |shift|  > 12 px or size != 1024 -> FAIL, regenerate that expression from the CURRENT face_front.png
 (Wren's accepted expressions measured 0.3-1.7 px x / 6.6-7.7 px y against a re-rendered base: the base had
 been rendered with a slightly different camera. Re-using expressions across a re-render costs ~7 px.)
-Then Opus looks at expr_contact.png: same painted style, eyes inside the sockets, mouth centred, no blush/
+Then the main session looks at expr_contact.png: same painted style, eyes inside the sockets, mouth centred, no blush/
 symbols, expressions read at a glance; closed-eye cells really closed.
 """
 import argparse

@@ -23,7 +23,7 @@ description: ER(Extraction)出头像框(avatar frame)的管线——调本机 ge
 spec 例子见 `$T/spec_frames_1026.json`(仓里带的样例)。每项 `[文件名, 显示名, 英文描述, 英文配色]`,描述只写形状和装饰(画风约束 CLI 自带),不写中文。一批 ≤12 个,默认 2K($0.101/批,勾哥已授权按批出,不逐批问)。
 
 ```bash
-T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"; CLI="$T/er_frame_cli.py"
+T="${ER_IMAGEGEN_DIR:-$(powershell.exe -NoProfile -Command "[Environment]::GetEnvironmentVariable('ER_IMAGEGEN_DIR','User')" | tr -d '\r')}"; T="${T:-F:/AI/Claude/ER}"; CLI="$T/er_frame_cli.py"
 PYTHONUTF8=1 py -3 "$CLI" gen "$T/spec_<set>.json" --yes   # 打印批次目录
 ```
 

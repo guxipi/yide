@@ -8,7 +8,7 @@ Writes clay_{front,left,34,34high,top70,high45,under}.png + clay_body.png (1024 
 Head centre: Head bone (centre = head.z + 0.41*bone length, frame = 1.25*bone length) when the model is
 rigged, otherwise from the bbox and the sheet's head ratio. --center-z/--scale are in normalized units
 (height 1.0, feet 0) and override the guess.
-Gate (Opus looks, compare with the previous mesh and the design sheet close-up side by side):
+Gate (the main session looks, compare with the previous mesh and the design sheet close-up side by side):
   front: round cheeks, U jaw, short round chin; left (profile): nose bridge + lips + round chin visible,
   cheek bulges forward, eye sits on the front plane; top70: face does not taper into a V; under: no
   deep socket holes.

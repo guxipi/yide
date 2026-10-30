@@ -181,7 +181,7 @@ t('闭环造鸭:plan 四阶段 + 路由', () => {
   const p = fs.readFileSync(path.join(ROOT, 'actions', 'plan.md'), 'utf8');
   assert(/闭环造鸭/.test(p), 'plan 应叫闭环造鸭');
   for (const ph of ['对齐', '造', '验', '交付']) assert(p.includes('· ' + ph) || p.includes('阶段'), '缺阶段 ' + ph);
-  assert(/run_tests/.test(p) && /自动验到全绿/.test(p), '应有 oracle 验证到全绿');
+  assert(/test run|run_tests/.test(p) && /自动验到全绿/.test(p), '应有 oracle 验证到全绿');
   const skill = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8');
   assert(/actions\/plan\.md/.test(skill) && /闭环造鸭/.test(skill), 'SKILL 缺 plan 路由/闭环造鸭触发词');
 });
@@ -200,7 +200,8 @@ t('闭环造鸭:producer 改进 8 条都在', () => {
 
 t('闭环造鸭:开造前检查点 + 失败回滚(归 plan,不另起动作)', () => {
   const p = fs.readFileSync(path.join(ROOT, 'actions', 'plan.md'), 'utf8');
-  assert(/检查点/.test(p) && /git stash/.test(p) && /专用分支|yide\/闭环/.test(p), '缺"开造前问勾哥建检查点(stash+专用分支)"');
+  assert(/检查点/.test(p) && /原子 commit/.test(p) && /不 `git stash`、不建\/切分支/.test(p), '缺"开造前记检查点(里程碑原子 commit,不 stash 不建分支)"');
+  assert(/git revert/.test(p), '回滚应走 git revert(不改写历史、不碰别人的活)');
   assert(/回滚/.test(p) && /一个单位/.test(p) && /\.checkpoint/.test(p), '缺失败回滚(整段一次撤 + 读 checkpoint)');
   assert(/回滚/.test(fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8')), 'SKILL plan 路由应含回滚触发词');
 });

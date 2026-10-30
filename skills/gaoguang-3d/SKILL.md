@@ -10,7 +10,7 @@ description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo,
 AI 生成的模型(Tripo 等)直接进项目必灰。原因是固定的三连:**embedded material 是 URP/Lit(PBR)** + **_BaseColor 常为 (0.8,0.8,0.8) 把贴图乘暗 20%**(也有白的,但 PBR 本身就压灰) + **_Smoothness 0.5 塑料高光**。工程里现成的 3D 着色是 `Assets/Shaders/ToonLit.shader`(`Custom/ToonLit`:双阶 toon 光 + rim + 描边开关)。这里的修法 = 换材质 + 对轴心 + 配动画 + 真光照验证,全程 Unity 内,不回 DCC。
 
 ## 0. 诊断(动手前必做,别猜)
-用 `execute_script` dump 真值(一次性探针 .cs 放 **项目根 `Temp/`,不进 Assets**,用完删;要留作工具的 builder → `Assets/Editor/CoplayTemp/`):
+dump 真值(一次性探针 .cs 放 **Assets 外**,如项目根 `Temp/`,用 `unity command script eval_file` / `script run` 跑,用完删;Coplay `execute_script` 只兜底,兜底时的临时驱动放 `Assets/Editor/CoplayTemp/`、不进 git;要留作工具的代码放正式目录 `Assets/Scripts/Editor/Setup/`):
 - 加载 FBX,遍历 `GetComponentsInChildren<Renderer>` 打印每个 sharedMaterial 的 shader 名、`_BaseColor`、`_BaseMap`、`_Smoothness`、`AssetDatabase.GetAssetPath(mat)`。assetPath 指向 .fbx 本身 = embedded 自动材质,就是本 skill 的目标场景。
 - **同时 dump rig 与动画**:hierarchy(有无 Armature)、SkinnedMeshRenderer.bones.Length、`LoadAllAssetsAtPath` 里的 AnimationClip 列表。Tripo 模型分两种:带 NLA 动画(科学家:Idle/Walk/Work)和**有骨架但零 clip**(球形机器人:41 bones,无动画)——后者要走第 3 节。
 - 同时 dump 当前主角(Hero.prefab 上现在挂的英雄材质)做对照。engineer.mat 是旧 KayKit 角色的材质,不当标杆。
@@ -55,7 +55,7 @@ AI 模型 pivot 常不在模型中心,旋转时会"甩"。修法:
 - 真实战局光 = `Assets/Prefabs/Environment/LightSet.prefab`(方向光 暖白(1,0.96,0.84)×1.6 + spots)。验证流程:临时 `InstantiatePrefab` 一个 LightSet + 一个模型实例(改名加 `__` 前缀)→ `capture_scene_object` 截图 → 看受光面**和背光面两个角度**(背光面只能看出 shadow band,判断不了饱和度)→ `DestroyImmediate` 全部临时物,**场景不保存**。
 - **场景会被用户中途切走**:用户在编辑器里干活,active scene 随时变(实测一次会话里 UIDesign_Gameplay → GameScene → Boot)。每次 `GameObject.Find` 临时物前先确认 active scene;预览物随"切场景不保存"自动消失——用 `git status <scene>` 确认场景没被连带保存,而不是假设。
 - **capture 对小物件会钻进几何体**:`capture_scene_object` 自动取景在杂物多的场景里会把相机怼进模型/地面内部(出来一张噪点贴脸图)。解法:把模型单独 spawn 到远处空地(如 (60,0,60))单拍;方向光是无限远的,照样有效。
-- **用户 WIP 编译错会卡死 execute_script**:报错若来自用户正在写的代码,别去修(那是他的活)。验证降级为**直接读资产 YAML**:.anim 的曲线值/`m_LoopTime`、.controller 的 `m_Motion` guid、fbx.meta 的 `externalObjects`——资产层证据同样硬。编译正常时也可用 `AnimationMode.SampleAnimationClip`(实例化→采样→销毁,一次脚本内完成)做数值验证。
+- **用户 WIP 编译错会卡死脚本执行**(CLI `script eval` 和 Coplay `execute_script` 都一样):报错若来自用户正在写的代码,别去修(那是他的活)。验证降级为**直接读资产 YAML**:.anim 的曲线值/`m_LoopTime`、.controller 的 `m_Motion` guid、fbx.meta 的 `externalObjects`——资产层证据同样硬。编译正常时也可用 `AnimationMode.SampleAnimationClip`(实例化→采样→销毁,一次脚本内完成)做数值验证。
 - 修好的样子:贴图原有的厚涂色阶保住、两阶 toon 阴影干净、**看不到黑描边**、暗面不灰黑、不发灰不塑料,和当前 Hero 站一起是一个画风。上面这套隔离摆拍只是自查;最终验收按总纲"怎么判断做到了",在真游戏相机、真灯光的竖屏截图上看,编辑器里孤立模型的截图不算数。
 
 ## 6. 收尾

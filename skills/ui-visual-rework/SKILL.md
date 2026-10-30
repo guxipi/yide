@@ -1,6 +1,6 @@
 ---
 name: ui-visual-rework
-description: Rework an Extraction UI screen to production quality ("成品级" = clear hierarchy, calm and crisp per ER美术规范, NOT busier or rounder), SuperCasual kit as one toolset. Trigger — "逐屏优化" / "优化这个 screen / pop up" / "更有商业化成品感" / "重做XX界面视效" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "按 SuperCasual preview 做" / "界面太丑" / "美化一下界面" or any re-skin/polish of a meta screen (panel, popup, calendar, leaderboard, reward reveal). Companion to ui-placement (placement + verification); this = finished-game visual quality.
+description: Rework an Extraction UI screen to production quality (成品级 = clear hierarchy, calm and crisp per ER美术规范, not busier or rounder), SuperCasual kit as one toolset; also the design-reference PARITY flow (原 ui-design-match). Trigger — "逐屏优化" / "优化这个 screen / pop up" / "refine XX 界面" / "visual 太 cheap" / "成品级 visual" / "界面太丑" / "美化一下界面" / "和mockup不同" / "跟设计稿不一样" / "照 UIDesign_Gameplay 对齐" / "像素级对齐". Companion to ui-placement.
 ---
 
 # UI Visual Rework (Extraction · SuperCasual kit)
@@ -8,6 +8,9 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 > 分工提醒:勾哥手摆过的屏,几何归他,AI 只接线和改可读性(见 ui-placement 开头);本 skill 的整屏重做只用于他点名要 AI 重做的屏。
 
 把一个"代码生成的平面色块界面"重做成成品级,流程与判断全部实跑验证过(Battle Pass / Leaderboard / Daily Login / Reward Reveal 四单)。**先读 `ui-placement` skill**(执行纪律、截图通道、RectTransform 坑)——本 skill 不重复它,只讲它之上的"做到好看"。
+
+## 有预摆参考或 mockup 要对齐时
+先读 `references/design-match-parity.md`(原 ui-design-match):mockup 必须有 spec sidecar 且实施解读经勾哥批准;参考和现状都数值化 dump 成同一种语言再对比;老 prefab 四大陷阱(遗留 z、遗留 localScale、空引用/stale override、LayoutGroup 塌宽);真点击验收。
 
 ## 目标水准:先读参考资料第 9 节
 
@@ -66,7 +69,7 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 ## 第〇步:侦察永远先行,别急着写代码
 
 1. 读目标界面的 **runtime 脚本**(serialized 字段 = 你必须保留的 wiring 接口;public API = 调用方依赖)。
-2. 找它的**建造方式**:grep `Tools/Setup` 菜单 → 多数界面由 `Assets/Scripts/Editor/Setup/*Setup.cs` 代码生成(scene 对象或 prefab 资产)。Builder 就是你要改的"源头"——改 builder + Rebuild 菜单,不要手摆场景。
+2. 找它的**建造方式**并判轨(规则见 `ui-placement`「真源模型」):**已 prefab 化的屏**直接改 prefab,对应 builder 已退役(菜单带 `(retired)`),禁止重跑;**还没迁的旧屏**由 `Assets/Scripts/Editor/Setup/*Setup.cs` 生成,改 builder + Rebuild 菜单,顺手 prefab 化。两种都不在场景实例上手摆;勾哥手摆过的几何不动。
 3. 若界面在场景里被人手改过,先 dump 场景实例(hierarchy+sprite+color+rect)拿真相,再决定重建。
 4. **顺手抓功能 bug 是本打法的一部分**:视效单里实际修出过「弹窗永远弹在全屏面板后面(sibling z 序)」「全服一人却排 #200(服务端占位估算)」「JSON 反序列化把可选对象变非 null 空壳导致所有卡显示同一图标」。界面难看常常和数据/流程坏掉混在一起,一起修,修完明说。
 
@@ -109,7 +112,7 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 
 **纪律**:全部 `.SetUpdate(true)`(防 timeScale);每条 tween 记进 List/字段,`OnBeforeHide`+`OnCleanup`/`OnDestroy` 统一 `Kill()` 并复位(rotation 归零、scale 归一);列表入场动画只做**前 10 个**(perf 指南);`async void` claim handler 在 await 后加 `if (this == null) return;` 守卫。
 
-## 第四步:工程化(必须可一键重建)
+## 第四步:工程化(还没迁的旧屏;已 prefab 化的屏直接改 prefab,不走这节)
 
 - Builder 全写进对应 `*Setup.cs`,加 `Tools/Setup/<系统> - Rebuild ... (SuperCasual)` 菜单:删旧实例 → 重建 prefab 资产(`SaveAsPrefabAsset` **同路径覆盖保 GUID**,场景引用不断)→ 重建场景对象 → 重新注册 `UIPopupsManager._registeredPanels`(先清 null 残留)→ `MarkSceneDirty`;运行后用 `EditorSceneManager.SaveScene` 存场景(Coplay save_scene 有路径坑)。
 - Wiring 一律 `SerializedObject.FindProperty(带 null 检查)`;sprite 加载失败要 `LogWarning` 路径——重建后 **grep 日志确认零 Sprite not found / Property not found**。
@@ -120,7 +123,7 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 
 通道与纪律见 `ui-placement` skill;物品格的项目约定和面板宽度实测数据见 `references/itemframe-group-and-text-crispness.md`。本打法特有的:
 
-- **分步驱动截图**:动画是时序的——`Open`(走 manager)→ sleep 2-3s → `Capture` 拆成独立 execute_script 调用(`Application.runInBackground=true` 否则编辑器失焦游戏冻结、`Time.time` 不走)。
+- **分步驱动截图**:动画是时序的——`Open`(走 manager)→ 等 2-3s → `capture game_view` 拆成独立调用;进 Play 前 `unity command editor.playmode set_run_in_background`(否则编辑器失焦游戏冻结、`Time.time` 不走),写法见 `playmode-verify-iterate`。
 - **动画在动的证明**:间隔 1-2s 截两帧,对比旋转光圈角度/光线位置。
 - **伪影鉴别**:同一帧里 `Refresh()`+截图 → 被 `Destroy()`(延迟到帧尾)的旧元素仍渲染,会拍出"压扁乱码双份卡"。**新帧重拍干净 = 伪影,真玩家看不到**;别误修。
 - **找不到的元素用二分**:逐个 `SetActive(false)` 区域再截图,三轮内锁定;比反推坐标快得多。
@@ -136,8 +139,8 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 | kit "按钮" prefab | 多数是纯 Image,**没有 Button 组件**,要自己 Add |
 | 光效叠不出来 | 旋转光圈/星星必须建在亮光层**之后**;dim 太浅光效不炸(kit 原配 ≥0.9,颜色按参考资料 9.3 用深色别用纯黑) |
 | 撕票线 | `Popup_Ticket_BottomPattern` 用 **Tiled** 挂在底条顶边 y+14 |
-| 编辑器失焦 Play 不走 | 第一件事 `Application.runInBackground = true` |
-| check_compile_errors 偶发说谎 | 再 grep Unity logs `error CS` 交叉验证 |
+| 编辑器失焦 Play 不走 | 进 Play 前 `editor.playmode set_run_in_background`(老驱动脚本首行 `Application.runInBackground = true`) |
+| 单一编译通道偶发说谎 | `unity command console status` + grep 日志 `error CS` 交叉验证 |
 
 ## 视觉/交互契约要点(2026-07-07,全文见 Visual_Refine_Contract.md)
 碰 UI 全员硬约束,以下要点立即生效:
@@ -159,4 +162,4 @@ description: Rework an Extraction UI screen to production quality ("成品级" =
 - **`Core.UI.PressScale`**(已入库 `Assets/Scripts/Core/UI/PressScale.cs`):kit 按钮是纯 Image 无按压反馈,新按钮一律挂上;unscaled time,timeScale=0 下照常工作。
 - **Canvas 参考**:kit 屏用 kit 自身 CanvasScaler **1080×2340 / Match 0.487**,measured px 1:1(详见 ui-placement 真源 `UI_Placement_Rules.md`,2026-06-14 RATIFIED;旧的 1440×2560 对 kit 屏已废弃)。
 
-**字体拍板(2026-10-12 已被 Saira 定稿取代,见第二步"字体与字色";以下仅适用于未迁移的旧屏)(2026-07-06 修订二分制,取代旧的"全场 CookieRun")**:**Title/大数字 = CookieRun Black Outline 54 SDF**;**其余一切非 title 文字 = `Cairo_Line_Black SDF`**(`GUI Pro-SuperCasual/ResourcesData/Fonts/`);两者都必挂 CJK fallback 链,UI 文案一律英文,字号下限对齐 HomeScreen 基线(见 CLAUDE.md「UI 字体铁规」)。已知欠账:死亡三屏(UIRevivePopup / UIDeathSummaryPanel / UIMineDefeatPanel)与 battle_endreward 设计稿字体口径待按二分制核一遍;新屏一律照二分制,别再手搓 Sen。
+**旧屏字体**:还没迁 Saira 的旧屏口径见上面第二步"文字(旧屏口径)"和工程 CLAUDE.md UI 字体铁规;新屏一律 Saira。

@@ -1,7 +1,7 @@
 // Generic version of Assets/Scripts/Gameplay/Actors/WrenFaceController.cs (2026-10-07) for every character.
 // Proposed target: Assets/Scripts/Gameplay/Actors/CharacterFaceController.cs. Writing it is a code change in a
-// shared project: `ucli.sh guard` first, get the user's go-ahead, use the project's GameLogger if logging is
-// ever added (never Debug.Log). Until it exists, a new character can reuse WrenFaceController ONLY if its face
+// shared project: `ucli.sh guard` first, get the user's go-ahead, the project has no logging wrapper, so plain
+// Debug.Log is fine if logging is ever added. Until it exists, a new character can reuse WrenFaceController ONLY if its face
 // material name starts with "WrenFace" - don't do that; add this class instead.
 //
 // Contract with face_swap.py (--uv-space cell): face polygons have UVs in "cell space" (u 0..1, v 2..3), the face

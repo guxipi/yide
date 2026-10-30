@@ -7,7 +7,7 @@ description: ER(Extraction)出 icon 的唯一管线——攒批调本机 gemini 
 
 勾哥 2026-10-26 拍板:以后所有 icon 都走他自己调的 gemini 工具箱,不走 codex image_gen(他原话:"它的画风一致性调教比 codex 好")。画风以仓库物品图标为准,母版是 vault `01 - 星际拓荒重构/011_基地星/art/基地星icon_v4_style_reference.png`,默认参考就用它(勾哥 10-26 定 v4 样张)。可读性标准也是勾哥原话:"过于复杂了,放在手机屏幕上会花"——单一粗轮廓主体、少零件、不要细纹/网格/电路线。
 
-工具箱是私有仓 `guxipi/er-imagegen`(10-29 起入 git,kryst 和 duck center 两台机共用)。目录 = 环境变量 `ER_IMAGEGEN_DIR`,没设就是 `F:/AI/Claude/ER`;下文命令里的 `$T` 都指它,Bash 状态不跨调用,每条命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。CLI 是 `$T/er_icon_cli.py`,同目录 `HANDOFF_生图工具箱.md` §0.0 记着每条设计的实测依据。开工先 `git -C "$T" pull --ff-only`;目录不存在就按第 0 节装,不要改用别的生图通道。所有命令用 `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" ...`(Bash,不走 PowerShell 管道喂中文)。
+工具箱是私有仓 `guxipi/er-imagegen`(10-29 起入 git,kryst、duck center、patri 三台机都装了)。目录 = 环境变量 `ER_IMAGEGEN_DIR`(Claude 进程比 `setx` 先启动时 bash 里读不到这个变量,下面的取值写法会从注册表补读;patri 机在 `C:/AI/Claude/ER`),没设就是 `F:/AI/Claude/ER`;下文命令里的 `$T` 都指它,Bash 状态不跨调用,每条命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。CLI 是 `$T/er_icon_cli.py`,同目录 `HANDOFF_生图工具箱.md` §0.0 记着每条设计的实测依据。开工先 `git -C "$T" pull --ff-only`;目录不存在就按第 0 节装,不要改用别的生图通道。所有命令用 `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" ...`(Bash,不走 PowerShell 管道喂中文)。
 
 ## 0. 新机器装一次
 
@@ -41,7 +41,7 @@ PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" queue add Ammo_T2 "three rifle cartridges
 ## 2. 出一批(一条命令一步,每步最多一次调用)
 
 ```bash
-T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"; CLI="$T/er_icon_cli.py"
+T="${ER_IMAGEGEN_DIR:-$(powershell.exe -NoProfile -Command "[Environment]::GetEnvironmentVariable('ER_IMAGEGEN_DIR','User')" | tr -d '\r')}"; T="${T:-F:/AI/Claude/ER}"; CLI="$T/er_icon_cli.py"
 PYTHONUTF8=1 py -3 "$CLI" queue take --play item --n 12          # 写出 spec_<set>.json,默认 style_ref=v4、sizes=[256]
 PYTHONUTF8=1 py -3 "$CLI" gen "$T/spec_<set>.json" --yes   # 1 次调用,打印批次目录
 ```

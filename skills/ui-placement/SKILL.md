@@ -1,6 +1,6 @@
 ---
 name: ui-placement
-description: Wiring, placing, aligning or building Unity uGUI UI in Extraction — RectTransform/anchors, panels, HUD, popups, item slots, safe-area; plus the "勾哥手摆、我接线" recipes (fixed slots + dynamic content, reference-box measuring, scale-up, equal spacing, wire-setup scripts). Trigger — "接线" / "接数据" / "摆UI" / "摆界面" / "调界面" / "做个界面" / "改UI" / "弄个面板/弹窗/HUD" / any UI、界面、面板、格子、安全区、对齐 task. Coplay capture is BLIND to screen-space UI — verify via ScreenCapture PNG + numbers. Invoke BEFORE touching .unity/.prefab UI.
+description: Wiring, placing, aligning or building Unity uGUI UI in Extraction — RectTransform/anchors, panels, HUD, popups, item slots, safe-area, plus the "勾哥手摆、我接线" recipes. Trigger — "接线" / "接数据" / "摆UI" / "摆界面" / "调界面" / "做个界面" / "改UI" / "弄个面板/弹窗/HUD" / any UI、界面、面板、格子、安全区、对齐 task. Verify via `unity command capture game_view` + numeric worldPos (Coplay capture is blind to screen-space UI). Invoke BEFORE touching .unity/.prefab UI.
 ---
 
 # UI Placement (Extraction)
@@ -39,8 +39,9 @@ Hand-EDITING `.prefab`/`.unity` stays banned — but **READING them with Grep/Re
 - Nested prefabs appear as `PrefabInstance` blocks — their `m_Modifications` list is where per-instance size/active overrides hide (e.g. a hidden "+" button = `m_IsActive 0` on a child fileID).
 - **Before editing a prefab, grep the scene for `target: {fileID: <that RT's fileID>, guid: <prefab guid>`** — a scene override on the same property masks your prefab edit ([[ui-prefab-not-scene-copy]]). No hits = the prefab edit will take effect.
 
-## Seeing the result — Coplay capture is BROKEN; use these two channels (battle-tested)
-`capture_ui_canvas` / `capture_scene_object` render through an offscreen camera/RT and **miss Screen Space (Overlay & Camera) canvases → black/grey images**. Do NOT rely on them for this project's UI. Instead:
+## Seeing the result — Unity CLI first; Coplay capture is BROKEN for UI
+**A0. 首选 = `unity command capture game_view -- --source screen --save_path Screenshots/x.png`**(Play 中;含 Screen Space-Overlay UI;需内联加 `--include_inline_image true --max_resolution 512`),写法见 `playmode-verify-iterate`。下面 A/A2 是 CLI 不可用时的老通道。
+`capture_ui_canvas` / `capture_scene_object` render through an offscreen camera/RT and **miss Screen Space (Overlay & Camera) canvases → black/grey images**. Do NOT rely on them for this project's UI.
 
 **A. See pixels = `ScreenCapture.CaptureScreenshot` → `Read` the PNG.**
 - Captures the final composited frame (all UI layers) to a disk file; bridge-independent (readable even if the MCP bridge drops on Play).
@@ -55,13 +56,13 @@ Hand-EDITING `.prefab`/`.unity` stays banned — but **READING them with Grep/Re
 - This is conclusive when you can't screenshot. **Do it before claiming "fixed"** ([[verify-before-handoff]]); a flow test (timeScale toggles) passing does NOT mean the panel renders correctly.
 - For rows/grids: dump each child's `GetWorldCorners` → `WorldToScreenPoint` and assert **equal gaps + the intended edge margin** — a numeric pass/fail beats squinting at a PNG.
 
-## Make changes via `execute_script` (most reliable), not 20 granular MCP calls
-For anything beyond a one-property tweak, write a C# file and run it with `execute_script` — atomic, reproducible, and it handles what granular calls fumble. **Entry-point contract: a class with a `public static Execute()` method** — Coplay looks for exactly that method name (any other name → "no entry point was found"); pass the file via the `filePath` argument.
+## Make changes via a script file, not 20 granular calls
+For anything beyond a one-property tweak, write a C# file and run it — atomic, reproducible. **首选 Unity CLI**:`unity command script run --file <Assets 外的 .cs> --entry Type.Method`(Roslyn 内存编译,无域重载;`--dry_run true` 只编不跑),一行的用 `script eval 'return …;'`,多行用 `script eval_file --file <path>`。**Coplay `execute_script` 只兜底**:入口必须是带 `public static Execute()` 的类(别的名字报 "no entry point was found"),文件经 `filePath` 传。
 - **Find objects robustly**: `FindObjectOfType(type)` (ACTIVE only) or walk `SceneManager.GetActiveScene().GetRootGameObjects()` (includes INACTIVE roots). `GameObject.Find(path)` fails on inactive objects / wrong path — never trust it for hidden panels.
 - **Resolve a game type**: loop `AppDomain.CurrentDomain.GetAssemblies()` + `asm.GetType("Namespace.Type")` — don't assume `Assembly-CSharp`.
 - **Wire serialized `[SerializeField]` privates**: `var so = new SerializedObject(comp); so.FindProperty("_field").objectReferenceValue = target; so.ApplyModifiedPropertiesWithoutUndo();`.
 - **Prefab edits**: MCP `set_property` + `prefab_path` works for simple props (float/bool). `PrefabUtility.ApplyObjectOverride(comp, prefabPath, InteractionMode.AutomatedAction)` pushes an instance's component values down to the prefab. For structural/multi-property edits the battle-tested pattern is `LoadPrefabContents(path)` → edit → `SaveAsPrefabAsset(root, path)` → `UnloadPrefabContents` in `finally` — safe even when the prefab CONTAINS nested prefab instances (the "Can't save a Prefab instance" throw comes from passing a scene instance, not loaded contents). After saving, re-`Read` the `.prefab` on disk to confirm the write landed ([[tool-output-ghost-text]]).
-- One-off probe `.cs` go at **project root** `Temp/` (NOT under Assets — avoids a domain reload), run, then delete; keep-as-tool builders → `Assets/Editor/CoplayTemp/`.
+- 脚本落点(对齐工程 CLAUDE.md 锁协议第 2 条):一次性探针放 **Assets 外**(项目根 `Temp/` 或 scratchpad,无域重载),跑完删;走 Coplay 兜底时的临时驱动放 `Assets/Editor/CoplayTemp/`,不进 git、用完删;要留作工具的接线/builder 一律放正式目录 `Assets/Scripts/Editor/Setup/`。
 
 ## RectTransform — the traps that bit us
 - **Never set `localPosition` on a stretch RectTransform.** It corrupts `anchoredPosition` and shoves the whole subtree off-screen (this pushed a pause panel to the top-right corner, CONTINUE button off-screen). To fill a parent: `anchorMin=(0,0); anchorMax=(1,1); pivot=(0.5,0.5); offsetMin=offsetMax=Vector2.zero;` — and leave localPosition alone.
@@ -100,15 +101,15 @@ ER already has a consistent decoupling pattern — **UI reflects state via event
 ## Play Mode reality (this project)
 - Pressing Play boots **Boot → menus**, NOT directly into a wave — you can't script your way into gameplay; a scene's widgets are absent/inactive until you're actually in that scene/state.
 - **Save the scene immediately after editing** — unsaved edits get wiped when a Play session loads a different scene.
-- Editing `.cs` triggers a domain reload — do it in Edit Mode. The user may enter Play Mode at any time: check `get_unity_editor_state.playMode` before `open_scene` (it errors in Play).
+- Editing `.cs` triggers a domain reload — do it in Edit Mode, holding the compile lock (CLAUDE.md 锁协议 v2). The user may enter Play Mode at any time: check `unity command editor status` (playMode) before `scene open` (it errors in Play).
 - Play Mode is for **look/verify (read-only)**; placement edits made in Play are discarded. (Prefab ASSET edits do persist — but do them in Edit Mode anyway, then re-enter Play to verify.)
-- **Split act/measure across separate `execute_script` calls** (e.g. switch tab in call 1, capture+measure in call 2): frames pass between MCP calls so layout settles naturally, and each script stays pure-sync ([[mcp-execute-script-async-hang]]).
+- **Split act/measure across separate script calls** (`script eval_file`, or Coplay `execute_script` as fallback) (e.g. switch tab in call 1, capture+measure in call 2): frames pass between MCP calls so layout settles naturally, and each script stays pure-sync ([[mcp-execute-script-async-hang]]).
 - **Drive the real flow, not SetActive**: reach a home tab via `UITabNavigationManager.SwitchToTab<T>()`; a popup photobombing your capture (Daily Login etc.) → find its real `CloseButton` and `onClick.Invoke()` it.
 
 ## Multi-resolution
-- Project convention (verified): `CanvasScaler` = Scale With Screen Size, **reference 1440×2560** (portrait 9:16), **Match ≈ 0.5** (some canvases use 0 — confirm per-canvas).
+- Project convention(2026-10-30 实读 YAML):`CanvasScaler` = Scale With Screen Size, **reference 1440×2560**;**HomeScreen 主 canvas(`UICanvasLayerManager`)Match = 0(纯跟宽)**;Boot / GameScene / Expedition / WorldZ / `Battle_pause.prefab` 里另有 Match 0.5 的 canvas;kit 屏 1080×2340。**动手前实读目标 canvas 的 Match,别套默认值。**
 - Pick one base aspect; expand along a single axis; check a few portrait ratios (tall 9:19.5, 9:16, tablet 3:4) via F8 shots.
-- **Canvas unit width SHRINKS on taller phones** (ref 1440×2560, match 0.5): 9:16 → 1440, 19.5:9 → ~1304, 20:9 → ~1288, 21:9 → ~1257 units. Before committing an edge-anchored row, do the arithmetic: row visual span (content + overhangs, × scale) must fit the NARROWEST width without hitting left-side content — a layout that fits 9:16 can collide on 21:9.
+- **长屏上画布怎么变,取决于 Match**:Match 0(HomeScreen 主 canvas)宽恒 1440、高变长(1080×2400 实机 → 1440×3200 逻辑尺寸),写死的绝对 y 在不同比例下不等价;Match 0.5 时**宽会缩**:9:16 → 1440, 19.5:9 → ~1304, 20:9 → ~1288, 21:9 → ~1257 units,边缘锚定的行要按最窄宽度算得下(内容 + 外伸 × scale)。
 
 ## Safe area (notch / punch-hole / gesture bar)
 - Don't hardcode pixel offsets. Use `Core.UI.SafeArea` (`Assets/Scripts/Core/UI/SafeArea.cs`, `[ExecuteAlways]`, driven by `Screen.safeArea`). Add a full-screen SafeArea child under the canvas, parent screen UI to it; close/back buttons + tab bar inside it. `_conformY` = top notch + bottom gesture bar; `_conformX` = curved/landscape only. Insets to the device's *actual* safe area (guidelines' "44/34" are design paddings, separate). Per-layer wiring: wrap each content layer (HUD/Overlay/Main) in its own SafeArea container; leave Background full-bleed (don't inset it).

@@ -95,7 +95,7 @@ root
 
 **先 edit mode 定静态,再 play mode 验运动+反馈。** 别一上来全在 play 里调——play 有怪/暂停/升级面板/失焦坏帧干扰。
 
-1. **静态(edit mode,最可靠)**:`execute_script` 把各 type prefab `PrefabUtility.InstantiatePrefab` 排一行到一个 parent → `capture_scene_object(parent)` 一张图看**颜色对不对、模型读不读得出、壳子在不在**。粒子在 edit 里不自动播没关系,这步只判静态。用完删 parent、别存场景。
+1. **静态(edit mode,最可靠)**:脚本(`unity command script run`,Coplay `execute_script` 兜底)把各 type prefab `PrefabUtility.InstantiatePrefab` 排一行到一个 parent → `capture_scene_object(parent)` 一张图看**颜色对不对、模型读不读得出、壳子在不在**。粒子在 edit 里不自动播没关系,这步只判静态。用完删 parent、别存场景。
 2. **运动 + 反馈(play mode)**:走 `playmode-verify-iterate` 的纪律(`runInBackground=true` 第一行、分步驱动、state dump 是权威)。
    - 进局内主玩法用记忆里的 playbook(`GameModeContext.CurrentMode` 先设再 `LoadGameSceneAsync(arena)`)。
    - 直接 `PoolService.Get(prefab)+Initialize(pos)` 在玩家周围生成各 type,看悬浮/飞-停/壳子光晕。
@@ -116,7 +116,7 @@ root
 | 多 PS 的 ETFX 池化后只播一个 | `PoolableVFX` 只控根 PS;子粒子设 `playOnAwake`,根设 `_overrideLifetime` |
 | 上升 icon 截图看不到 | GameScene 是 ScreenSpaceOverlay canvas,截图盲;用 **state dump** 数实例 |
 | play 里调视效老被打断 | 怪/auto-combat/升级面板/失焦坏帧;静态评估挪 **edit mode** |
-| 别人同开编辑器,execute_script 偶发 timeout / play 态被清 | 并发 domain reload;重试 + 关键值 dump 核实,只在别 session 占 Play 时才等 |
+| 别人同开编辑器,脚本执行偶发 timeout / play 态被清 | 并发 domain reload;重试 + 关键值 dump 核实,只在别 session 占 Play 时才等 |
 | dump 实例 `GameObject.Find("X")` 得 null 假阴性 | `Instantiate` 出的实例名是 `X(Clone)`;用子串匹配或 reflect 控制器持有的实例字段,别用精确 Find |
 | dump 池化对象数=0 假阴性 | 池化对象秒级归池,`FindObjects(Exclude inactive)` 漏掉曾生成的;用 `Include` inactive(池对象不销毁=曾用过)或生成后即时 dump |
 | 找模型/资产 Glob/Grep/Read 全找不到 + subagent 编造路径 | asset 包常被 `.gitignore` 忽略 → ripgrep 系工具(Glob/Grep/Read)+ Explore agent **全盲**;改用 Unity `AssetDatabase.FindAssets("name t:GameObject")` 经 `execute_script` 查真库,渲染 contact sheet 肉眼挑 |
@@ -125,4 +125,4 @@ root
 
 ## 收尾(同 feature 流程)
 
-编译干净(`check_compile_errors` + grep logs `error CS` 交叉验证)→ edit-mode 静态过 + play-mode 运动/反馈 dump 过 → 写一条 project 记忆(builder 入口、配方、踩坑)→ 推进了产品就 `progress.js bump` → 问勾哥上传 Planyway。配套:`ui-visual-rework`(UI 面)、`playmode-verify-iterate`(测试闭环)、`gaoguang-3d`(AI 模型入库与修观感)。
+编译干净(`unity command console status` + grep 日志 `error CS` 交叉验证)→ edit-mode 静态过 + play-mode 运动/反馈 dump 过 → 写一条 project 记忆(builder 入口、配方、踩坑)→ 推进了产品就 `progress.js bump` → 问勾哥上传 Planyway。配套:`ui-visual-rework`(UI 面)、`playmode-verify-iterate`(测试闭环)、`gaoguang-3d`(AI 模型入库与修观感)。

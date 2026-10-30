@@ -26,7 +26,7 @@
 - 提醒:翼德不能替他按 Play/出包/上真机;但证据落盘后,翼德能读回来做三查。
 
 ## D. 跑测 + 三查(triage)
-- **若接了 Unity MCP**(见 `integrations/unity-mcp/`,且 Unity 开着):`check_compile_errors` 看编译错、`get_unity_logs` 读 Console、`play_game` + 驱动脚本验运行时行为——真·在引擎里验证。**Coplay 没有 `run_tests`**,跑 NUnit 套件只能走下一条 CLI 或让勾哥在 Test Runner 手动跑(见 `playmode-verify-iterate` 第〇步)。
+- **若有 Unity CLI 或 Unity MCP**(CLI 优先,写法见 `playmode-verify-iterate`;MCP 见 `integrations/unity-mcp/`,且 Unity 开着):`check_compile_errors` 看编译错、`get_unity_logs` 读 Console、`play_game` + 驱动脚本验运行时行为——真·在引擎里验证。**Coplay 没有 `run_tests`**,跑 NUnit 套件只能走下一条 CLI 或让勾哥在 Test Runner 手动跑(见 `playmode-verify-iterate` 第〇步)。
 - **否则**(纯 CLI,需本机 Unity 编辑器 + license):`Unity -runTests -batchmode -projectPath . -testPlatform EditMode -testResults r.xml`(冒烟子集 `-testCategory Smoke`)。**别看退出码**(Unity 无统一约定),**解析 NUnit XML**。
 - 读 `Player.log` / `adb logcat` / NUnit XML,聚类失败,产出结构化报告(按 SOP)。
 - **报错 → 自己定位、修、重跑,到全绿为止**;别把没修绿的东西丢给勾哥手测(见 F)。

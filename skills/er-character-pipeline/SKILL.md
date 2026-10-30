@@ -20,12 +20,12 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 - **皮肤按部件换,底模冻结(10-26 Coda 验证)**:Tripo 每次整身重生成脸都会变,而且按总高归一化身体会缩放,所以皮肤不能整身重生成。每个英雄冻结一个底模(定稿脸 + 打底衣 + 寸头,头皮完整),新皮肤的发型/帽子/上衣/下装/鞋各自从新的整身生成里拆出来、相似变换对齐、适配到底模上。新英雄一开始就把寸头底模当定稿做;老英雄用 `head_shave.py` 剃头,脸一个顶点不动。全套做法、Coda 实测数字和没实测的部分见 `references/10-部件换装.md`。
 - **一副骨架铁律(10-24 Rook2 定)**:模型 FBX 和所有动作 FBX 必须来自**同一副最终骨架**。绑骨阶段任何改静止姿势的操作(rig_build 的镜像/roll 归零/脊柱拉直、换头、归一化)之后,Tripo 预设/文生动作都要用 `scripts/blender/anim_bake_to_rig.py` 按世界空间重新烘到最终骨架上,再用 `anim_verify.py` 过门(逐骨世界方向误差 <1°,注意 FBX 读回从第 1 帧起要 +1 帧对齐),Unity 里动作 FBX 一律 `CopyFromOther` 模型 avatar(`eval/anim_import_shared.cs`)。**禁止**动作 FBX 自建第二份 avatar 再靠 enforce/canon T-pose 去凑;禁止看到交叉腿/点脚尖/后仰就去改 avatar、加 leg_fix 常量——先量 Blender 源和 Unity 同一时刻的数字(`eval/knee_t.cs`、`eval/foot_probe.cs`),差在哪修哪。
 - **验收看全身四视图不看数字**:每个在用动作 `eval/fullbody.cs` 出正/侧/背/3/4,与 Wren 同机位并排,逐条列出不自然的点(脚掌俯仰、膝距、手臂贴身、手腕、头倾、朝向),派子 agent 修,再出同一组图复验;膝盖数值只能当辅助。改过 avatar 或骨架后,所有派生 .anim(裁剪待机、求解敬礼、舱内握把)全部作废重生成。
-- **门只认证据**:脚本打印的 PASS/FAIL 和 Opus 亲眼看过的对照板/裁图。sol 或任何报告里写的"pass"不算。每次修改都和上一版裁同一区域并排看,不对着 prompt 打勾。
+- **门只认证据**:脚本打印的 PASS/FAIL 和主会话亲眼看过的对照板/裁图。sol 或任何报告里写的"pass"不算。每次修改都和上一版裁同一区域并排看,不对着 prompt 打勾。
 - **几何看灰模,贴图看不打光的纯贴图**,都从游戏会用的角度看(正、侧、3/4、70° 俯视)。
 - **识别件照定稿图的形状**,只许删悬空件、加粗细件。同一件东西有两种可行画法,做对照板让勾哥点。
 - **花点数的 Tripo 操作本会话做**(子 agent 不认转述授权);每次点 Generate 前核对设置。**不记点数、不记余额、不对账**(10-24 勾哥定:"不要 care Tripo 点数的事情"),单次明显异常(>150)才提一句。
 - **Unity**:先 `scripts/unity/ucli.sh guard`;Play 中不写 .cs;eval 不同步等异步;从 Git Bash 调;收尾一定 stop 并确认。不切场景、不碰无关改动、不 commit/push,除非勾哥说。
-- **分工**:sol(codex CLI)出图改图、可以照模板跑脚本;Opus 写 spec、做所有验收、操作 Tripo 和 Unity;Fable 只在审美拍板时短用。
+- **分工**:sol(codex CLI)出图改图、可以照模板跑脚本;主会话写 spec、做所有验收、操作 Tripo 和 Unity(用哪个模型勾哥当次说,这里不写死)。
 - Blender 在 `F:/Apps/blender.exe`(5.1,后台 `-b --python x.py -- 参数`,输出一律绝对路径)。Python 用 `py -3`。
 
 ## 阶段一览
@@ -37,7 +37,7 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 | 3 Tripo 白模 | 浏览器验身;Multi-view,H3.1,Ultra 开,贴图关,6 万面,30 点 | 网页(见 03);`inspect_model.py` | 下载文件验过;进 5.1 | 03 |
 | 4 Tripo 贴图 | 贴图页换上平光厚涂四张,Remove Lighting 关,4K,20 点 | 网页;`inspect_model.py` | 进 5.2 | 03 |
 | 5 模型验收 | 灰模看脸和剪影;纯贴图看笔触、镜像、手臂底面 | `clay_face.py`、`render_views.py --mode clay/unlit`、`compare_board.py` | 形状门 + 贴图门(04 列的每条) | 04 |
-| 6 绑骨 | Tripo Humanoid/Mixamo 绑骨(20 点)+ 预设动作(免费);rig GLB 上清脏贴图;修骨、加次级链、形变测试 | `tex_extract.py` → `tex_clean.py` → `rig_build.py` → `rig_audit.py` → `deform_sheet.py` | `RIG_AUDIT PASS`(含接缝门 seam_jump_edges ≤ 0.3%、seam_coloc_split = 0);`gate_body_p99_all_pass`;Opus 看 deform_crops 九个姿势 | 03、04、05 |
+| 6 绑骨 | Tripo Humanoid/Mixamo 绑骨(20 点)+ 预设动作(免费);rig GLB 上清脏贴图;修骨、加次级链、形变测试 | `tex_extract.py` → `tex_clean.py` → `rig_build.py` → `rig_audit.py` → `deform_sheet.py` | `RIG_AUDIT PASS`(含接缝门 seam_jump_edges ≤ 0.3%、seam_coloc_split = 0);`gate_body_p99_all_pass`;主会话看 deform_crops 九个姿势 | 03、04、05 |
 | 7 表情换脸 | 渲脸底图+投影;sol 画表情;拼 4×3 图集;脸面分材质写格子空间 UV;发光遮罩 | `face_render.py` → `build_prompts.py expr` → `face_atlas.py` → `face_swap.py` → `face_qa_sheet.py`;`emission_mask.py` | calib 门;`ATLAS_GATES PASS`;闭眼格眼角零残留、后脑干净;`export_fbx.py` FBX_CHECK PASS | 06 |
 | 8 Unity 入库 | Humanoid + Enforce T-Pose;ToonLit 厚涂参数 + remap;prefab + SpringBone + 短裙 `HeroSkirtFollow` 跟大腿走 + 腿型 `HeroLegTidy` + 头发 `spring_limits.cs`(见 07 §8.7)+ 预览秀 `HeroPreviewShow`(1~2 个性格动作 + 表情,§8.8)+ 肤色核对(§8.9);本地换主角 + 枪挂点 | `spring_spec.py` 打印全部命令 → `ucli.sh eval …cs` | `AVATAR PASS`(+ .meta diff);Unlit/ToonLit 渲染门;PREFAB OK;SPRING_LIMITS;Gear 页强制大动作不炸;WEAPON MOUNT OK | 07 |
 | 9 实机验收 | Boot → 主页 → 装备页 → START → 出击 → 远征;状态截图;收尾 stop | `ingame_check.sh <Name> <out>`、`anim_state.cs` | 08 列的每条看图门;Console 无新错;stopped;Assets/Temp 清干净;欠账写清 | 08 |
