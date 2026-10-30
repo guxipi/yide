@@ -1,5 +1,4 @@
 {
-  "modules": ["../mods/session-relay/hooks/register.tsx"],
   "hooks": {
     "SessionStart": [
       {

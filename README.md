@@ -94,7 +94,6 @@ node scripts/install-codex.js
 | **Unity 把关** | 你写/改 C# 后,翼德自动扫一遍(热路径性能、过时 API、序列化生命周期、资源卫生),只提建议、不擅自改;跟这个文件相关的旧教训也一并冒出来。 |
 | **项目信息探测** | 进 Unity 项目自动读出版本 / 渲染管线 / 输入系统 / Addressables / 脚本后端,不用你告诉它。 |
 | **记忆沉淀** | 隔一阵自动整理记忆(开会话时若距上次超过一天就理一次),电脑关机也不丢。 |
-| **冷 session 续篇(session-relay)** | 闲置超过 1 小时的 session 收到子会话 / 子 agent 的回报时不唤醒它(唤醒要整段重写缓存,很贵),而是自动开一个续篇 session 接着干;上下文到 400K 时输入框上方给一个「开新 session 续」按钮,`/relay-now` 同效。源码在 `mods/session-relay/`。 |
 | **保持轻** | 教训用"源文件 + 索引"管理,开场只带身份 + 红线 + 条数,不会越用越臃肿;还有个"称重器"盯着开场注入别超标。 |
 
 ## 翼德 vs Claude(它俩的分工)
@@ -119,8 +118,7 @@ yide/
 ├── SKILL.md                 # 单一 /yide 入口(派发)
 ├── skills/                  # 翼德托管的项目层 skill(自动发现,/yide:<名> 命名空间;v0.30.0 起)
 ├── actions/                 # 按需加载:onboard/record/brief/consolidate/update/qa/review/note/distill/experts/prompts/plan/mockup/ui/storyboard/docs/playtest/voice/zhanji/doctor
-├── hooks/hooks.json         # exec 形式(Windows-safe)+ modules 加载 mods/ 下的函数 hook
-├── mods/session-relay/      # 函数 hook mod:冷 session 不唤醒、自动开续篇;≥400K 给续篇按钮 + /relay-now
+├── hooks/hooks.json         # exec 形式(Windows-safe)
 ├── scripts/*.js             # 全 Node,无第三方依赖
 ├── templates/brain/         # onboard 时复制到 ~/.yide
 ├── templates/qa/            # bug SOP / 报告模板 / EvidenceCapture.cs

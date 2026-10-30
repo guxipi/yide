@@ -2,6 +2,12 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.72.0 — 2026-10-30 撤掉 patri 机 10-24 后的省限额 / 拆 session 改动
+- 勾哥 10-30:10-24 后 patri 机对翼德的省限额改动让 Fable 和 Opus 都变傻,以抹除为主还原到 10-24 前;只留「隔夜后在同一 session 发消息的拦截」(那条在 patri 机 `~/.claude/settings.json` 的 context_guard,不在本仓)。
+- 删 session-relay mod(v0.71.4/0.71.5):不再自动开续篇、不再自动压缩;`hooks.json` 去掉 `modules`,`plugin.json` 去掉 `types`,README 去掉对应行。
+- lead-orchestration 撤 10-25 的 8c「lead≤200K、子会话 45 分钟收回合、过大换 lead」和派单里的 45 分钟条。
+- v0.71.7 / v0.71.8 已在 10-30 合并时丢弃;版本号跳到 0.72.0,让各机插件缓存不再停在旧的 0.71.8 目录。
+
 ### v0.71.6 — 2026-10-29 gemini 工具箱入 git,duck center 也能出 icon/头像框
 - 工具箱 `F:\AI\Claude\ER` 建私有仓 `guxipi/er-imagegen`(只收 .py 和文档,产物/队列/key 不进)。CLI 里写死的 vault `I:` 和 Unity `F:` 路径改为先认 `ER_VAULT` / `ER_UNITY_PROJECT`,否则扫盘。
 - er-icon-gen / er-frame-gen:工具目录改读 `ER_IMAGEGEN_DIR`(默认 `F:/AI/Claude/ER`),开工先 pull;er-icon-gen 加第 0 节新机器安装。key 由勾哥自己在每台机 setx。
