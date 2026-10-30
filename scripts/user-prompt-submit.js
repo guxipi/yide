@@ -53,7 +53,8 @@ try {
   // 1) 会话健康度提醒(先评估:它的优先级更高,治最痛的"修6遍/上下文污染")
   try { const n = sessionNudge(input); if (n) parts.push(n); } catch {}
   // 2) prompt 库召回
-  try { const r = recallSuggestion(prompt, sid); if (r) parts.push(r); } catch {}
+  // 2026-10-30 默认关闭:按关键词推荐的模板多数和当下任务无关;设 YIDE_PROMPT_RECALL=1 才开。
+  if (process.env.YIDE_PROMPT_RECALL === '1') { try { const r = recallSuggestion(prompt, sid); if (r) parts.push(r); } catch {} }
   // 3) 会话命名:首句粗取名字 + 提醒模型起正式名;模型起的名在下一句换上
   let title = null;
   if (!host.isCodex()) {
@@ -61,7 +62,7 @@ try {
       const r = sessionTitle.onPrompt(sid, prompt);
       if (r) {
         title = r.title;
-        if (r.ask) parts.push(sessionTitle.instruction(sid, path.join(__dirname, 'session-title.js')));
+        // 2026-10-30:不再让模型另跑命令起正式名,首句粗取的名字够用
       }
     } catch {}
   }

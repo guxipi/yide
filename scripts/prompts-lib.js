@@ -43,8 +43,14 @@ function matchByText(text) {
   let best = null;
   for (const e of getIndex()) {
     let score = 0;
-    for (const k of [...(e.keywords || []), ...(e.tags || [])]) {
-      if (k && t.includes(String(k).toLowerCase())) score++;
+    // 只看 keywords(tags 太泛,unity/ui/extraction 几乎句句命中);纯 ASCII 词按整词匹配,免得 "ui" 命中 "build"。
+    for (const k of (e.keywords || [])) {
+      const kw = String(k || '').toLowerCase();
+      if (!kw) continue;
+      const hit = /^[\x00-\x7f]+$/.test(kw)
+        ? new RegExp('(^|[^a-z0-9])' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^a-z0-9])').test(t)
+        : t.includes(kw);
+      if (hit) score++;
     }
     if (e.name && t.includes(String(e.name).toLowerCase())) score++;
     if (score > 0 && (!best || score > best.score || (score === best.score && (e.uses || 0) > (best.entry.uses || 0)))) {

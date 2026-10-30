@@ -157,12 +157,12 @@ t('4 个角色镜头存在且 frontmatter name 正确', () => {
 t('SKILL 路由含 mockup', () => {
   assert(/actions\/mockup\.md/.test(fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf8')), 'SKILL 缺 mockup 路由');
 });
-t('战绩判据:更新翼德不算、出现于 extraction 注入', () => {
+t('战绩判据不再进开场注入(2026-10-30 去杂事)', () => {
   const eb = path.join(TMP, 'eggbrain', '.yide');
   fs.mkdirSync(path.join(eb, '.meta'), { recursive: true });
   const { extractionContext } = require(path.join(SCRIPTS, 'extraction-context.js'));
   const out = extractionContext(eb, '/some/extraction-raiders', ROOT) || '';
-  assert(/战绩判据/.test(out) && /更新翼德/.test(out), '应含"只奖励推进产品、更新翼德不算"的判据');
+  assert(!/战绩判据/.test(out) && !/progress\.js/.test(out), '开场注入不应再要求模型记战绩');
 });
 
 t('项目档案有 UI/UX 预设;mockup 读预设 + 存确认稿文件夹', () => {
@@ -723,10 +723,10 @@ t('11.6 空转退化:连拦两次没进展后放行(不撞 8 次硬上限)', () 
   assert(seq[0] === 'block' && seq[1] === 'block', '前两次应拦,实为 ' + seq.join(','));
   assert(seq[2] === 'pass', '毫无进展时第三次应退化放行,实为 ' + seq[2]);
 });
-t('11.7 留尾闸门:把"要不要继续"甩回用户 + 没登记 scope → block', () => {
+t('11.7 留尾闸门已删:收尾问"要不要继续"不再被拦(2026-10-30)', () => {
   const tp = writeTranscript('tail-ask', [userText('把这块做了'), asstTool('Edit', { file_path: '/x.cs', new_string: 'y' }),
     asstText('A 和 B 改好了,C 那块要不要我继续?')]);
-  assert(stopAudit({ transcript_path: tp, session_id: 's-tail', stop_hook_active: false }) === 'block', '留尾措辞应 block');
+  assert(stopAudit({ transcript_path: tp, session_id: 's-tail', stop_hook_active: false }) === 'pass', '问用户要不要继续不该被拦');
 });
 t('11.8 留尾闸门:走 AskUserQuestion 的正当拍板 → 放行', () => {
   const tp = writeTranscript('tail-popup', [userText('把这块做了'), asstTool('AskUserQuestion', {}),
@@ -773,7 +773,7 @@ t('12.1 会话标题:底标保留,目标名前缀,模型名下一句生效,resum
   assert(/已就位 · \d{4}-\d{2}-\d{2}$/.test(base), '首个标题应是底标,实为 ' + base);
   const h1 = prompt('我想要给翼德加个会话命名功能,保留时间戳');
   assert(h1.sessionTitle === '给翼德加个会话命名功能_' + base, '首句应粗取名字,实为 ' + h1.sessionTitle);
-  assert((h1.additionalContext || '').includes('session-title.js'), '首句应提醒模型起名');
+  assert(!(h1.additionalContext || '').includes('session-title.js'), '首句不应再让模型另跑命令起名');
   execFileSync('node', [path.join(SCRIPTS, 'session-title.js'), 'set', '--session', sid, '优化翼德'], { encoding: 'utf8', env });
   const h2 = prompt('继续');
   assert(h2.sessionTitle === '优化翼德_' + base, '模型名应在下一句生效,实为 ' + h2.sessionTitle);

@@ -120,16 +120,13 @@ try {
   // 教训库:2026-07-25 起不再报数、不再按文件自动浮现(退役理由见 CHANGELOG v0.57.0)。
   // 新教训按 record 动作分流进红线 / charter / 项目 CLAUDE.md / skill —— 那几层才 always-on 或按场景加载。
 
-  // prompt 库:自动静默捕获(不打断)。召回由 UserPromptSubmit hook 负责,无需在此提示。
-  ctx += `\n---\n## prompt 库\n某条 prompt 明显好用(≥2:几轮搞定/说"对了"/没返工/常重复)且库里没近似 → 静默存入 ~/.yide/prompts 跑 prompts.js index,回一行即可;拿不准别存。\n`;
-
   // scope 契约:治"任务不做完就收工"。多步任务开工前登记,收尾 Stop hook 按它拦。
-  ctx += `\n---\n## scope 契约(多步任务必用)\n` +
-    `勾哥的规矩是一口气做完、不留尾巴。接到需要多步/多文件的活,**开工前**先登记 scope,收尾时 Stop hook 会按它拦住没收敛的条目:\n` +
+  ctx += `\n---\n## scope 契约(可选)\n` +
+    `只在勾哥要求把一张清单全部做完时登记;一般多步活不用登记。登记后收尾时 Stop hook 会按它拦住没收敛的条目;勾哥中途改方向,就把旧条目 waive 掉跟着改:\n` +
     `\`node "${path.join(PLUGIN_ROOT, 'scripts', 'scope.js')}" set --session ${SESSION_ID} --json '[{"what":"做什么","verify":"能判定成败的命令(可省)"}]'\`\n` +
     `(本会话 sid = \`${SESSION_ID}\`,所有子命令都带上它)\n` +
     `干完跑 \`check\` 让退出码写状态(0 才算 pass);没命令可跑的走 \`attest --evidence "<具体证据>"\`;真不做了走 \`waive --reason "<理由>"\`。` +
-    `别自己在心里打勾——状态只认命令退出码和写下来的证据。单步小活不用登记。\n`;
+    `别自己在心里打勾——状态只认命令退出码和写下来的证据。\n`;
 
   // 随手记 inbox:只报未整理条数(手机扔进来的笔记)
   let nInbox = 0;
@@ -155,7 +152,7 @@ try {
     if (process.env.YIDE_NO_AUTO_CONSOLIDATE) {
       ctx += `\n---\n## 🧹 记忆整理\n距上次整理已超过 24 小时。合适时机执行一次记忆整理(consolidate 动作:读 actions/consolidate.md)。\n`;
     } else {
-      ctx += `\n---\n## 🧹 记忆整理(到期)\n距上次>24h。回应用户前先静默执行一次记忆整理(consolidate 动作:读 actions/consolidate.md,合并去重+打时间戳),一句话告知后继续;用户若很赶则推迟到本轮末。\n`;
+      ctx += `\n---\n## 🧹 记忆整理(到期)\n距上次>24h。先把勾哥这一轮要的事做完;记忆整理(consolidate 动作:读 actions/consolidate.md)只在勾哥说"整理记忆"时做,别插在回答前。\n`;
     }
   }
 

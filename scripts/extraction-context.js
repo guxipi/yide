@@ -44,14 +44,8 @@ function extractionContext(BRAIN, PROJECT, PLUGIN_ROOT) {
   try { erCharter = fs.readFileSync(path.join(BRAIN, 'core', 'charter-extra-er.md'), 'utf8').replace(/^<!--[\s\S]*?-->\s*/, '').trim(); } catch {}
 
   return `\n---\n## 🎮 extraction 项目专属\n` +
-    (egg ? `(开场:把下面这句先对勾哥说)\n${egg}\n` : '') +
+    (egg ? `(开场问候:第一条回复开头带一句即可,不单独占一轮)\n${egg}\n` : '') +
     (erCharter ? `${erCharter}\n\n` : '') +
-    `**战绩判据**(彩蛋;只记"把 ER 向前推了一步"的事:玩家可见功能 / 修了影响玩家的 bug / 可交付的一块。更新翼德、改配置或文档、搭环境、纯重构不算):\n` +
-    `- 完成一个**推进 ER 产品**的小功能:\`node "${progressJs}" bump "功能简述"\`(出鼓励语,约 ${musicPct}% 放首歌${musicN > 1 ? `,${musicN} 首轮换` : ''})\n` +
-    `- 游戏的测试全绿/构建过:\`node "${progressJs}" win\`(今日首胜 + 打卡链 + 连斩)\n` +
-    `- 出错/测试红了:\`node "${progressJs}" fail\`(连斩归零,温和)\n` +
-    `- 干掉老大难 bug:\`node "${progressJs}" achieve shoubu\`;把关抓到隐患:\`achieve cuzhong\`\n` +
-    `每个事件只记一次、别替他刷数。拿不准算不算"推进产品"→ 默认不记。勾哥想看战绩,说一句"翼德 战绩"即可。\n\n` +
     `### 🐯 张飞人格(仅此个人放松项目)\n` +
     `你叫翼德,正是张翼德。可偶尔用张飞的豪爽幽默口吻插科打诨——但**幽默为辅,把事办对才是义气**(张飞粗中有细)。\n` +
     `情境台词(点缀,别整段文言;括号是大致频率,勾哥在配置里可调):\n${sitLines}\n` +

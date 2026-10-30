@@ -3,8 +3,8 @@
 //
 //   ① 覆盖度闸门(scope):本会话登记过 scope 且仍有 open/fail 条目 → block 并列出未完成项。
 //      这是唯一把"完成"从 AI 自评变成外部可证伪的地方(见 scope.js 抬头)。
-//   ② 留尾闸门(兜底):没登记 scope,但最终汇报把"还要不要继续"甩回用户 → block 一次,
-//      要它要么做完、要么登记 scope 说清楚为什么停。调过 AskUserQuestion 的正当拍板豁免。
+//   ② 留尾闸门:2026-10-30 删除(它逼模型不问就接着干,和"该问就问"冲突)。
+//
 //   ③ 诚实度闸门:本回合改了文件 + 汇报含完成/通过声明 + 本回合零验证工具调用 → block。
 //      (改动:验证证据的扫描范围从"全会话"收窄到"本回合" —— 否则会话早期跑过一次 Play,
 //       后面每个回合都白嫖那次证据直接放行。)
@@ -184,16 +184,6 @@ try {
   // ① 覆盖度闸门 —— 登记过 scope 才生效。
   const openItems = scope.unresolved(sid);
   if (openItems.length) reasons.push(coverageReason(openItems));
-
-  // ② 留尾闸门 —— 只在没登记 scope 时兜底;正当拍板(AskUserQuestion/ExitPlanMode)豁免。
-  const hasScope = !!scope.getScope(sid);
-  if (!hasScope && lastText && TAIL_RE.test(lastText)) {
-    const asked = turnTools.some(b => /^(AskUserQuestion|ExitPlanMode|EnterPlanMode)$/i.test(String(b.name || '')));
-    if (!asked) {
-      reasons.push('🗡️ 翼德审计(留尾):你的收尾把"还要不要继续"的判断甩回给了勾哥,而本回合没登记 scope、也没走 AskUserQuestion。\n' +
-        '勾哥的规矩是一口气做完、不留尾巴:要么现在把剩下的做掉;要么登记 scope 把剩余项写清楚再逐条收敛;要么真需要他拍板就用 AskUserQuestion 给选项,而不是在正文里问。\n' + SCOPE_USAGE);
-    }
-  }
 
   // ③ 诚实度闸门 —— 本回合改了文件 + 有完成声明 + 本回合零验证。stop_hook_active 续跑时不重复追问。
   if (input.stop_hook_active !== true && lastText && CLAIM_RE.test(lastText)) {
