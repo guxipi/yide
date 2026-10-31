@@ -2,6 +2,13 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.76.0 — 2026-10-31 开工复用闸:每轮开工前先查现成 skill / 做法 / 可复用件
+- 勾哥 10-31:"不止是这一个 skill,我需要一个通用的开始做之前的 gate 来检查这个是否已经有可以使用的 skill 或是做法,是否有东西可以直接复用。"
+- 病根:选 skill、找现成件只在接活那一刻做一次;活中途变了样不再回头查,就自己临时写脚本绕远路(10-31 stage.py / refkit.py 现成不用;10-24 Lab 做法卡零使用)。
+- `scripts/reuse-gate.js`(PreToolUse 调用):每轮用户消息之后,第一次"开工动作"前,本轮必须先有查找(Grep/Glob/Skill/读 SKILL.md/ls·grep·find),再跑 `reuse-check.js record --task --skills --reuse` 登记;登记里写要用的 skill 必须本会话真加载过。没做就 deny,拦截消息里附全部可用 skill 清单和登记命令。
+- 开工动作 = 新建代码文件、跑 Blender 脚本、派 codex、派子 agent(Explore/Plan 等只读的除外)、起 Workflow、Coplay execute_script/create_/generate_。改已有文件不拦;后台任务通知不算新一轮;读不到 transcript 不拦;Codex 跳过;`YIDE_REUSE_GATE=0` 或 `.meta/skill-gates.json` 的 `{"reuseGate":{"enabled":false}}` 可关。
+- hooks.json PreToolUse matcher 加 `Agent|Task|Workflow`。新增测试 13.2。
+
 ### v0.75.1 — 2026-10-31 skill 闸:跑 Blender 前必须已加载 reference-replicate
 - 勾哥 10-31 问"总是不加载 skill 的根本原因、怎么保证"。会话记录:14 个跑过 Blender 的会话,0 个加载过 reference-replicate;er-blender 里早写了"走 reference-replicate",照样没加载。文字规矩靠不住,改成机器拦。
 - `pre-tool-use.js` 新增 skill 闸:Bash / PowerShell 里跑 `blender -b … -P/--python`,或调 Blender MCP 的 execute_blender_code,本会话 transcript 里没有真实的 `Skill(reference-replicate)` 调用就 deny,提示先加载。加载一次本会话放行;读不到 transcript 不拦;Codex 跳过。可用 `~/.yide/.meta/skill-gates.json` 覆盖。

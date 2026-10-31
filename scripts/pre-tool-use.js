@@ -231,6 +231,21 @@ try {
     }
   }
 
+  // 1d) 开工复用闸:每轮用户消息后第一次"开工动作"前,必须查过现成 skill / 做法 / 可复用件并登记(见 reuse-gate.js)。
+  if (!host.isCodex() && process.env.YIDE_REUSE_GATE !== '0') {
+    let enabled = true;
+    try {
+      if (fs.existsSync(GATES)) {
+        const c = JSON.parse(fs.readFileSync(GATES, 'utf8'));
+        if (c && c.reuseGate && c.reuseGate.enabled === false) enabled = false;
+      }
+    } catch {}
+    if (enabled) {
+      const why = require(path.join(__dirname, 'reuse-gate.js')).check(input, { pluginRoot: host.pluginRoot(), projectDir: host.projectDir(input) });
+      if (why) emit('deny', why);
+    }
+  }
+
   // 2) 自动放行(只读/导航;拿不准就 defer)
   let allowConf = DEFAULT_ALLOW;
   try {

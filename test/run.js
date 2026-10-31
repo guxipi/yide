@@ -795,7 +795,7 @@ t('13.1 skill 闸:没加载拦、加载放行、非 Blender 不误伤、读不�
   fs.writeFileSync(no, JSON.stringify({ message: { content: [{ type: 'tool_use', name: 'Read', input: { file_path: 'x/reference-replicate/SKILL.md' } }] } }) + '\n');
   fs.writeFileSync(yes, JSON.stringify({ message: { content: [{ type: 'tool_use', id: 'a', name: 'Skill', input: { skill: 'yide:reference-replicate' } }] } }) + '\n');
   const bl = '"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b a.blend --factory-startup -P gen/x.py -- --k v';
-  const d = (tool, ti, tx) => preToolDecision({ tool_name: tool, tool_input: ti, transcript_path: tx });
+  const d = (tool, ti, tx) => preToolDecision({ tool_name: tool, tool_input: ti, transcript_path: tx }, { YIDE_REUSE_GATE: '0' });
   assert(d('Bash', { command: bl }, no) === 'deny', '没加载(只 Read 过 SKILL.md)应拦');
   assert(d('PowerShell', { command: "& 'C:/b/blender.exe' -b a.blend -P s.py" }, no) === 'deny', 'PowerShell 也应拦');
   assert(d('mcp__blender__execute_blender_code', { code: 'import bpy' }, no) === 'deny', 'Blender MCP 也应拦');
@@ -803,6 +803,40 @@ t('13.1 skill 闸:没加载拦、加载放行、非 Blender 不误伤、读不�
   assert(d('Bash', { command: 'grep -P foo blender_log.txt' }, no) === 'allow', 'grep -P 不应误伤');
   assert(d('Bash', { command: bl }, path.join(TMP, 'missing.jsonl')) !== 'deny', '读不到 transcript 不拦');
   assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: bl }, transcript_path: no }, { YIDE_HOST: 'codex' }) !== 'deny', 'Codex 跳过');
+});
+
+// === 13b. 开工复用闸:每轮第一次开工动作前要查过现成件并登记(2026-10-31)===
+t('13.2 开工复用闸:没登记拦、查过并登记放行、换轮重查、后台通知不算换轮、登记的 skill 要真加载', () => {
+  const U = text => JSON.stringify({ type: 'user', message: { role: 'user', content: text } });
+  const UR = () => JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: 'x', content: 'ok' }] } });
+  const A = (name, input) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id: 'i', name, input }] } });
+  const rec = s => A('Bash', { command: `node "x/reuse-check.js" record --task "做扳手" --skills "${s}" --reuse "gen/kitlib.py 的 Part 直接用"` });
+  const tx = (name, rows) => { const p = path.join(TMP, name); fs.writeFileSync(p, rows.join('\n') + '\n'); return p; };
+  const newPy = path.join(TMP, 'brand_new_tool.py');
+  const existing = path.join(TMP, 'tx_no.jsonl');
+  const W = (p, t) => preToolDecision({ tool_name: 'Write', tool_input: { file_path: p, content: 'x' }, transcript_path: t });
+  const none = tx('r0.jsonl', [U('做扳手锤子')]);
+  assert(W(newPy, none) === 'deny', '没登记新建代码文件应拦');
+  assert(W(existing, none) !== 'deny', '改已有文件不拦');
+  assert(preToolDecision({ tool_name: 'Edit', tool_input: { file_path: newPy }, transcript_path: none }) !== 'deny', 'Edit 不拦');
+  const ok = tx('r1.jsonl', [U('做扳手锤子'), A('Grep', { pattern: 'wrench' }), UR(), rec('none:没有对口的'), UR()]);
+  assert(W(newPy, ok) !== 'deny', '查过并登记应放行');
+  const noSearch = tx('r2.jsonl', [U('做扳手锤子'), rec('none:没有'), UR()]);
+  assert(W(newPy, noSearch) === 'deny', '登记前没查找应拦');
+  const prevTurn = tx('r3.jsonl', [U('做工具箱'), A('Grep', { pattern: 'x' }), UR(), rec('none:没有'), UR(), U('过了,做扳手锤子')]);
+  assert(W(newPy, prevTurn) === 'deny', '换了一轮用户消息应重查');
+  const notif = tx('r4.jsonl', [U('做扳手'), A('Glob', { pattern: '*' }), UR(), rec('none:没有'), UR(), U('<task-notification>\n<task-id>b1</task-id> done')]);
+  assert(W(newPy, notif) !== 'deny', '后台任务通知不算新一轮');
+  const needSkill = tx('r5.jsonl', [U('做扳手'), A('Grep', { pattern: 'x' }), UR(), rec('yide:reference-replicate'), UR()]);
+  assert(W(newPy, needSkill) === 'deny', '登记要用的 skill 没加载应拦');
+  const loaded = tx('r6.jsonl', [U('做扳手'), A('Skill', { skill: 'yide:reference-replicate' }), UR(), rec('yide:reference-replicate'), UR()]);
+  assert(W(newPy, loaded) !== 'deny', '登记的 skill 已加载应放行');
+  assert(preToolDecision({ tool_name: 'Agent', tool_input: { subagent_type: 'Explore', prompt: 'x' }, transcript_path: none }) !== 'deny', 'Explore 只读 agent 不拦');
+  assert(preToolDecision({ tool_name: 'Agent', tool_input: { subagent_type: 'executor', prompt: 'x' }, transcript_path: none }) === 'deny', '派执行 agent 没登记应拦');
+  assert(preToolDecision({ tool_name: 'Write', tool_input: { file_path: newPy }, transcript_path: none }, { YIDE_REUSE_GATE: '0' }) !== 'deny', '环境变量可关');
+  const cli = args => { try { execFileSync('node', [path.join(SCRIPTS, 'reuse-check.js')].concat(args), { encoding: 'utf8' }); return 0; } catch (e) { return e.status; } };
+  assert(cli(['record', '--task', '做扳手', '--skills', 'none', '--reuse', '无']) === 1, '空话登记应不合格');
+  assert(cli(['record', '--task', '做扳手', '--skills', 'none:都不对口', '--reuse', 'gen/kitlib.py 的 Part 直接用']) === 0, '具体登记应通过');
 });
 
 // 清理
