@@ -122,7 +122,7 @@ function check(input, opts) {
     if (isUserTurn(o)) break;
     for (const u of toolUses(o).reverse()) { // 倒序:同一条消息里先查后登记也算
       const c = u.input && u.input.command;
-      if ((u.name === 'Bash' || u.name === 'PowerShell') && /reuse-check\.js["']?\s+record\b/.test(String(c || ''))) {
+      if ((u.name === 'Bash' || u.name === 'PowerShell') && /^\s*node(?:\.exe)?\s+["']?[^"'\n]*reuse-check\.js["']?\s+record\b/m.test(String(c || ''))) {
         if (!record) record = String(c);
       } else if (record && isSearch(u)) searched = true; // 只算登记之前(倒序扫描里更早)的查找
     }

@@ -827,6 +827,8 @@ t('13.2 开工复用闸:没登记拦、查过并登记放行、换轮重查、�
   assert(W(newPy, prevTurn) === 'deny', '换了一轮用户消息应重查');
   const notif = tx('r4.jsonl', [U('做扳手'), A('Glob', { pattern: '*' }), UR(), rec('none:没有'), UR(), U('<task-notification>\n<task-id>b1</task-id> done')]);
   assert(W(newPy, notif) !== 'deny', '后台任务通知不算新一轮');
+  const mention = tx('r7.jsonl', [U('做扳手'), A('Grep', { pattern: 'x' }), UR(), A('Bash', { command: 'git commit -m "跑 reuse-check.js record 登记"' }), UR()]);
+  assert(W(newPy, mention) === 'deny', '命令文字里只是提到登记命令不算登记');
   const needSkill = tx('r5.jsonl', [U('做扳手'), A('Grep', { pattern: 'x' }), UR(), rec('yide:reference-replicate'), UR()]);
   assert(W(newPy, needSkill) === 'deny', '登记要用的 skill 没加载应拦');
   const loaded = tx('r6.jsonl', [U('做扳手'), A('Skill', { skill: 'yide:reference-replicate' }), UR(), rec('yide:reference-replicate'), UR()]);
