@@ -57,6 +57,19 @@ def resolve_groups(cfg):
     return g
 
 
+# ER_BL_CPU=1: render with Cycles on the CPU when Blender cannot create a GPU (OpenGL) context
+# (10-31: nvoglv64.dll crash in DRW_gpu_context_create for every background Blender).
+CPU = __import__("os").environ.get("ER_BL_CPU") == "1"
+
+
+def _cycles_cpu(scene, samples):
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = samples
+    scene.cycles.use_denoising = False
+    scene.cycles.use_adaptive_sampling = False
+
+
 def world_pts(objs):
     pts = []
     for o in objs:
@@ -144,8 +157,11 @@ def apply_underlay(cfg, objs):
 
 
 def setup_canvas_render(scene):
-    scene.render.engine = "BLENDER_EEVEE"
-    scene.eevee.taa_render_samples = 32
+    if CPU:
+        _cycles_cpu(scene, 32)
+    else:
+        scene.render.engine = "BLENDER_EEVEE"
+        scene.eevee.taa_render_samples = 32
     scene.render.film_transparent = True
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGBA"

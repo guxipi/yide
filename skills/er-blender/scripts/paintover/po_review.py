@@ -24,6 +24,19 @@ GROUND = "#D9A56A"
 VFOV = 25.0
 
 
+# ER_BL_CPU=1: render with Cycles on the CPU when Blender cannot create a GPU (OpenGL) context
+# (10-31: nvoglv64.dll crash in DRW_gpu_context_create for every background Blender).
+CPU = __import__("os").environ.get("ER_BL_CPU") == "1"
+
+
+def _cycles_cpu(scene, samples):
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = samples
+    scene.cycles.use_denoising = False
+    scene.cycles.use_adaptive_sampling = False
+
+
 def _lin(c):
     return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
 
@@ -76,8 +89,18 @@ def toon_material(name, color=None, white=False):
 
     sock(shadow, "B_Color").default_value = (*SHADOW_TINT, 1)
     L.new(bsock, sock(shadow, "A_Color"))
-    L.new(dif.outputs[0], s2r.inputs[0])
-    L.new(s2r.outputs["Color"], ramp.inputs["Fac"])
+    if CPU:   # Cycles has no Shader-to-RGB: step on N.L instead (self-shading only, no cast shadows)
+        geo = nt.nodes.new("ShaderNodeNewGeometry")
+        dot = nt.nodes.new("ShaderNodeVectorMath")
+        dot.operation = "DOT_PRODUCT"
+        dot.inputs[1].default_value = SUN_DIR
+        ramp.color_ramp.elements[0].position = 0.08
+        ramp.color_ramp.elements[1].position = 0.13
+        L.new(geo.outputs["Normal"], dot.inputs[0])
+        L.new(dot.outputs["Value"], ramp.inputs["Fac"])
+    else:
+        L.new(dif.outputs[0], s2r.inputs[0])
+        L.new(s2r.outputs["Color"], ramp.inputs["Fac"])
     L.new(ramp.outputs["Color"], sock(mix, "Factor_Float"))
     L.new(sock(shadow, "Result_Color"), sock(mix, "A_Color"))
     L.new(bsock, sock(mix, "B_Color"))
@@ -87,8 +110,11 @@ def toon_material(name, color=None, white=False):
 
 
 def setup(scene, w, h):
-    scene.render.engine = "BLENDER_EEVEE"
-    scene.eevee.taa_render_samples = 48
+    if CPU:
+        _cycles_cpu(scene, 32)
+    else:
+        scene.render.engine = "BLENDER_EEVEE"
+        scene.eevee.taa_render_samples = 48
     try:
         scene.eevee.use_shadows = True
     except AttributeError:

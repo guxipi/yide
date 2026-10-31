@@ -57,6 +57,9 @@ mo.co 近景参考存在 vault `013 美术/mo.co截图/裁切/expedition_mocoref
 | 深色件被画成藏蓝 | 单件好看,和其它联邦件放一起对不齐色 | 勾哥 10-31 要统一:`prompt.colors` 写死「深色件是中性石板灰 #465C6D / #606F84,NOT navy, NOT blue」 |
 | joblist 写成 CRLF 换行 | xargs 拿到"名字\r",找不到提示词,全部 REJECT | po_prompts 改成只写 LF(10-31 第一次复用时踩到) |
 | 底稿画了方向光 | 进游戏明暗算两遍 | 底稿只有固有色乘柔和 AO;提示词禁方向光和投影 |
+| 后台 Blender 建不起 GPU 上下文(10-31) | EEVEE 渲染直接崩:`nvoglv64.dll` EXCEPTION_ACCESS_VIOLATION,栈在 `DRW_gpu_context_create`;换 Vulkan、PowerShell、关沙箱都一样,旧 blend 也崩 | 设环境变量 `ER_BL_CPU=1`:`po_blender`(底稿)、`po_review`、`kit/review.py` 改用 Cycles CPU。底稿是固有色×AO 的 Emission,结果和 EEVEE 一致;评审的两阶 toon 改按 N·L 分阶,**没有投影**,只能看形和色,进 Unity 后真光照再看一次 |
+| 单个小件独占一张画布 | sol 把它画大一圈、位置下移,配准 0.78 不过(10-31 固定环 300 px/m) | 提高 ppm 让物件占满画布(固定环 380 px/m 后 0.970 通过);多件同套时按主题分 set,各写只含本 set 的 what |
+| `py -3 -c print(...)` 生成的名单管道给 xargs | 每个名字带 `\r`,Blender 找不到物件 | 管道里加 `tr -d '\r'` |
 
 ## 已知不足
 - 大块白板的明暗对比比 mo.co 弱(10-30 勾哥选这版先铺开)。要加强时,在提示词里明确写"明暗对比和亮边加倍"。
