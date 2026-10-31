@@ -789,6 +789,22 @@ t('12.2 粗取名字:口头前缀去掉、短回复/命令不取', () => {
   assert(guessGoal('继续') === '' && guessGoal('/loop 5m') === '' && guessGoal('ok') === '', '短回复/命令不应取名');
 });
 
+// === 13. skill 闸:跑 Blender 前本会话必须已加载 reference-replicate(2026-10-31)===
+t('13.1 skill 闸:没加载拦、加载放行、非 Blender 不误伤、读不到 transcript 不拦', () => {
+  const no = path.join(TMP, 'tx_no.jsonl'), yes = path.join(TMP, 'tx_yes.jsonl');
+  fs.writeFileSync(no, JSON.stringify({ message: { content: [{ type: 'tool_use', name: 'Read', input: { file_path: 'x/reference-replicate/SKILL.md' } }] } }) + '\n');
+  fs.writeFileSync(yes, JSON.stringify({ message: { content: [{ type: 'tool_use', id: 'a', name: 'Skill', input: { skill: 'yide:reference-replicate' } }] } }) + '\n');
+  const bl = '"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b a.blend --factory-startup -P gen/x.py -- --k v';
+  const d = (tool, ti, tx) => preToolDecision({ tool_name: tool, tool_input: ti, transcript_path: tx });
+  assert(d('Bash', { command: bl }, no) === 'deny', '没加载(只 Read 过 SKILL.md)应拦');
+  assert(d('PowerShell', { command: "& 'C:/b/blender.exe' -b a.blend -P s.py" }, no) === 'deny', 'PowerShell 也应拦');
+  assert(d('mcp__blender__execute_blender_code', { code: 'import bpy' }, no) === 'deny', 'Blender MCP 也应拦');
+  assert(d('Bash', { command: bl }, yes) !== 'deny', '加载过应放行');
+  assert(d('Bash', { command: 'grep -P foo blender_log.txt' }, no) === 'allow', 'grep -P 不应误伤');
+  assert(d('Bash', { command: bl }, path.join(TMP, 'missing.jsonl')) !== 'deny', '读不到 transcript 不拦');
+  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: bl }, transcript_path: no }, { YIDE_HOST: 'codex' }) !== 'deny', 'Codex 跳过');
+});
+
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 

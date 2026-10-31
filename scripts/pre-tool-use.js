@@ -49,6 +49,22 @@ function rewriteSize(command, cwd) {
 const META = path.join(brainDir(), '.meta');
 const RULES = path.join(META, 'hook-rules.json');
 const ALLOW = path.join(META, 'allow-rules.json');
+const GATES = path.join(META, 'skill-gates.json');
+
+// skill 闸默认配置。可被 .meta/skill-gates.json({"gates":[...]})整体覆盖。
+// patterns 全部命中(对 command,没有 command 就对全部字符串值)才算这类操作;不写 patterns = 该工具每次都算。
+const BLENDER_GATE_REASON =
+  '本会话还没加载 reference-replicate。ER 的 Blender 活都是照参考做(红线⑥ + 设计图/概念卡),' +
+  '第一步先用 Skill 工具加载 yide:reference-replicate,按它锁参考、整张找实例、逐层填观察表、用 refkit.py 量比例,' +
+  '再动 Blender。加载一次,本会话之后的 Blender 调用都放行。';
+const DEFAULT_SKILL_GATES = [
+  { id: 'blender-needs-reference-replicate', skill: 'yide:reference-replicate',
+    tools: ['Bash', 'PowerShell'], patterns: ['blender', '\\s-b\\s', '\\s(-P|--python|--python-expr)\\s'],
+    reason: BLENDER_GATE_REASON },
+  { id: 'blender-mcp-needs-reference-replicate', skill: 'yide:reference-replicate',
+    tools: ['mcp__blender__execute_blender_code', 'mcp__blender__execute_blender_code_for_cli'],
+    reason: BLENDER_GATE_REASON },
+];
 
 // 自动放行默认配置(保守:只读/导航)。可被 .meta/allow-rules.json 覆盖。
 const DEFAULT_ALLOW = {
@@ -181,6 +197,37 @@ try {
           '先读懂现有实现为什么这样写(git log -p、调用方、记忆里的相关拍板),能在原逻辑上增量改就增量改;' +
           '确实需要推倒,停下来向用户说明现有逻辑哪里不能沿用、打算怎么改,等用户同意后再动。');
       }
+    }
+  }
+
+  // 1c) skill 闸:某类操作第一次出现前,本会话必须已经用 Skill 工具加载过指定 skill。
+  //     治"规矩写在 skill 里,干活时想不起来加载"(10-31:14 个跑过 Blender 的会话,0 个加载过 reference-replicate)。
+  //     只认 transcript 里真实的 Skill 调用;读一遍 SKILL.md 不算。Codex 没有 Skill 工具,跳过。
+  if (!host.isCodex()) {
+    let gates = DEFAULT_SKILL_GATES;
+    try {
+      if (fs.existsSync(GATES)) {
+        const c = JSON.parse(fs.readFileSync(GATES, 'utf8'));
+        if (c && Array.isArray(c.gates)) gates = c.gates;
+      }
+    } catch {}
+    let tx = null;
+    for (const g of gates) {
+      if (!g || !g.skill || !Array.isArray(g.tools) || !g.tools.includes(tool)) continue;
+      const pats = Array.isArray(g.patterns) ? g.patterns : [];
+      let hit = !pats.length;
+      if (pats.length) {
+        const target = typeof ti.command === 'string' ? ti.command : blob;
+        hit = pats.every(p => { try { return new RegExp(p, 'i').test(target); } catch { return false; } });
+      }
+      if (!hit) continue;
+      if (tx === null) {
+        try { tx = input.transcript_path ? fs.readFileSync(input.transcript_path, 'utf8') : ''; } catch { tx = ''; }
+      }
+      if (!tx) continue; // 读不到 transcript 就不拦(宁可漏拦,不误伤)
+      const name = String(g.skill).replace(/^[^:]+:/, '');
+      const loaded = new RegExp('"name":"Skill","input":\\{"skill":"(?:[\\w-]+:)?' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"').test(tx);
+      if (!loaded) emit('deny', '🗡️ 翼德 skill 闸:' + (g.reason || `这类操作前先用 Skill 工具加载 ${g.skill}。`));
     }
   }
 

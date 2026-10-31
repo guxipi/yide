@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.75.1 — 2026-10-31 skill 闸:跑 Blender 前必须已加载 reference-replicate
+- 勾哥 10-31 问"总是不加载 skill 的根本原因、怎么保证"。会话记录:14 个跑过 Blender 的会话,0 个加载过 reference-replicate;er-blender 里早写了"走 reference-replicate",照样没加载。文字规矩靠不住,改成机器拦。
+- `pre-tool-use.js` 新增 skill 闸:Bash / PowerShell 里跑 `blender -b … -P/--python`,或调 Blender MCP 的 execute_blender_code,本会话 transcript 里没有真实的 `Skill(reference-replicate)` 调用就 deny,提示先加载。加载一次本会话放行;读不到 transcript 不拦;Codex 跳过。可用 `~/.yide/.meta/skill-gates.json` 覆盖。
+- er-blender 工作纪律第 0 步改为加载 reference-replicate;07 补"先量比例、先复述打回、白模没过不画"。
+
 ### v0.75.0 — 2026-10-31 er-blender:部件化建模 + paint-over 手绘质感管线
 - 勾哥 10-30/31:J01 POI 建筑和小件"建模非常棒","painter over 的把控尤其好,需要未来根据不同的场景不断复用"。
 - er-blender 新增 `07-建筑部件拼装`(先做墙、门框、屋顶、壳段再按设计坐标拼,不做地板,Claude 直接做)和 `08-手绘paintover`(底稿 → sol 手绘 → 配准 → 投影回 UV → 图集;游戏镜头固定所以只画 G 视角 + E/W 侧视;三道门 + 10 条实测坑)。
