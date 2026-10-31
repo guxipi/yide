@@ -121,12 +121,9 @@ try {
   // 新教训按 record 动作分流进红线 / charter / 项目 CLAUDE.md / skill —— 那几层才 always-on 或按场景加载。
 
   // scope 契约:治"任务不做完就收工"。多步任务开工前登记,收尾 Stop hook 按它拦。
-  ctx += `\n---\n## scope 契约(可选)\n` +
-    `只在勾哥要求把一张清单全部做完时登记;一般多步活不用登记。登记后收尾时 Stop hook 会按它拦住没收敛的条目;勾哥中途改方向,就把旧条目 waive 掉跟着改:\n` +
-    `\`node "${path.join(PLUGIN_ROOT, 'scripts', 'scope.js')}" set --session ${SESSION_ID} --json '[{"what":"做什么","verify":"能判定成败的命令(可省)"}]'\`\n` +
-    `(本会话 sid = \`${SESSION_ID}\`,所有子命令都带上它)\n` +
-    `干完跑 \`check\` 让退出码写状态(0 才算 pass);没命令可跑的走 \`attest --evidence "<具体证据>"\`;真不做了走 \`waive --reason "<理由>"\`。` +
-    `别自己在心里打勾——状态只认命令退出码和写下来的证据。\n`;
+  ctx += `\n---\n## scope 契约\n` +
+    `勾哥要求把一张清单全做完时才登记,收尾 Stop hook 按它拦:\`node "${path.join(PLUGIN_ROOT, 'scripts', 'scope.js')}" set --session ${SESSION_ID} --json '[{"what":"做什么","verify":"判定命令(可省)"}]'\`;` +
+    `完成跑 \`check\`(退出码 0 才算过),没命令可跑用 \`attest --evidence\`,改方向或不做用 \`waive --reason\`,子命令都带 \`--session ${SESSION_ID}\`。\n`;
 
   // 随手记 inbox:只报未整理条数(手机扔进来的笔记)
   let nInbox = 0;

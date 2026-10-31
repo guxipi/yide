@@ -54,7 +54,7 @@ const GATES = path.join(META, 'skill-gates.json');
 // skill 闸默认配置。可被 .meta/skill-gates.json({"gates":[...]})整体覆盖。
 // patterns 全部命中(对 command,没有 command 就对全部字符串值)才算这类操作;不写 patterns = 该工具每次都算。
 const BLENDER_GATE_REASON =
-  '本会话还没加载 reference-replicate。ER 的 Blender 活都是照参考做(红线⑥ + 设计图/概念卡),' +
+  '本会话还没加载 reference-replicate。ER 的 Blender 活都是照参考做(mo.co 参考红线 + 设计图/概念卡),' +
   '第一步先用 Skill 工具加载 yide:reference-replicate,按它锁参考、整张找实例、逐层填观察表、用 refkit.py 量比例,' +
   '再动 Blender。加载一次,本会话之后的 Blender 调用都放行。';
 const DEFAULT_SKILL_GATES = [

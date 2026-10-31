@@ -30,7 +30,7 @@ py -3 $S/po_board.py <板>.png 2 760 "之前" a.png "之后" b.png ...          
 | `ppm` | 主视角像素密度。V5 实机约 71~77 px/m;J01 用过:母舱 62、遗址 70、小件 110、有顶屋 89 |
 | `side_ratio` | 侧视密度系数,默认 0.6 |
 | `underlay` | `col` = 顶点色 `Col`(我们 kit 生成的件);`material` = 物件原有的底色或贴图(Tripo 件、外来件) |
-| `prompt.what / card / card_desc / colors / style_refs` | sheet 上画的是什么;过审概念卡(这件东西的成品画法);要保留的固有色;两张 mo.co 近景(先实看,红线⑥) |
+| `prompt.what / card / card_desc / colors / style_refs` | sheet 上画的是什么;过审概念卡(这件东西的成品画法);要保留的固有色;两张 mo.co 近景(先实看,mo.co 参考红线) |
 | `fallback`、`atlas_scale`、`cut_m` | 第三轮兜底(默认开)、图集缩放(默认 0.75)、长面切段(默认 1 m) |
 
 mo.co 近景参考存在 vault `013 美术/mo.co截图/裁切/expedition_mocoref_*_paintover参考_*.png`(石墙块、衣柜)。它们登记在参考登记表(Sheet「jungle lab」组件清单)「通用 / 人造物质感上限」行。新对象先查登记表里它自己那一行;要另挑和材质更接近的近景,按 `mo.co截图/INDEX.md` 挑好写回那一行再用,同一对象之后一直用这两张,不每次重挑。

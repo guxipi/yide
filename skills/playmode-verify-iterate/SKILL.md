@@ -13,6 +13,10 @@ CC 自己进 Play Mode 真测 → 发现问题 → 回来修 → 重测 → **�
 
 ## 第〇步:进 Play 前
 
+> **ER 进 Play 前要知道的两件事(2026-10-31 从翼德开场挪来)**:
+> - `playModeStartScene` 的真持久层是 EditorPrefs 键 `PlayModeSceneSelector.StartScenePath.<dataPath>`,每次 domain reload 重新套用;pin / 还原都写这个键,还原值 = 开工时实读的原值(在 Boot 和 HomeScreen 之间来回变,从不是 Expedition)。测远征临时 pin `Expedition`。
+> - Enter Play Mode Options 关了 domain reload 和 scene reload,静态量跨 Play 存活;测"第二次进 Play"类 bug 先想到这条。
+
 > **通道(2026-10-23 定稿,替代 09-29 口径)**:**Unity 官方 CLI 是主路,Coplay MCP 只兜底**(Coplay 公司 2026-03 被收购并入 Aura,dev MCP 自 2026-02 停更)。Pipeline 包 **0.9.0-exp.1 起命令全部分组命名,旧扁平名直接报错**(`editor_play`→`editor.playmode start`、`eval`→`script eval`、`console`→`console get`…;全表 `unity command --obsolete-command-names`)。多编辑器并存时**每条命令都带 `--project-path <工程路径>`**;Pipeline 自有参数放 `--` 之后(`script eval` 的 `timeout` 是毫秒,会被 CLI 自己的 `--timeout` 秒吞掉);`--format json` 的输出末尾可能多一行 `<claude-code-hint …/>`,解析前 `grep -v claude-code-hint`。eval 走 Bash 不走 PowerShell,代码写成 `return <expr>;`,eval 里绝不同步等异步(会把编辑器锁死)。
 
 **下面这些事 CLI 有明确优势,一律用 CLI,不许退回 Coplay**(验证口径 2026-10-23,Pipeline 0.9 / CLI 1.0.0-beta.14):
