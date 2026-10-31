@@ -5,7 +5,7 @@ description: Rework an Extraction UI screen to production quality (成品级 = c
 
 # UI Visual Rework (Extraction · SuperCasual kit)
 
-> 分工提醒:勾哥手摆过的屏,几何归他,AI 只接线和改可读性(见 ui-placement 开头);本 skill 的整屏重做只用于他点名要 AI 重做的屏。
+> CARGO 屏的几何、样式、接线都改该屏的 `Cargo<Screen>Setup.cs` builder 再重跑(见 ui-placement 开头),不手摆、不手改 prefab;本 skill 的整屏重做只用于勾哥点名要重做的屏。
 
 把一个"代码生成的平面色块界面"重做成成品级,流程与判断全部实跑验证过(Battle Pass / Leaderboard / Daily Login / Reward Reveal 四单)。**先读 `ui-placement` skill**(执行纪律、截图通道、RectTransform 坑)——本 skill 不重复它,只讲它之上的"做到好看"。
 
@@ -26,7 +26,7 @@ description: Rework an Extraction UI screen to production quality (成品级 = c
 **流程**
 1. 现状先实读:prefab dump(节点 / sprite / 色值 / 字体 / 字号)+ 实机截图;字号一律换算成屏上像素(字号 × 父级缩放 × canvas scaleFactor;Popup 层 1440 参考 → 1080 屏 ×0.75,kit 屏 1080 参考 1:1)。
 2. 第一轮可以出 mock 定方向(竞品只借布局和层次);**方向一定就只改真 prefab,每轮给勾哥的是 Play 截图**(`ScreenCapture.CaptureScreenshot`,1080×2340)。mock 和 builder 两套组装代码必出偏差,这次因此多返工三轮。
-3. 有 builder 的 prefab 改 builder 再跑(菜单覆盖前要确认,避免冲掉手摆);没有 builder 的直接 `PrefabUtility.LoadPrefabContents` 改结构 → `SaveAsPrefabAsset`。脚本改成序列化引用,不按节点名查。
+3. 有 builder 的 prefab 改 builder 再跑(CARGO 屏一律改 builder 重跑;其它屏菜单覆盖前确认没有没进 builder 的改动);没有 builder 的直接 `PrefabUtility.LoadPrefabContents` 改结构 → `SaveAsPrefabAsset`。脚本改成序列化引用,不按节点名查。
 4. 进 Play 走真入口打开,每个变体都开一遍(单格 / 多格 / 不同礼包),state dump(文本、`characterCount`、active、屏上 rect)+ 截图;关闭键走真 `onClick`。测完停 Play,只提交本单文件。
 5. **遮挡检查是交付硬门(勾哥 10-13 点名)**:每屏两道都过才算完。① 脚本:关键元素(标题 / 副标题 / 内容行 / 按钮 / 倒计时 / 角标 / info)屏上矩形两两求交,TMP 按**可见字形轮廓**(`characterInfo` 的 bottomLeft/topRight)算,别用 `textBounds`(含整行行高,Saira ≈1.57em,会大量误报),重叠 >3% 或出卡/出窗即红;有意的叠放(贴纸角标压按钮沿)显式豁免。脚本在 vault `013 美术/工具/ui_occlusion_check.cs`。② 肉眼:人物的脸、手、主道具不许被任何 UI 压住,压插画的元素优先放插画空景一侧。
 

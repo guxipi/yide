@@ -73,6 +73,6 @@ gun badge、GUARANTEE 角标、价值贴纸、两段式价值句、人物出框 
 
 ## 6. 不做的事
 
-- 不改 Unity 工程、不接线(那是 ui-placement 的活;UI 分工是勾哥手摆、我接线)。
+- 不改 Unity 工程、不接线(那是 ui-placement 的活:CARGO 屏一律改 builder 重跑)。
 - 不在 tokens 第十七节以外的地方加纹样和渐变。
 - 不自造数值。卡面上的 gems、天数、价格从 Config Hub / BP 表 / 礼包表读;没读到就写占位并在页头标"待真源"。

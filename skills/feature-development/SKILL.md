@@ -70,7 +70,7 @@ dump 真相的方法:写一次性探针 .cs 放 **Assets 外**(项目根 `Temp/`
 ## 第四步:实现纪律(贴合 repo,别堆屎山)
 
 - **改真源,不改副本**。UI 先判轨(细则见 `ui-placement`「真源模型」):
-  - **已 prefab 化的屏**:直接改 prefab(Prefab Mode / `LoadPrefabContents`),对应 builder 已退役(菜单带 `(retired)`),**禁止重跑**冲掉手工 refine。勾哥手摆过的几何不动,只接线。
+  - **已 prefab 化的屏**:直接改 prefab(Prefab Mode / `LoadPrefabContents`),对应 builder 已退役(菜单带 `(retired)`),**禁止重跑**冲掉手工 refine。CARGO 屏的几何、样式、接线都写进 `Cargo<Screen>Setup.cs` builder 重跑,不手摆。
   - **还没迁的旧屏**:改 `Assets/Scripts/Editor/Setup/*Setup.cs` builder + `Tools/Setup/... Rebuild` 菜单,不手摆场景;顺手 prefab 化。新面板一律 prefab,禁止新增场景内联 UI 子树。
   - builder 写法:`SaveAsPrefabAsset` 同路径覆盖保 GUID;`SerializedObject.FindProperty` 带 null 检查 wire 字段;sprite 加载失败 `LogWarning` 路径。
 - **复用既有套路保持一致**:抄最近的同类实现的 helper(`ApplySprite`/`CreateUIChild`/`SetRef`/`PlaceText`),别每次发明。视效走 `ui-visual-rework` 的配方提取法。
