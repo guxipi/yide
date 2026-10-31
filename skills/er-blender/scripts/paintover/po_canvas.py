@@ -33,7 +33,7 @@ def main():
     for gname, names in groups.items():
         objs = [bpy.data.objects[n] for n in names]
         for v in cfg["views"]:
-            t = P.tile_spec(objs, v, vdefs)
+            t = P.tile_spec(objs, v, vdefs, pad_m=cfg.get("pad_m", 0.3))   # small props: lower pad (10-31)
             wm, hm = t["u1"] - t["u0"], t["v1"] - t["v0"]
             vp = cfg["ppm"] * (cfg["side_ratio"] if v in ("E", "W") and "G" in cfg["views"] else 1.0)
             if wm * vp < 30 and v != cfg["views"][0]:

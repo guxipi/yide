@@ -150,16 +150,30 @@ def main():
         me = o.data
         mw = o.matrix_world
         nmat = mw.to_3x3().inverted().transposed()
-        if "PaintUV" in me.uv_layers:
-            me.uv_layers.remove(me.uv_layers["PaintUV"])
-        uvl = me.uv_layers.new(name="PaintUV")
+        # cfg.keep_painted (10-31): incremental pass. Faces already on a "Painted_*" slot keep their UV and
+        # atlas; only the other faces are mapped, onto a NEW slot with this set's atlas (same 'PaintUV' map,
+        # each material samples its own image). Used for the covered-house interior after the exterior shipped.
+        keep = bool(cfg.get("keep_painted")) and "PaintUV" in me.uv_layers
+        if keep:
+            uvl = me.uv_layers["PaintUV"]
+            old_painted = {i for i, m in enumerate(me.materials) if m and m.name.startswith("Painted_")}
+            if mat_paint.name not in [m.name for m in me.materials if m]:
+                me.materials.append(mat_paint)
+            new_idx = [m.name if m else None for m in me.materials].index(mat_paint.name)
+            old_painted.discard(new_idx)
+        else:
+            if "PaintUV" in me.uv_layers:
+                me.uv_layers.remove(me.uv_layers["PaintUV"])
+            uvl = me.uv_layers.new(name="PaintUV")
+            mat_raw = orig_mat.get(o.name) or mat_raw0
+            me.materials.clear()
+            me.materials.append(mat_paint)
+            me.materials.append(mat_raw)
         me.uv_layers.active = uvl
-        mat_raw = orig_mat.get(o.name) or mat_raw0
-        me.materials.clear()
-        me.materials.append(mat_paint)
-        me.materials.append(mat_raw)
         n_paint = n_raw = 0
         for poly in me.polygons:
+            if keep and poly.material_index in old_painted:
+                continue
             c = mw @ poly.center
             nrm = (nmat @ poly.normal).normalized()
             samples = [c] + [c.lerp(mw @ me.vertices[vi].co, 0.6) for vi in poly.vertices][:4]
@@ -199,10 +213,11 @@ def main():
                 if best is not None:
                     break
             if best is None:
-                poly.material_index = 1
+                if not keep:
+                    poly.material_index = 1
                 n_raw += 1
                 continue
-            poly.material_index = 0
+            poly.material_index = new_idx if keep else 0
             n_paint += 1
             sname, t = best
             ox, oy, k = place[sname]
