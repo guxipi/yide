@@ -246,6 +246,21 @@ try {
     }
   }
 
+  // 1e) 参考闸:每轮第一次出图 / 建模动作前,必须登记本次对标的 mo.co 图(或免参考理由),登记的图本会话要真打开过(见 ref-gate.js)。
+  if (!host.isCodex() && process.env.YIDE_REF_GATE !== '0') {
+    let enabled = true;
+    try {
+      if (fs.existsSync(GATES)) {
+        const c = JSON.parse(fs.readFileSync(GATES, 'utf8'));
+        if (c && c.refGate && c.refGate.enabled === false) enabled = false;
+      }
+    } catch {}
+    if (enabled) {
+      const why = require(path.join(__dirname, 'ref-gate.js')).check(input, { pluginRoot: host.pluginRoot() });
+      if (why) emit('deny', why);
+    }
+  }
+
   // 2) 自动放行(只读/导航;拿不准就 defer)
   let allowConf = DEFAULT_ALLOW;
   try {

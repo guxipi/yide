@@ -33,7 +33,7 @@ py -3 $S/po_board.py <板>.png 2 760 "之前" a.png "之后" b.png ...          
 | `prompt.what / card / card_desc / colors / style_refs` | sheet 上画的是什么;过审概念卡(这件东西的成品画法);要保留的固有色;两张 mo.co 近景(先实看,红线⑥) |
 | `fallback`、`atlas_scale`、`cut_m` | 第三轮兜底(默认开)、图集缩放(默认 0.75)、长面切段(默认 1 m) |
 
-mo.co 近景参考存在 vault `013 美术/mo.co截图/裁切/expedition_mocoref_*_paintover参考_*.png`(石墙块、衣柜)。新场景要先挑和对象材质相近的 mo.co 截图另裁两张,不要死用这两张。
+mo.co 近景参考存在 vault `013 美术/mo.co截图/裁切/expedition_mocoref_*_paintover参考_*.png`(石墙块、衣柜)。它们登记在参考登记表(Sheet「jungle lab」组件清单)「通用 / 人造物质感上限」行。新对象先查登记表里它自己那一行;要另挑和材质更接近的近景,按 `mo.co截图/INDEX.md` 挑好写回那一行再用,同一对象之后一直用这两张,不每次重挑。
 
 ## 门(全部要过)
 1. **sol 门**:`run_codex.sh` 自动核 rollout,参考图张数必须等于 4。REJECT 原样重跑一次;连续两次 REJECT 停下查原因。J01 两批 33 张里有 2 张第一次被拦,重跑后通过。

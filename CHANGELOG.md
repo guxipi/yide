@@ -2,6 +2,13 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.0 — 2026-10-31 参考闸:mo.co 参考按物件锁定,登记的图要真打开过
+- 勾哥 10-31:mo.co 前置参考"有时拉不相关的截图;同一个物品前后拉不同的截图;明显不需要时也拉"。审计 25 个会话:三张整帧被不同活当默认开场;同一张水面帧在 lineup 里叫 16 和 28、结论互相矛盾;出 icon 也拉;ref 笔记引用了库里不存在的文件。
+- 根因:红线⑥只要求"开过 mo.co 图",不管开的是哪张;10-16 丛林 Lab 已有的按物件锁参考登记表(Sheet「jungle lab」组件清单 I 列)没人用。
+- `scripts/ref-check.js`:`lock --object … --refs "<文件名> 裁 …"` / `lock --none …` / `exempt --why "<类别>:<说明>"`,校验格式(refs 最多 3 张;免参考类别:不改外观/图标头像框/商店营销/UI/Tripo生成/只写文档派单/非ER)。
+- `scripts/ref-gate.js`(PreToolUse 调用):每轮第一次跑 Blender、Blender MCP、派 codex 出图、Coplay 生成图片 / 3D 前,本轮必须有一条合格登记;lock 的每个文件本会话必须真用 Read 打开过原图(读 ref/ 拷贝不算)。图标 CLI、codex 写代码不拦;读不到 transcript 不拦;Codex 跳过;`YIDE_REF_GATE=0` 或 `.meta/skill-gates.json` 的 `{"refGate":{"enabled":false}}` 可关。
+- reference-replicate §0、er-blender 第 0.5 步、08-手绘paintover 改为从登记表取参考。新增测试 13.3。
+
 ### v0.76.0 — 2026-10-31 开工复用闸:每轮开工前先查现成 skill / 做法 / 可复用件
 - 勾哥 10-31:"不止是这一个 skill,我需要一个通用的开始做之前的 gate 来检查这个是否已经有可以使用的 skill 或是做法,是否有东西可以直接复用。"
 - 病根:选 skill、找现成件只在接活那一刻做一次;活中途变了样不再回头查,就自己临时写脚本绕远路(10-31 stage.py / refkit.py 现成不用;10-24 Lab 做法卡零使用)。
