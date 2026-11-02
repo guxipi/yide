@@ -1,0 +1,414 @@
+{
+ "id": "A1",
+ "name": "联邦主干道人行道地砖 + 地缘砖",
+ "project": "Extraction / J01 v7",
+ "version": "v4f",
+ "approved": {
+  "date": "2026-11-02",
+  "by": "勾哥",
+  "words": [
+   "过,存资产铺开",
+   "版面太平+Kerb 的边缘应该有一些圆滑处理",
+   "我说圆滑处理的意思是这个面打磨圆滑",
+   "地砖都要使用 v5 镜头,不要来回来去搞",
+   "注意边缘的圆润度,一般是不存在需要你直切的"
+  ]
+ },
+ "reference": {
+  "file": "Claude Feature Docs/Jungle Planet/BIBLE/lineup/pipeline/refs/moco_street_crosswalk.png",
+  "crop": [
+   480,
+   0,
+   641,
+   300
+  ],
+  "rule": "唯一参考,颜色和形状都只从这一张取(勾哥 11-02「认定唯一参考图,选色才不会飞」)"
+ },
+ "colors": {
+  "screen_target_srgb": {
+   "slab": "#F8CFBA",
+   "seam": "#DFB49F",
+   "kerb": "#FBD4BD",
+   "road": "#DFC4BB"
+  },
+  "screen_shadow_note": "板在影里 #B88F94 属光影列,不进本色",
+  "albedo_srgb": {
+   "slab": "#CAC0BF",
+   "kerb": "#CDC4C2",
+   "seam": "#E4D2C8 (unlit)",
+   "road": "#C2BBC0",
+   "gain": [
+    1.58422816,
+    1.18594921,
+    0.938629568
+   ]
+  },
+  "albedo_note": "在 V5(俯角 46 / vFOV 25 / 60.2 m)+ JunglePlanet.unity 光影 rig(LabLook.Apply 后,_LabShadowTint (1.58,1.38,0.935),主光 1.8×(1.05,.957,.772))下反解到屏幕目标;换光 rig 要重反解",
+  "per_piece_mul": {
+   "slab": [
+    1,
+    0.982,
+    1.018,
+    0.991,
+    1.009
+   ],
+   "kerb": [
+    1,
+    0.985,
+    1.015,
+    0.992,
+    1.008
+   ]
+  },
+  "lablit": {
+   "shadowTint": [
+    0.76,
+    0.743,
+    0.815
+   ],
+   "ambientStrength": 0.654,
+   "shadowThreshold": -0.04,
+   "shadowSoftness": 0.08,
+   "seam_unlit": true
+  }
+ },
+ "units": {
+  "slab": {
+   "count": 5,
+   "size_m": "1.05–1.14 方",
+   "thickness": 0.15,
+   "top_edge": "1.5 cm 软圆角(2 环)",
+   "side_submesh": "缝色材质",
+   "tris": "39–42"
+  },
+  "kerb": {
+   "count": 5,
+   "size_m": "0.52–0.58 × 0.36–0.38",
+   "thickness": 0.15,
+   "road_edge": "R 6 cm 五段圆肩,朝车道长边",
+   "other_edges": "硬",
+   "tris": 182
+  },
+  "mottle": {
+   "slab_amp": 0.04,
+   "kerb_amp": 0.03,
+   "texture": "96×96 RGBAHalf 两层平滑值噪声,每块一张",
+   "seeds": "slab 500+i / kerb 600+i"
+  },
+  "outline_seeds": "slab 4100+i / kerb 4200+i(System.Random)"
+ },
+ "recipe": {
+  "gap": 0.02,
+  "layout": "正交不错缝,±1° / ±1 cm,地缘砖一列在车道侧顶面与板齐,缝板 unlit 缝色(顶 T-0.002)在地缘砖侧缩 2.5 cm,沿坡按 dz/ds 倾斜",
+  "pavement_band": {
+   "cols": 2,
+   "pave_w_from_corridor_edge_m": 2.65
+  },
+  "pieces": [
+   {
+    "id": "A1_slab_01",
+    "size_m": [
+     1.11496282,
+     1.1372838
+    ],
+    "tris": 98,
+    "corners": [
+     "round",
+     "chamfer",
+     "straight",
+     "straight"
+    ],
+    "bow_m": [
+     -0.011,
+     -0.0061,
+     0.0086,
+     -0.0106
+    ],
+    "bumps_m": [
+     -0.005,
+     0.0096,
+     0.0079
+    ]
+   },
+   {
+    "id": "A1_slab_02",
+    "size_m": [
+     1.07293618,
+     1.04892874
+    ],
+    "tris": 98,
+    "corners": [
+     "chamfer",
+     "round",
+     "bite",
+     "chamfer"
+    ],
+    "bow_m": [
+     -0.0121,
+     -0.0112,
+     -0.0077,
+     0.0116
+    ],
+    "bumps_m": [
+     -0.0092,
+     0.0081
+    ]
+   },
+   {
+    "id": "A1_slab_03",
+    "size_m": [
+     1.1189096,
+     1.11357212
+    ],
+    "tris": 91,
+    "corners": [
+     "straight",
+     "straight",
+     "straight",
+     "chamfer"
+    ],
+    "bow_m": [
+     0.008,
+     -0.0091,
+     -0.0141,
+     -0.0062
+    ],
+    "bumps_m": [
+     -0.0093,
+     -0.0097,
+     -0.0094
+    ]
+   },
+   {
+    "id": "A1_slab_04",
+    "size_m": [
+     1.07688308,
+     1.09070468
+    ],
+    "tris": 98,
+    "corners": [
+     "chamfer",
+     "round",
+     "bite",
+     "chamfer"
+    ],
+    "bow_m": [
+     -0.0133,
+     -0.0143,
+     0.0133,
+     -0.0108
+    ],
+    "bumps_m": [
+     0.0093,
+     -0.0099
+    ]
+   },
+   {
+    "id": "A1_slab_05",
+    "size_m": [
+     1.1228565,
+     1.08966482
+    ],
+    "tris": 98,
+    "corners": [
+     "chamfer",
+     "bite",
+     "straight",
+     "straight"
+    ],
+    "bow_m": [
+     0.014,
+     0.0107,
+     -0.0155,
+     0.0075
+    ],
+    "bumps_m": [
+     -0.0074,
+     0.0063
+    ]
+   },
+   {
+    "id": "A1_kerb_01",
+    "size_m": [
+     0.572690964,
+     0.362147123
+    ],
+    "tris": 182,
+    "corners": [
+     "bite",
+     "straight",
+     "chamfer",
+     "round"
+    ],
+    "bow_m": [
+     0.0039,
+     -0.0036,
+     0.0038,
+     -0.0028
+    ],
+    "bumps_m": [
+     0.0097,
+     0.0088,
+     -0.0084
+    ]
+   },
+   {
+    "id": "A1_kerb_02",
+    "size_m": [
+     0.5464243,
+     0.367575377
+    ],
+    "tris": 182,
+    "corners": [
+     "straight",
+     "straight",
+     "round",
+     "round"
+    ],
+    "bow_m": [
+     0.008,
+     -0.0031,
+     0.0043,
+     -0.0027
+    ],
+    "bumps_m": [
+     -0.0099,
+     -0.0083,
+     -0.0068
+    ]
+   },
+   {
+    "id": "A1_kerb_03",
+    "size_m": [
+     0.575157762,
+     0.3730036
+    ],
+    "tris": 182,
+    "corners": [
+     "round",
+     "chamfer",
+     "chamfer",
+     "bite"
+    ],
+    "bow_m": [
+     -0.0031,
+     -0.0018,
+     0.0046,
+     -0.0022
+    ],
+    "bumps_m": [
+     -0.0099,
+     0.006
+    ]
+   },
+   {
+    "id": "A1_kerb_04",
+    "size_m": [
+     0.5488911,
+     0.359931856
+    ],
+    "tris": 182,
+    "corners": [
+     "straight",
+     "straight",
+     "round",
+     "straight"
+    ],
+    "bow_m": [
+     -0.0061,
+     0.0031,
+     0.0047,
+     0.0022
+    ],
+    "bumps_m": [
+     -0.0079,
+     -0.0093,
+     0.0094
+    ]
+   },
+   {
+    "id": "A1_kerb_05",
+    "size_m": [
+     0.522624552,
+     0.3653601
+    ],
+    "tris": 182,
+    "corners": [
+     "chamfer",
+     "round",
+     "chamfer",
+     "chamfer"
+    ],
+    "bow_m": [
+     -0.0053,
+     -0.0026,
+     -0.0057,
+     -0.0029
+    ],
+    "bumps_m": [
+     0.0091,
+     0.0064
+    ]
+   }
+  ]
+ },
+ "generator": {
+  "editor_script": "Assets/Scripts/Editor/Lab/J01v7/A1KitGen.cs",
+  "entry": "Lab.J01v7.Editor.A1KitGen.Build()",
+  "menu": "Tools/Lab/J01v7/A1 人行道砖套件 重建",
+  "spread": [
+   "Claude Feature Docs/Jungle Planet/BUILD/J01_v7/gen/export_kerb_lines.py",
+   "Claude Feature Docs/Jungle Planet/BUILD/J01_v7/engine/A1/a1_pave_capture.cs"
+  ],
+  "worksite": "Claude Feature Docs/Jungle Planet/BUILD/J01_v7/engine/A1/A1_unity_工单.md"
+ },
+ "assets": {
+  "root": "Assets/Art/Lab/J01v7/A1",
+  "files": {
+   "Assets/Art/Lab/J01v7/A1/A1_kit.json": "8e4cc0b4fbd1919764e06ed36125c8b0466f508202cb601611329ac2a3125d9c",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_kerb_01.mat": "6a1f571cb8ffb3e79a85fc14d5b890a9221b6bc99b7d4223fcb4cc2f82d7784d",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_kerb_02.mat": "45a1f5ca9487eb873cd858500e37746dfe2a12d6ddad8eb6dbf8e42032f38f30",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_kerb_03.mat": "dc0896e8eb05670a3fef70f76c9e94aa621d1aa4c910719e9c366ecce2eac0a0",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_kerb_04.mat": "a8b80a7bcec54df273ca52ba67c7b1eb39ecc84fd0bc8488646349f735830030",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_kerb_05.mat": "fbbf160510a158f43af776cb1d122c6d32efa035c60d8c5007f52bc568b4ad08",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_road.mat": "432b9be400d2fd0e124e1decb76aed6f96abc4af464172c2f499ea87ff4f4a00",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_seam.mat": "f1de63e4c5f638eff252860c250ee7c42b439ca646de76a3fa391eb2d138e637",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_slab_01.mat": "d5707a1920683defd3754e7b6bbf46235ae28aa3b1009f207a0106c1752f732c",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_slab_02.mat": "a4499a4569ab2b8280348b93e5c2d9041cf56af7d04354782bf7bd5fa30c7e39",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_slab_03.mat": "e08751ac90f3af085f1dfb7ed9f4c06d9f39e2cf57534177974ed47a02924803",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_slab_04.mat": "e12577159c23ed405978ea149c85db21076b310a41eff98b99fe49692785bf52",
+   "Assets/Art/Lab/J01v7/A1/Materials/A1_slab_05.mat": "df1c1af02f15af575cda3b6ab398c822c1a3bbe125fe278480f3ccae61885c37",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_kerb_01.asset": "adfacf20ce607c23771cefca1e002f75a40389b1e094bcd79dab9263d0c756a1",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_kerb_02.asset": "ec95ff3f21f03e03a0151d13a8b954e3e1143ba354ac729de0df7f0433566a44",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_kerb_03.asset": "70f89469e353d4bb1051a5357de00e6e828bc2f4f246ba8758121162601b76ee",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_kerb_04.asset": "ecc8c02f27e3189fa0993a993ebcadaf250a27997f8d99e00c74be7eb368b119",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_kerb_05.asset": "2c8a8319f01ad4145ff63ca128b90e5a61ded9e521105371c0dfa16df43b435e",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_slab_01.asset": "3216449c7ea48cd3f2ba73f9de1f6f7c031f228ac82af97569d959c5620a3a9d",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_slab_02.asset": "4d46fd84e42936a9491b289337372998c70fa3e42a57a9e53e04fa1975e218ba",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_slab_03.asset": "3fbbe6d11ad1eab992176c1bea4b83eacb8b96555f2b013bda555a59900d0ab4",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_slab_04.asset": "e13e1a59950acdac4d07df2b185ad89936bbacca902ca9a911d2fb4af9ec4138",
+   "Assets/Art/Lab/J01v7/A1/Meshes/A1_slab_05.asset": "e8b9ffe8d5d82b3067f7bb893db03b893e23272c01a6c5f04bc94e9268859222",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_kerb_01.prefab": "966e579bd2a38551c319b45cc74f5be53c54f02841df93547fb25a50da6184c1",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_kerb_02.prefab": "421663bd49a5e33e3b003f3d1c64176795fedd9e0e1a923f9132445c71c51910",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_kerb_03.prefab": "d2e9317d4982de34445292c18c141c549c3fa84bc8e70e529a50349e3f0cd0d8",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_kerb_04.prefab": "e2007a2d8a6f6ee0889ee893609efe13faf6fe4e5b165857b51890c32f91f231",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_kerb_05.prefab": "cf67d67336584a08afb3889de6fd5f6a6e14da1c22e0a86b886bd53670596465",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_slab_01.prefab": "fff7cfd73ad9d2b13da0fb10f3ef12e1887924fcd49a68adf0352d6f001986f2",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_slab_02.prefab": "a5b38f1ac9d2b675a8146e4e6966fd6b2fd0b3f333a6c13de98e25cbe093a481",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_slab_03.prefab": "9d0409be74452523201658e145cc06b2cd870771487f7550bafb0df2f9233c49",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_slab_04.prefab": "ecfe3a4060f4695fc08ece9114a86ba6e9f6bbadb266b75992192d8d0b11097e",
+   "Assets/Art/Lab/J01v7/A1/Prefabs/A1_slab_05.prefab": "2e2135aeecb07427d5238c69bc2fadfb2b8d9995b0e4b9186438123ca4e2311c",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_kerb_01.asset": "7ed288e0947b3b4353968ec3d6c0caae68ea7828936f472048ca1dd9e4d11c7a",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_kerb_02.asset": "8d067138790543dcb990fe01e7509a95587e8df12680b4462534609384a1f448",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_kerb_03.asset": "e1555544a4e2c2ef395ed05d39051d562315fe542d397371b9a15463f93130af",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_kerb_04.asset": "2fe8817ad2f0f246b003103f830ac95549aeb8b900ef34c7aafdc76c4f76e61e",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_kerb_05.asset": "2e6cd5be2a3aa23476cec0f0b285e4c48acc458a327169b47ffcda214e06b225",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_slab_01.asset": "f8f042ba0c096b986b7bfd2328b0ca694a497be3cb9058b3bac100ad0c44f16e",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_slab_02.asset": "32f6faeb1ab63ab2b274bab51110eb841be992ef68b489bd75b08cbcc2c5ef0d",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_slab_03.asset": "29a97f7eff3cfe40851ef4ce249981e14e2fe943f50d79ac337c8763dbeddba3",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_slab_04.asset": "ae230cbccbf3e3e1a7c9de9258d7dd011c4ff1f902cb7adeb8a47d70bc5493e3",
+   "Assets/Art/Lab/J01v7/A1/Textures/mottle_A1_slab_05.asset": "4241702bca394172aedc43efd82507a377d2e1b5133d0823de8f29153a2022a2"
+  }
+ },
+ "generated": "2026-11-02T20:27:15+04:00"
+}
