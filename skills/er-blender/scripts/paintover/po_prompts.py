@@ -34,7 +34,8 @@ FINISH, exactly like the guard booth on the right side of image 2 (image 3 is a 
 - every panel and block is an almost flat, even colour with only ONE very large, very soft gradient: a touch lighter at its top, a touch darker toward its bottom;
 - a thin, crisp, light highlight line along the top edges and convex corners of each block (the bevel catching light);
 - neighbouring blocks / panels may differ very slightly in value, but each single block stays one clean tone;
-- window glass: flat colour with one or two clean, straight, lighter diagonal reflection bands, like the booth window in image 2;
+- window glass ONLY where the base colours list glass: flat colour with one or two clean, straight, lighter diagonal reflection bands, like the booth window in image 2;
+- solid wall panels, doors, plates and lids are NOT glass: no reflection bands on them, even when they are light or framed;
 - safety stripes, light strips and screens are flat, clean colour bands with crisp edges;
 - soft occlusion only in the tightest inner corners and right under overhangs, warm grey, very narrow.
 {card}
