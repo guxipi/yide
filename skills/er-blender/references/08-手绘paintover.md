@@ -1,11 +1,13 @@
-# 08 手绘质感 paint-over:给模型加 mo.co 的笔触,任何场景复用
+# 08 paint-over 上色管线:给模型上干净的手绘色,任何场景复用
 
-勾哥 10-30:模型太 basic,要用 paint-over 加 mo.co 的质感和笔触;10-31 看完 J01 全套后:"painter over 的把控尤其好,我需要未来根据不同的场景不断复用"。这一章就是复用手册:换场景只换一个配置 JSON,脚本不动。
+> **2026-11-04 勾哥拍板:J01 建筑和建筑拆件的贴图一律「新版干净上色」**(块面近平涂 + 一道大渐变 + 棱上细亮边 + 块间轻微色差 + 玻璃斜反光;禁笔触斑驳、掉漆、擦痕、灰痕、污渍、任何做旧)。标准图在 vault `013 美术/丛林Lab/贴图风格基准/`,规则见 vault 记忆 `013 美术/AI记忆/feedback-j01-building-texture-clean-only-20261104.md`。旧的笔触 / 做旧画法已从本管线删掉,不再当参考。
 
-**分工**:笔触由 sol 画(局内 2D 美术归 sol,代码不许画笔触或占位);Claude 出底稿、配准、投影、验收。看图验收必须亲眼看。
+勾哥 10-31:"painter over 的把控尤其好,我需要未来根据不同的场景不断复用"。这一章就是复用手册:换场景只换一个配置 JSON,脚本不动。
+
+**分工**:上色由 sol 画(局内 2D 美术归 sol,代码不许画笔触或占位);Claude 出底稿、配准、投影、验收。看图验收必须亲眼看。
 
 ## 原理
-在 Blender 里把模型按固定视角正交渲成"画布"(固有色乘柔和 AO,纯绿底,不打方向光)→ sol 在画布上原位手绘 → 配准回画布 → 每个面挑最正对、看得见它的视角,把画投影回 UV → 每类物件出一张图集。
+在 Blender 里把模型按固定视角正交渲成"画布"(固有色乘柔和 AO,纯绿底,不打方向光)→ sol 在画布上原位上色(干净上色)→ 配准回画布 → 每个面挑最正对、看得见它的视角,把画投影回 UV → 每类物件出一张图集。
 
 **ER 的游戏镜头不转**(V5:从南 46° 俯视)。所以主视角就是"游戏镜头方向的正交视图 G",再补 E/W 侧视(0.6 倍密度,只在屏幕边缘斜着看到);朝北的面永远不上屏幕,不画。这样画的正好是玩家看到的那一面,张数也只有六面全画的一半左右。
 
@@ -13,15 +15,16 @@
 ```bash
 B="<blender.exe>"; S=<yide>/skills/er-blender/scripts/paintover; W=<工作目录>; CFG=<配置>.json
 "$B" -b <场景>.blend --factory-startup -P $S/po_canvas.py --python-exit-code 1 -- --cfg $CFG --out $W     # 1 底稿
-py -3 $S/po_prompts.py $CFG $W                                                                             # 2 提示词
-cat $W/joblist_<set>.txt | xargs -P 4 -I{} bash <yide>/skills/er-shop-mkt/scripts/run_codex.sh $W {} 4  # 2 sol 手绘(放进一个 run_in_background)
+py -3 $S/po_prompts.py $CFG $W                                                                             # 2 提示词(末行打出每单参考张数 N,也写进 refcount_<set>.txt)
+cat $W/joblist_<set>.txt | xargs -P 4 -I{} bash <yide>/skills/er-shop-mkt/scripts/run_codex.sh $W {} $N # 2 sol 上色(放进一个 run_in_background)
 py -3 $S/po_register.py $W --set <set>                                                                     # 3 配准 + 门
+# 3.5 锁色:L 跟底稿、a/b 跟色板,做法见 vault 记忆 paintover-interior-side-and-colorlock-20261104(S5 工地 gen/color_lock.py)
 "$B" -b <场景>.blend --factory-startup -P $S/po_project.py --python-exit-code 1 -- --cfg $CFG --work $W   # 4 投影 + 图集
 "$B" -b <场景>_painted.blend --factory-startup -P $S/po_review.py --python-exit-code 1 -- --out $W --groups "标签=前缀"  # 5 评审图
 py -3 $S/po_board.py <板>.png 2 760 "之前" a.png "之后" b.png ...                                          # 对照板
 ```
 
-## 配置(`examples/` 有 J01 三份可抄)
+## 配置(`examples/j01v7_bh_booth.json` 可抄,11-04 哨亭干净上色实跑过)
 | 字段 | 说明 |
 |---|---|
 | `set` | 名字;画布叫 `<set>_00.png`… |
@@ -30,16 +33,20 @@ py -3 $S/po_board.py <板>.png 2 760 "之前" a.png "之后" b.png ...          
 | `ppm` | 主视角像素密度。V5 实机约 71~77 px/m;J01 用过:母舱 62、遗址 70、小件 110、有顶屋 89 |
 | `side_ratio` | 侧视密度系数,默认 0.6 |
 | `underlay` | `col` = 顶点色 `Col`(我们 kit 生成的件);`material` = 物件原有的底色或贴图(Tripo 件、外来件) |
-| `prompt.what / card / card_desc / colors / style_refs` | sheet 上画的是什么;过审概念卡(这件东西的成品画法);要保留的固有色;两张 mo.co 近景(先实看,mo.co 参考红线) |
+| `prompt.what / colors` | sheet 上画的是什么;要保留的固有色(灰写死 NEUTRAL grey, NOT blue/violet) |
+| `prompt.style_refs` | 成品画法基准两张:06 场景图整图 + 06 哨亭裁区。不写就用 vault `贴图风格基准/ref06_full.png`、`ref06_booth.png`(vault 不在 I 盘时写绝对路径) |
+| `prompt.card / card_desc`(可选) | 本件自己的场景图 / 裁区,只用来对哪块是什么颜色,不学它的笔触 |
+| `prompt.extra`(可选) | `{sheet 名: 一句补充}`,例如「深灰方块是关着的金属检修盖,不是窗」 |
+| ~~`prompt.marks`~~ | 已删(做旧痕迹)。配置里还写着会直接报错退出 |
 | `fallback`、`atlas_scale`、`cut_m` | 第三轮兜底(默认开)、图集缩放(默认 0.75)、长面切段(默认 1 m) |
 
-mo.co 近景参考存在 vault `013 美术/mo.co截图/裁切/expedition_mocoref_*_paintover参考_*.png`(石墙块、衣柜)。它们登记在参考登记表(Sheet「jungle lab」组件清单)「通用 / 人造物质感上限」行。新对象先查登记表里它自己那一行;要另挑和材质更接近的近景,按 `mo.co截图/INDEX.md` 挑好写回那一行再用,同一对象之后一直用这两张,不每次重挑。
+参考:人造物外形只挂我们认可的概念图 / 场景图(拍板 #14),成品画法统一对标 `贴图风格基准/` 里的 06 哨亭;不再挂 mo.co 石墙块 / 衣柜近景(那两张带出了做旧)。
 
 ## 门(全部要过)
-1. **sol 门**:`run_codex.sh` 自动核 rollout,参考图张数必须等于 4。REJECT 原样重跑一次;连续两次 REJECT 停下查原因。J01 两批 33 张里有 2 张第一次被拦,重跑后通过。
+1. **sol 门**:`run_codex.sh` 自动核 rollout,参考图张数必须等于 po_prompts 打出的 N(默认 3,带 card 是 4)。REJECT 原样重跑一次;连续两次 REJECT 停下查原因。J01 两批 33 张里有 2 张第一次被拦,重跑后通过。
 2. **配准门**:`po_register` 判 PASS = 仿射配准后轮廓吻合度 ≥ 0.965,且 Lab 色漂 < 12。J01 33 张实测 0.970~0.999。
 3. **内部漂移,必须人看**:轮廓门看不出"轮廓里的东西被挪了"(例如屋顶俯视是个矩形,肋画歪了也照样 PASS)。每张 sheet 和画布上下叠着看一遍。
-4. **评审门**:46° 全景、3/4、游戏距离各一张,前后对比;再缩到 512 px 近景,和 mo.co 近景并排,逐项写差在哪(笔触、渐变、亮边、暗缝、斑驳频率)。有绿色、有品红(没投上的面)、有错位的竖纹 = 回去查,不交。
+4. **评审门**:46° 全景、3/4、游戏距离各一张,前后对比;再和 `贴图风格基准/新版干净上色_*.png` 并排,逐项写差在哪(平涂是否干净、大渐变、棱上亮边、玻璃反光、有没有混进笔触 / 斑驳 / 脏痕 / 冷紫阴影,混进任何一项就重画)。有绿色、有品红(没投上的面)、有错位的竖纹 = 回去查,不交。
 5. **引擎门**:进 Unity 后在真光照、V5 镜头下再截一次(两阶 toon 只是近似 LabLit)。LabLit 只吃这一张底色图。
 
 ## 坑(全是 J01 实际踩过的,每条都改进了脚本)
@@ -62,6 +69,5 @@ mo.co 近景参考存在 vault `013 美术/mo.co截图/裁切/expedition_mocoref
 | `py -3 -c print(...)` 生成的名单管道给 xargs | 每个名字带 `\r`,Blender 找不到物件 | 管道里加 `tr -d '\r'` |
 
 ## 已知不足
-- 大块白板的明暗对比比 mo.co 弱(10-30 勾哥选这版先铺开)。要加强时,在提示词里明确写"明暗对比和亮边加倍"。
 - 室内面(进屋时屋顶隐藏后才看得到的面)要另出一套拿掉屋顶的底稿。
 - 图集现在每类一张 3456 宽;手机上要不要拆成每栋一张或降到 2048,进 Unity 时定。

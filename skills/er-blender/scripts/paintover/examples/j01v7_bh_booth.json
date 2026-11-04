@@ -1,0 +1,29 @@
+{
+ "set": "bh",
+ "groups": {
+  "BH_Shell": [
+   "BH_Booth_Up",
+   "BH_Booth_Roof",
+   "BH_Booth_DoorUp"
+  ],
+  "BH_Low": [
+   "BH_Booth_Low",
+   "BH_Booth_Door"
+  ]
+ },
+ "views": [
+  "G",
+  "E",
+  "W"
+ ],
+ "ppm": 120,
+ "side_ratio": 0.6,
+ "underlay": "col",
+ "prompt": {
+  "what": "a small federal guard booth at a bridge checkpoint: beige shell walls with an orange diagonal safety stripe, grey window frames, teal window glass, a thick flat roof slab with an antenna box, a glass door",
+  "colors": "warm beige shell #DCC8B3 (interior faces a touch darker #CDB9A4), neutral grey window frames, plinth and door frame #535556, mid grey furniture frames and chair #6A6C6E, teal window glass #2C6671, orange safety stripe #CA7610, small cyan light strip and screens #55FDFE (keep them small and flat bright), military olive green locker #7F7F62 with darker olive trim #5F6048, dark gunmetal rifles #3E4244",
+  "extra": {
+   "bh_01": "The dark grey square on the right-hand block is a CLOSED metal utility hatch: keep it flat neutral dark grey #535556. It is NOT a window: no glass, no teal, no reflection."
+  }
+ }
+}
