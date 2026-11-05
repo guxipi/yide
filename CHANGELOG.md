@@ -2,6 +2,9 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.3 — 2026-11-05 gaoguang-3d 补 LabLitMaterial
+- 勾哥 11-05:"全局都是使用同一种 shader LabLit"。gaoguang-3d §1 第 4 步写明工程代码取 shader 走 `Gameplay.Rendering.LabLitMaterial`,并提醒它 `Create` 的默认值是旧参数换算来的,建完要按 battery_goblin 那组覆盖。大脑仓 ER 常驻注入、项目事实、executor 卡同步写入"3D 只用 LabLit"。
+
 ### v0.77.2 — 2026-11-05 3D 材质做法统一改 Lab/LabLit
 - 勾哥 11-05:旧 skill 还在教老 toon 材质 remap,纠正为 LabLit。原 ToonLit 已于 2026-10-30 换成 LabLit。
 - gaoguang-3d §1 改成 LabLit 材质 + remap,参数表以 `J01Creatures_20261030/battery_goblin_revised.mat` 为准,remap 样板指 `doe_natural.fbx.meta`;10-07 Wren 那组旧参数删除。

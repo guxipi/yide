@@ -43,7 +43,7 @@ dump 真值(一次性探针 .cs 放 **Assets 外**,如项目根 `Temp/`,用 `uni
    importer.SaveAndReimport();
    ```
    embedded 材质名从第 0 步的 dump 里拿(如 `tripo_mat_b2495fc7`)。成功标志:fbx.meta 的 `externalObjects` 出现该条目,样板是 `J01Creatures_20261030/doe_natural/doe_natural.fbx.meta`(`materialImportMode: 1`,`doe_natural_Painted` → `doe_natural.mat`)。
-4. 材质用 `new Material(Shader.Find("Lab/LabLit"))` + `AssetDatabase.CreateAsset` 脚本建,别手写 YAML(shader guid 容易错)。现成脚本:er-character-pipeline 的 `scripts/unity/eval/materials_setup.cs`。
+4. 材质用脚本建 + `AssetDatabase.CreateAsset`,别手写 YAML(shader guid 容易错)。工程代码里取 shader 走 `Gameplay.Rendering.LabLitMaterial.LabShader`(`Assets/Scripts/Gameplay/Rendering/LabLitMaterial.cs`),eval 脚本里用 `Shader.Find("Lab/LabLit")`。`LabLitMaterial.Create` / `ApplyToonShading` 写进去的是从旧 toon 参数换算来的默认值(阈值约 -0.04、软宽 0.08、ambient 0.3),不是上表那组;建完要按上表覆盖。现成脚本:er-character-pipeline 的 `scripts/unity/eval/materials_setup.cs`。
 
 ## 2. 修轴心:量 bounds、在使用方 prefab 上反向补偿(FBX pivot Unity 内改不了)
 AI 模型 pivot 常不在模型中心,旋转时会"甩"。修法:
