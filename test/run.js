@@ -912,5 +912,24 @@ t('14.1 专家卡同步:副本内容不同且更新也被大脑覆盖、同内�
   } finally { process.env.YIDE_HOME = saved; }
 });
 
+t('local-hooks:没配置不跑;配了就后台拉起;脚本不存在跳过', () => {
+  const lh = require(path.join(SCRIPTS, 'local-hooks.js'));
+  const cfg = path.join(process.env.YIDE_LOCAL, 'local-hooks.json');
+  try { fs.unlinkSync(cfg); } catch {}
+  assert(lh.fire('Stop') === 0, '没配置应 0 条');
+  const marker = path.join(TMP, 'local-hook-marker.txt');
+  const script = path.join(TMP, 'local-hook-probe.js');
+  fs.writeFileSync(script, `require('fs').writeFileSync(${JSON.stringify(marker)}, process.argv[2] || 'ok');`);
+  fs.mkdirSync(process.env.YIDE_LOCAL, { recursive: true });
+  fs.writeFileSync(cfg, JSON.stringify({ Stop: [{ node: script, args: ['fired'] }, { node: path.join(TMP, 'nope.js') }] }));
+  try {
+    assert(lh.fire('SessionStart') === 0, '别的事件不该跑');
+    assert(lh.fire('Stop') === 1, '应只拉起存在的那 1 条');
+    const until = Date.now() + 5000;
+    while (!fs.existsSync(marker) && Date.now() < until) { execFileSync('node', ['-e', 'setTimeout(()=>{},100)']); }
+    assert(fs.existsSync(marker) && fs.readFileSync(marker, 'utf8') === 'fired', '后台脚本应真的跑了并拿到参数');
+  } finally { try { fs.unlinkSync(cfg); } catch {} }
+});
+
 console.log(`\n结果:${pass} 过 / ${fail} 败` + (fail ? '  →  ' + fails.join(', ') : ''));
 process.exit(fail ? 1 : 0);

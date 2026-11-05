@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.6 — 2026-11-05 本机附加脚本 local-hooks(DuckCenter 跑 ER 记忆清单生成器)
+- 勾哥 11-05:"挂进 yide 插件自己的 hook"(Claude Code 用户级 settings 加 hook 被 auto 模式拦)。新增 `scripts/local-hooks.js`:读本机私有 `~/.yide-local/local-hooks.json`,按事件把配置里的 node 脚本分离到后台跑,不等结果、异常全吞;没有这个文件就什么都不跑,所以只影响配了的那台机器。
+- `session-start.js` 开头 `fire('SessionStart')`,`stop-audit.js` 开头 `fire('Stop')`(Stop 和 SubagentStop 都走它);两处都包在 try 里,不改简报和审计的输出。
+- 第一个用户:DuckCenter 配了 vault `07 - AI上下文/AI记忆/_tools/er-memory-regen.js`,每个会话开始和每轮结束重建 ER 的 MEMORY.md。新增测试 local-hooks(没配置 0 条 / 只拉起存在的脚本 / 后台真跑并拿到参数)。
+
 ### v0.77.5 — 2026-11-05 er-blender paint-over 旧笔触画法残留全清,锁色进 skill
 - 勾哥 11-05:"我要求你强制清除这次"(11-04 已拍板 J01 建筑拆件一律干净上色、完全抹除旧图记忆)。er-blender 的 description、Trigger 词和路由表不再写"手绘质感 / 加 mo.co 笔触",改成"干净上色 paint-over:底稿 → sol 干净上色 → 配准 → 锁色 → 投影回 UV → 图集";`03-道具风格化` 第 4 条改为 paint-over 干净上色。
 - `08-手绘paintover.md` 改名 `08-干净上色paintover.md`,标题和正文去掉"手绘 / 笔触"口径;原理写清 sol 只喂三类参考(画布 / 06 整图 + 哨亭裁区 / 本件设计格);3.5 锁色给出真命令;坑表加 WS 测候站 11-05 六条和 M2 矿点黄绿凝胶一条。

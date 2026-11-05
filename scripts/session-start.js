@@ -14,6 +14,9 @@ const { resolve } = require(path.join(__dirname, 'resolve.js'));
 const host = require(path.join(__dirname, 'host.js'));
 const sessionTitle = require(path.join(__dirname, 'session-title.js'));
 
+// 本机附加脚本(~/.yide-local/local-hooks.json;没有就不跑,后台分离、不影响简报)
+try { require(path.join(__dirname, 'local-hooks.js')).fire('SessionStart'); } catch {}
+
 // a < b ?(semver,缺位按 0)
 function verLt(a, b) {
   const pa = String(a).split('.').map(n => parseInt(n, 10) || 0);

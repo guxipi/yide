@@ -22,6 +22,9 @@ const { readLocalJson, writeLocalJson } = require(path.join(__dirname, 'store.js
 const host = require(path.join(__dirname, 'host.js'));
 const { readCodexTurn } = require(path.join(__dirname, 'codex-turn.js'));
 
+// 本机附加脚本(~/.yide-local/local-hooks.json;没有就不跑,后台分离、不影响审计)
+try { require(path.join(__dirname, 'local-hooks.js')).fire('Stop'); } catch {}
+
 // 完成/通过声明(保守强匹配,中英)。(?<!un)verified:UNVERIFIED 是合规的"未验证"标注,不算完成声明。
 const CLAIM_RE = /(已接通|接通了|部署完成|部署成功|已部署|测试通过|全部通过|验证通过|验收通过|已验证|修复完成|已修复并验证|(?<!un)verified|all tests pass(ed)?|tests? pass(ed)?|deployed successfully|works as expected)/i;
 // 把"还要不要干下去"的判断甩回用户的措辞。收得紧,只匹配疑问式 + 指向继续工作。
