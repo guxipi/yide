@@ -2,6 +2,12 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.2 — 2026-11-05 3D 材质做法统一改 Lab/LabLit
+- 勾哥 11-05:旧 skill 还在教老 toon 材质 remap,纠正为 LabLit。原 ToonLit 已于 2026-10-30 换成 LabLit。
+- gaoguang-3d §1 改成 LabLit 材质 + remap,参数表以 `J01Creatures_20261030/battery_goblin_revised.mat` 为准,remap 样板指 `doe_natural.fbx.meta`;10-07 Wren 那组旧参数删除。
+- er-character-pipeline:`materials_setup.cs` 改 `Shader.Find("Lab/LabLit")`,参数 BASE/THRESH/SOFT/TINT/AMB/RIM/RIMPOW,发光走 `_UseEmissionMap` + `_EMISSION` + `_EmissionMap` + `_EmissionColor`,描边和旧暗部键全删;`spring_spec.py` 读配置 `unity.lablit`(原 `unity.toon`),渲染目录 `_toon` 改 `_lit`;`char_config.example.json` 材质段同步;SKILL 阶段 8、07、05、pitfalls、REVIEW 同步。
+- executor 模板红线 8 改为"3D 模型用 Lab/LabLit,本身没有描边"。
+
 ### v0.77.1 — 2026-10-31 开场瘦身(6878 → 5237 字)
 - 勾哥 10-31:"不要给翼德开场太多负担"。张飞情境台词保留,说明压成两行;scope 契约压成两行。
 - 交易 / 异步 PvP 写法挪进 cloud-code-deploy「强一致核心的写法」;启动场景键、domain reload 关闭挪进 playmode-verify-iterate 第〇步。

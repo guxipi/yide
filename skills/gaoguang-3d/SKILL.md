@@ -1,13 +1,13 @@
 ---
 name: gaoguang-3d
-description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo, Meshy, text-to-3D) into Extraction to match its mo.co-style painted toon look (ToonLit remap + pivot centering + rig/animation + real-lighting verify). Trigger — "高光3D" / "模型太灰暗" / "模型发灰" / "新模型不好看" / "像 mo.co 那样干净鲜亮" / "把XX替换成这个模型" / 新导入的 FBX 看起来灰、暗、塑料感 / pivot 轴心不在模型中间、转身会甩 / 模型有骨架没动画需要配动画. NOT particle/aura/trail/burst/光环拖尾爆开 VFX (→ vfx-production); model intake + look-fix only.
+description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo, Meshy, text-to-3D) into Extraction to match its mo.co-style painted toon look (Lab/LabLit material remap + pivot centering + rig/animation + real-lighting verify). Trigger — "高光3D" / "模型太灰暗" / "模型发灰" / "新模型不好看" / "像 mo.co 那样干净鲜亮" / "把XX替换成这个模型" / 新导入的 FBX 看起来灰、暗、塑料感 / pivot 轴心不在模型中间、转身会甩 / 模型有骨架没动画需要配动画. NOT particle/aura/trail/burst/光环拖尾爆开 VFX (→ vfx-production); model intake + look-fix only.
 ---
 
 # 高光3D — AI 模型进项目的入库与修观感流水线 (Extraction)
 
 **目标水准和验收以 ER 美术规范为准**:vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 游戏内画面的质量和质感;旧的 Archero / Brawl Stars 低模 / KayKit 平色加黑描边口径全部作废)。和本 skill 最相关的结果要求是:3D 世界里看不到黑描边(角色、怪也一样),阴影和暗面不灰黑,看不出硬刻面,饱和度按"地面低、主体高"的预算走。角色长相和头身以 vault `013 美术/角色手册/` 为准。下面写的是一种验证过的做法,不是唯一做法;换别的路线也行,结果过总纲门槛即可。
 
-AI 生成的模型(Tripo 等)直接进项目必灰。原因是固定的三连:**embedded material 是 URP/Lit(PBR)** + **_BaseColor 常为 (0.8,0.8,0.8) 把贴图乘暗 20%**(也有白的,但 PBR 本身就压灰) + **_Smoothness 0.5 塑料高光**。工程里现成的 3D 着色是 `Assets/Shaders/ToonLit.shader`(`Custom/ToonLit`:双阶 toon 光 + rim + 描边开关)。这里的修法 = 换材质 + 对轴心 + 配动画 + 真光照验证,全程 Unity 内,不回 DCC。
+AI 生成的模型(Tripo 等)直接进项目必灰。原因是固定的三连:**embedded material 是 URP/Lit(PBR)** + **_BaseColor 常为 (0.8,0.8,0.8) 把贴图乘暗 20%**(也有白的,但 PBR 本身就压灰) + **_Smoothness 0.5 塑料高光**。工程里 3D 模型统一用 `Assets/Shaders/Lab/LabLit.shader`(`Lab/LabLit`:NdotL 两阶明暗 + 暗部 tint + rim,没有描边);原 ToonLit 已于 2026-10-30 换成 LabLit。这里的修法 = 换材质 + 对轴心 + 配动画 + 真光照验证,全程 Unity 内,不回 DCC。
 
 ## 0. 诊断(动手前必做,别猜)
 dump 真值(一次性探针 .cs 放 **Assets 外**,如项目根 `Temp/`,用 `unity command script eval_file` / `script run` 跑,用完删;Coplay `execute_script` 只兜底,兜底时的临时驱动放 `Assets/Editor/CoplayTemp/`、不进 git;要留作工具的代码放正式目录 `Assets/Scripts/Editor/Setup/`):
@@ -17,11 +17,24 @@ dump 真值(一次性探针 .cs 放 **Assets 外**,如项目根 `Temp/`,用 `uni
 - grep FBX 的 guid 找到所有引用它的 prefab/scene(决定 pivot 修在哪)。
 - 素材在云盘时注意:用户给的 `G:\My Drive\...` 路径本机 G: 直接可读(本机挂两个云盘账号,G: 和 H: 都在),别想当然换盘符。
 
-## 1. 修观感:ToonLit 材质 + ModelImporter Remap(不要在 prefab 里 override 材质)
-1. 在模型同目录建 `<Model>.mat`:shader `Custom/ToonLit`,`_BaseMap` = 模型 basecolor 贴图,`_BaseColor` = **纯白**(别留灰)。
-2. Toon 参数按模型类型选,**别再抄 engineer.mat**(描边 20、阴影 0.6/0.5/0.6、阈值 0.746 那组是给 KayKit 低模平色角色调的,叠在自带厚涂明暗的 AI 模型上 = 明暗算两遍 + 每缕头发描一道黑线)。下面是起步值,按截图结果调:
-   - **自带厚涂贴图的角色/怪(Tripo 常态)**:`_ShadowColor (0.85,0.8,0.85)`、`_ShadowThreshold 0.5`、`_ShadowSmoothing 0.25`、`_RimThreshold 0.9`、`_BaseColor 0.95 灰`、**`_OutlineWidth 0`**(2026-10-07 Wren 实测定参,10-11 起描边归零)。注意 ToonLit 新建材质默认 `_OutlineWidth 1.5` 纯黑,要显式写 0。
-   - **环境/建筑/道具**:rim alpha 0、outline 0(原 planet-dressing 的环境配方;那个 skill 随星球战役退役已删)。
+## 1. 修观感:LabLit 材质 + ModelImporter Remap(不要在 prefab 里 override 材质)
+1. 在模型同目录建 `<Model>.mat`:shader `Lab/LabLit`,`_BaseMap` = 模型 basecolor 贴图(LabLit 只吃这一张,法线 / ORM 不进)。
+2. 参数 10-30 起以 `Assets/Art/3DModelsfromGu/J01Creatures_20261030/battery_goblin_revised/battery_goblin_revised.mat` 为准(同批 `doe_natural.mat` 同一组,只有 `_BaseColor` 是 0.8):
+
+   | 属性 | 值 | 说明(shader Properties 原注) |
+   |---|---|---|
+   | `_BaseColor` | (0.82, 0.82, 0.82, 1) | 乘在 `_BaseMap` 上 |
+   | `_ShadowThreshold` | -0.03 | NdotL 分界 |
+   | `_ShadowSoftness` | 0.82 | NdotL 过渡带宽 |
+   | `_ShadowTint` | (0.74, 0.76, 0.9, 1) | 暗部色,再乘全局 `_LabShadowTint` |
+   | `_AmbientStrength` | 0.32 | |
+   | `_RimColor` | (0.55, 0.65, 0.85, 0) | alpha = rim 强度,0 = 关 |
+   | `_RimPower` | 5.37 | |
+   | `_ReceiveContact` | 0 | Lab 接触压暗,0/1 |
+
+   - 发光:`_UseEmissionMap` 1(Toggle,对应 keyword `_EMISSION`,脚本里要 `EnableKeyword("_EMISSION")`)+ `_EmissionMap` + `_EmissionColor`(HDR,始终叠加,黑 = 无)。
+   - 环境 / 建筑 / 道具:同一 shader;rim 关(`_RimColor` alpha 0)。其余参数是否和角色 / 怪同一组:待核,先对照同类已入库件的 .mat。
+   - LabLit 没有描边属性,不用写也写不了;别从旧材质拷 outline / shadow-color 一类的键。
    - 拿不准先做 Unlit 对照:换 URP/Unlit 纯贴图看一眼,判断问题出在几何还是着色。
 3. **Remap 在 importer 上做**,所有使用处自动生效、prefab 零改动:
    ```csharp
@@ -29,8 +42,8 @@ dump 真值(一次性探针 .cs 放 **Assets 外**,如项目根 `Temp/`,用 `uni
    importer.AddRemap(new AssetImporter.SourceAssetIdentifier(typeof(Material), "<embedded材质名>"), mat);
    importer.SaveAndReimport();
    ```
-   embedded 材质名从第 0 步的 dump 里拿(如 `tripo_mat_b2495fc7`)。成功标志:fbx.meta 的 `externalObjects` 出现该条目。
-4. 材质用 `new Material(Shader.Find("Custom/ToonLit"))` + `AssetDatabase.CreateAsset` 脚本建,别手写 YAML(shader guid 容易错)。
+   embedded 材质名从第 0 步的 dump 里拿(如 `tripo_mat_b2495fc7`)。成功标志:fbx.meta 的 `externalObjects` 出现该条目,样板是 `J01Creatures_20261030/doe_natural/doe_natural.fbx.meta`(`materialImportMode: 1`,`doe_natural_Painted` → `doe_natural.mat`)。
+4. 材质用 `new Material(Shader.Find("Lab/LabLit"))` + `AssetDatabase.CreateAsset` 脚本建,别手写 YAML(shader guid 容易错)。现成脚本:er-character-pipeline 的 `scripts/unity/eval/materials_setup.cs`。
 
 ## 2. 修轴心:量 bounds、在使用方 prefab 上反向补偿(FBX pivot Unity 内改不了)
 AI 模型 pivot 常不在模型中心,旋转时会"甩"。修法:
@@ -56,7 +69,7 @@ AI 模型 pivot 常不在模型中心,旋转时会"甩"。修法:
 - **场景会被用户中途切走**:用户在编辑器里干活,active scene 随时变(实测一次会话里 UIDesign_Gameplay → GameScene → Boot)。每次 `GameObject.Find` 临时物前先确认 active scene;预览物随"切场景不保存"自动消失——用 `git status <scene>` 确认场景没被连带保存,而不是假设。
 - **capture 对小物件会钻进几何体**:`capture_scene_object` 自动取景在杂物多的场景里会把相机怼进模型/地面内部(出来一张噪点贴脸图)。解法:把模型单独 spawn 到远处空地(如 (60,0,60))单拍;方向光是无限远的,照样有效。
 - **用户 WIP 编译错会卡死脚本执行**(CLI `script eval` 和 Coplay `execute_script` 都一样):报错若来自用户正在写的代码,别去修(那是他的活)。验证降级为**直接读资产 YAML**:.anim 的曲线值/`m_LoopTime`、.controller 的 `m_Motion` guid、fbx.meta 的 `externalObjects`——资产层证据同样硬。编译正常时也可用 `AnimationMode.SampleAnimationClip`(实例化→采样→销毁,一次脚本内完成)做数值验证。
-- 修好的样子:贴图原有的厚涂色阶保住、两阶 toon 阴影干净、**看不到黑描边**、暗面不灰黑、不发灰不塑料,和当前 Hero 站一起是一个画风。上面这套隔离摆拍只是自查;最终验收按总纲"怎么判断做到了",在真游戏相机、真灯光的竖屏截图上看,编辑器里孤立模型的截图不算数。
+- 修好的样子:贴图原有的厚涂色阶保住、LabLit 两阶阴影干净、**看不到黑描边**、暗面不灰黑、不发灰不塑料,和当前 Hero 站一起是一个画风。上面这套隔离摆拍只是自查;最终验收按总纲"怎么判断做到了",在真游戏相机、真灯光的竖屏截图上看,编辑器里孤立模型的截图不算数。
 
 ## 6. 收尾
 - 删 `Temp/` 下所有临时 .cs。
@@ -64,5 +77,5 @@ AI 模型 pivot 常不在模型中心,旋转时会"甩"。修法:
 - 不 commit、不 push(红线)。
 
 ## 已知局限 / 升级路线
-- 贴图本身饱和度低(白大褂、灰发)时 ToonLit 只能还原贴图,不能无中生有。要不要更艳先看参考资料第 3 节的饱和度预算:角色、怪、交互物该跳出来,环境件反而要收。确实要提,可以微调 `.mat` 的 `_BaseColor` 往暖色推,或 PS 里直接加贴图饱和度,二选一,别叠加过头。
+- 贴图本身饱和度低(白大褂、灰发)时 LabLit 只能还原贴图,不能无中生有。要不要更艳先看参考资料第 3 节的饱和度预算:角色、怪、交互物该跳出来,环境件反而要收。确实要提,可以微调 `.mat` 的 `_BaseColor` 往暖色推,或 PS 里直接加贴图饱和度,二选一,别叠加过头。
 - 手做律动 clip 只适合装饰性 NPC;要正经走路/战斗动画,走 Meshy 重 rig(auto_rig_3d_model → apply_animation_to_rigged_model → .glb)或回 DCC。

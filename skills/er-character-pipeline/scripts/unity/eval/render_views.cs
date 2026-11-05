@@ -1,6 +1,6 @@
 // ucli.sh eval render_views.cs PREFAB=Assets/.../<Name>.prefab OUT=C:/abs/out/dir LIGHTSET=Assets/Prefabs/Environment/LightSet.prefab UNLIT=0|1
 // UNLIT=1 swaps the INSTANCE's materials to URP/Unlit with the same _BaseMap/_BaseMap_ST (diagnosis: if Unlit matches
-// the Tripo look, geometry+texture are fine and any 'broken' look is the ToonLit parameters).
+// the Tripo look, geometry+texture are fine and any 'broken' look is the Lab/LabLit parameters).
 // Edit-mode, controlled-angle renders with the real game light: temp instance far from the scene at (300,0,300),
 // temp camera -> RenderTexture -> PNG written straight to OUT (absolute path, outside Assets), everything
 // destroyed afterwards, scene not saved. Use this instead of capture_scene_view (blank when the scene view does

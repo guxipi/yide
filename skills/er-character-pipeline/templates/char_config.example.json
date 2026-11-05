@@ -460,23 +460,29 @@
   "asset_dir": "Assets/Art/3DModelsfromGu/0_Characters/Wren",
   "hero_prefab": "Assets/Prefabs/Heroes/Hero.prefab",
   "height_vs_old_hero": 0.9,
-  "toon": {
-   "_ShadowColor": [
-    0.85,
-    0.8,
-    0.85,
+  "lablit": {
+   "_BaseColor": [
+    0.82,
+    0.82,
+    0.82,
     1
    ],
-   "_ShadowThreshold": 0.5,
-   "_ShadowSmoothing": 0.25,
-   "_OutlineWidth": 0,
-   "_RimThreshold": 0.9,
-   "_BaseColor": [
-    0.95,
-    0.95,
-    0.95,
+   "_ShadowThreshold": -0.03,
+   "_ShadowSoftness": 0.82,
+   "_ShadowTint": [
+    0.74,
+    0.76,
+    0.9,
     1
-   ]
+   ],
+   "_AmbientStrength": 0.32,
+   "_RimColor": [
+    0.55,
+    0.65,
+    0.85,
+    0
+   ],
+   "_RimPower": 5.37
   },
   "spring_manager": {
    "simulationFrameRate": 60,

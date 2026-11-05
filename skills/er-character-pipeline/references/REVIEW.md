@@ -50,7 +50,7 @@
 - 斜背的长件(Harrow 的枪)用轴对齐盒子会把背上的衣服一起收成硬件 → rigid 加 `capsule_radius`。
 - 驼背角色:加 `straighten_spine` 开关,并在 01 写明体态不画进建模图。
 - 表情控制器的枚举是固定 11 个槽位,配置里换名字/顺序游戏里会显示错格子 → face_atlas 警告,文档改成"所有角色同一套槽位,只改描述"。
-- materials_setup 的 ToonLit 参数写死在代码里、配置里的 toon 段没人读 → 改成由 spring_spec 从配置填。
+- materials_setup 的材质参数写死在代码里、配置里的材质段没人读 → 改成由 spring_spec 从配置填。
 - prefab_build 里对 UnityEngine.Object 用了 `??`(编辑器假 null 会让它失效)→ 改成显式判空。
 - 实机文档说"出击后再截状态图",但脚本结束就 stop 了 → 状态截图并进 ingame_check.sh。
 - UI 按钮名会变 → ucli.sh 加 `buttons` 列出当前屏可点按钮,文档写明点不到时怎么查。

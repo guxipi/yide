@@ -1,6 +1,6 @@
 ---
 name: er-character-pipeline
-description: ER(Extraction Raider)角色从定稿设计图到游戏里能跑能打能看的完整管线——建模四视图 → 结构参考 → Tripo 网页生成白模/上贴图/绑骨/预设动作 → 灰模与贴图验收 → Blender 修骨加马尾裙摆背包链 → 换脸表情图集 → Unity Humanoid 入库(T-pose、ToonLit 厚涂参数、SpringBone、换主角、枪挂点)→ 装备页+远征实机验收 → 归档。每步有脚本和可判定的门。只要用户说"做角色模型 / 出建模四视图 / 上 Tripo / 角色进 Unity / 给某角色建模绑骨 / 换主角模型 / 给 Harrow(Vesper/Tuba/Coda…)做 3D / 角色表情换脸 / 马尾裙子物理"或任何 ER 人物从图到 3D 到游戏的活,都用这个 skill;只修一个已入库模型的着色也先看这里的阶段 8。
+description: ER(Extraction Raider)角色从定稿设计图到游戏里能跑能打能看的完整管线——建模四视图 → 结构参考 → Tripo 网页生成白模/上贴图/绑骨/预设动作 → 灰模与贴图验收 → Blender 修骨加马尾裙摆背包链 → 换脸表情图集 → Unity Humanoid 入库(T-pose、LabLit 材质 + remap、SpringBone、换主角、枪挂点)→ 装备页+远征实机验收 → 归档。每步有脚本和可判定的门。只要用户说"做角色模型 / 出建模四视图 / 上 Tripo / 角色进 Unity / 给某角色建模绑骨 / 换主角模型 / 给 Harrow(Vesper/Tuba/Coda…)做 3D / 角色表情换脸 / 马尾裙子物理"或任何 ER 人物从图到 3D 到游戏的活,都用这个 skill;只修一个已入库模型的着色也先看这里的阶段 8。
 ---
 
 # ER 角色模型管线(设计图 → Tripo → 绑骨 → 表情 → Unity → 实机)
@@ -39,7 +39,7 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 | 5 模型验收 | 灰模看脸和剪影;纯贴图看笔触、镜像、手臂底面 | `clay_face.py`、`render_views.py --mode clay/unlit`、`compare_board.py` | 形状门 + 贴图门(04 列的每条) | 04 |
 | 6 绑骨 | Tripo Humanoid/Mixamo 绑骨(20 点)+ 预设动作(免费);rig GLB 上清脏贴图;修骨、加次级链、形变测试 | `tex_extract.py` → `tex_clean.py` → `rig_build.py` → `rig_audit.py` → `deform_sheet.py` | `RIG_AUDIT PASS`(含接缝门 seam_jump_edges ≤ 0.3%、seam_coloc_split = 0);`gate_body_p99_all_pass`;主会话看 deform_crops 九个姿势 | 03、04、05 |
 | 7 表情换脸 | 渲脸底图+投影;sol 画表情;拼 4×3 图集;脸面分材质写格子空间 UV;发光遮罩 | `face_render.py` → `build_prompts.py expr` → `face_atlas.py` → `face_swap.py` → `face_qa_sheet.py`;`emission_mask.py` | calib 门;`ATLAS_GATES PASS`;闭眼格眼角零残留、后脑干净;`export_fbx.py` FBX_CHECK PASS | 06 |
-| 8 Unity 入库 | Humanoid + Enforce T-Pose;ToonLit 厚涂参数 + remap;prefab + SpringBone + 短裙 `HeroSkirtFollow` 跟大腿走 + 腿型 `HeroLegTidy` + 头发 `spring_limits.cs`(见 07 §8.7)+ 预览秀 `HeroPreviewShow`(1~2 个性格动作 + 表情,§8.8)+ 肤色核对(§8.9);本地换主角 + 枪挂点 | `spring_spec.py` 打印全部命令 → `ucli.sh eval …cs` | `AVATAR PASS`(+ .meta diff);Unlit/ToonLit 渲染门;PREFAB OK;SPRING_LIMITS;Gear 页强制大动作不炸;WEAPON MOUNT OK | 07 |
+| 8 Unity 入库 | Humanoid + Enforce T-Pose;LabLit 材质(参数以 battery_goblin_revised.mat 为准)+ remap;prefab + SpringBone + 短裙 `HeroSkirtFollow` 跟大腿走 + 腿型 `HeroLegTidy` + 头发 `spring_limits.cs`(见 07 §8.7)+ 预览秀 `HeroPreviewShow`(1~2 个性格动作 + 表情,§8.8)+ 肤色核对(§8.9);本地换主角 + 枪挂点 | `spring_spec.py` 打印全部命令 → `ucli.sh eval …cs` | `AVATAR PASS`(+ .meta diff);Unlit/LabLit 渲染门;PREFAB OK;SPRING_LIMITS;Gear 页强制大动作不炸;WEAPON MOUNT OK | 07 |
 | 9 实机验收 | Boot → 主页 → 装备页 → START → 出击 → 远征;状态截图;收尾 stop | `ingame_check.sh <Name> <out>`、`anim_state.cs` | 08 列的每条看图门;Console 无新错;stopped;Assets/Temp 清干净;欠账写清 | 08 |
 | 10 归档 | 文件进 vault、写回手册、写报告、更新 skill/记忆 | — | 09 的清单 | 09 |
 

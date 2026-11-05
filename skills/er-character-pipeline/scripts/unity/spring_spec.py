@@ -2,7 +2,7 @@
 
 usage: py -3 spring_spec.py --config char.json [--face-type "Gameplay.Actors.WrenFaceController, Assembly-CSharp"]
 Prints, in order: guard, import_setup, enforce_tpose, avatar_check, materials_setup, prefab_build, render_views (unlit +
-toon), hero_swap, weapon_mount, avatar_check again. (fix_animator_node.cs is a repair tool, not in the list.) Copy-paste them one at a time and read each result before the next.
+LabLit), hero_swap, weapon_mount, avatar_check again. (fix_animator_node.cs is a repair tool, not in the list.) Copy-paste them one at a time and read each result before the next.
 """
 import argparse
 import os
@@ -61,17 +61,19 @@ def main():
     print(f'{U} eval {ev}/import_setup.cs FBX="{fbx}"')
     print(f'{U} eval {ev}/enforce_tpose.cs FBX="{fbx}"')
     print(f'{U} eval {ev}/avatar_check.cs FBX="{fbx}"')
-    t = u.get("toon", {})
-    sc = t.get("_ShadowColor", [0.85, 0.8, 0.85, 1])
-    toon = (f'SHADOW={sc[0]},{sc[1]},{sc[2]} THRESH={t.get("_ShadowThreshold", 0.5)} SMOOTH={t.get("_ShadowSmoothing", 0.25)} '
-            f'OUTLINE={t.get("_OutlineWidth", 0)} RIM={t.get("_RimThreshold", 0.9)} BASE={t.get("_BaseColor", [0.95])[0]}')
-    print(f'{U} eval {ev}/materials_setup.cs DIR="{d}" NAME="{N}" FBX="{fbx}" {emis} {toon}')
+    t = u.get("lablit", {})  # Lab/LabLit params; defaults = battery_goblin_revised.mat (J01Creatures_20261030)
+    tint = t.get("_ShadowTint", [0.74, 0.76, 0.9, 1])
+    rim = t.get("_RimColor", [0.55, 0.65, 0.85, 0])
+    lit = (f'BASE={t.get("_BaseColor", [0.82])[0]} THRESH={t.get("_ShadowThreshold", -0.03)} SOFT={t.get("_ShadowSoftness", 0.82)} '
+           f'TINT={tint[0]},{tint[1]},{tint[2]} AMB={t.get("_AmbientStrength", 0.32)} '
+           f'RIM={rim[0]},{rim[1]},{rim[2]},{rim[3]} RIMPOW={t.get("_RimPower", 5.37)}')
+    print(f'{U} eval {ev}/materials_setup.cs DIR="{d}" NAME="{N}" FBX="{fbx}" {emis} {lit}')
     print(f'{U} eval {ev}/prefab_build.cs FBX="{fbx}" PREFAB="{prefab}" CONTROLLER="Assets/Art/Animations/Hero/HeroAnimationController.controller" '
           f'FACE_TYPE="{a.face_type}" SPRING="{";".join(springs)}" COLLIDERS="{",".join(f"{c}:{radius[c]}" for c in sorted(colls))}" MANAGER="{manager}"')
     rout = os.path.join(cfg["out_dir"], cfg["files"].get("unity_dir", "unity"), "render").replace("\\", "/")
-    print(f'mkdir -p "{rout}_unlit" "{rout}_toon"')
+    print(f'mkdir -p "{rout}_unlit" "{rout}_lit"')
     print(f'{U} eval {ev}/render_views.cs PREFAB="{prefab}" OUT="{rout}_unlit" LIGHTSET="Assets/Prefabs/Environment/LightSet.prefab" UNLIT=1')
-    print(f'{U} eval {ev}/render_views.cs PREFAB="{prefab}" OUT="{rout}_toon" LIGHTSET="Assets/Prefabs/Environment/LightSet.prefab" UNLIT=0')
+    print(f'{U} eval {ev}/render_views.cs PREFAB="{prefab}" OUT="{rout}_lit" LIGHTSET="Assets/Prefabs/Environment/LightSet.prefab" UNLIT=0')
     hp = u.get("hero_prefab", "Assets/Prefabs/Heroes/Hero.prefab")
     print(f'# before hero_swap: back up the hero prefab to Assets/Temp/HeroOld.prefab (hero_swap.cs does it) and outside the project')
     print(f'{U} eval {ev}/hero_swap_keepall.cs HERO="{hp}" NEWPREFAB="{prefab}" RATIO={u.get("height_vs_old_hero", 0.9)}')

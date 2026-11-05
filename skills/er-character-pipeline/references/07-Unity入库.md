@@ -44,7 +44,7 @@ py -3 scripts/unity/spring_spec.py --config <cfg> --face-type "Gameplay.Actors.W
 
 ## 8.3 着色门:Unity 里和 Tripo 里必须是同一个人
 - 先看 `UNLIT=1`(URP/Unlit 纯贴图):应和 Blender 里的 tex 渲染几乎一样。不一样 = 贴图/UV/材质 remap 有问题(常见:新 FBX 的材质名变了,旧 remap 不生效,身体变素色、脸上贴了整张图集——重跑 materials_setup)。
-- 再看 `UNLIT=0`(ToonLit + LightSet 真光):不能"崩坏"。10-07 勾哥说"跟 Tripo 里像两个人"——原因是照抄了 engineer.mat 的 ToonLit 参数(描边 20、阴影 0.6/0.5/0.6、阈值 0.746、平滑 0.06、rim 0.351),那是给 KayKit 低模平色角色调的;叠在自带厚涂明暗的 AI 角色上 = 明暗算两遍 + 每缕头发描黑线。厚涂角色用 materials_setup 里的参数:`_ShadowColor (0.85,0.8,0.85)`、`_ShadowThreshold 0.5`、`_ShadowSmoothing 0.25`、`_OutlineWidth 0`(2026-10-11 起 3D 世界看不到黑描边,角色也不描)、`_RimThreshold 0.9`、`_BaseColor 0.95`。gaoguang-3d skill 里的 engineer 口径**不适用于这类角色**。
+- 再看 `UNLIT=0`(`Lab/LabLit` + LightSet 真光):不能"崩坏"。原 ToonLit 已于 2026-10-30 换成 LabLit;10-30 起参数以 `Assets/Art/3DModelsfromGu/J01Creatures_20261030/battery_goblin_revised/battery_goblin_revised.mat` 为准:`_BaseColor 0.82 灰`、`_ShadowThreshold -0.03`、`_ShadowSoftness 0.82`、`_ShadowTint (0.74,0.76,0.9)`、`_AmbientStrength 0.32`、`_RimColor (0.55,0.65,0.85,0)`(alpha = rim 强度,0 = 关)、`_RimPower 5.37`;发光走 `_UseEmissionMap` + `_EmissionMap` + `_EmissionColor`。这些是 materials_setup 的默认值,由 spring_spec 从配置 `unity.lablit` 填。LabLit 没有描边。别照抄 engineer.mat(KayKit 低模平色角色的旧材质),叠在自带厚涂明暗的 AI 角色上明暗会算两遍(10-07 勾哥:"跟 Tripo 里像两个人")。
 - 看:脸干净、厚涂色阶保住、头发和膝盖后面没有黑描边、没有过曝;受光面和背光面各一张;top70 俯视能认出角色。
 
 ## 8.4 换主角时的三个结构要求(hero_swap.cs 已经做对,手改时别破坏)
@@ -58,7 +58,7 @@ py -3 scripts/unity/spring_spec.py --config <cfg> --face-type "Gameplay.Actors.W
 现在工程里只有 `Gameplay.Actors.WrenFaceController`(按材质名前缀 "WrenFace" 找脸)。新角色要用通用版 `templates/unity/CharacterFaceController.cs`(按材质名后缀 "Face" 找,枚举顺序 = 图集顺序)。这是共享代码改动:先问勾哥,guard 后再写,不要为了复用把新角色的脸材质也叫 "WrenFace..."。Expression 枚举顺序必须和 config `face.expressions` 一致。
 
 ## 8.6 出口门
-AVATAR PASS(+ .meta diff);材质 remap 覆盖全部 embedded 名;UNLIT 和 ToonLit 两组渲染看图门过;prefab OK;(本地)Hero 换好、WeaponMount 赋上;编辑器 stopped、compiling=false、Console 无新错误;Assets/Temp 里只剩 HeroOld.prefab(阶段 9 后删)。
+AVATAR PASS(+ .meta diff);材质 remap 覆盖全部 embedded 名;UNLIT 和 LabLit 两组渲染看图门过;prefab OK;(本地)Hero 换好、WeaponMount 赋上;编辑器 stopped、compiling=false、Console 无新错误;Assets/Temp 里只剩 HeroOld.prefab(阶段 9 后删)。
 
 ## 8.7 裙子和头发:裙子跟大腿走,头发才用弹簧(10-08 定,三轮调物理失败后换方案)
 **短裙不要用 SpringBone。** 三轮实测:前片限制窄 → 跑步深蹲大腿穿出前片(插件先算碰撞后算角度限制,限制把推开的裙子拽回腿里);放宽到 80° → 被大腿胶囊顶成翻领;后片 → 冲刺起步被惯性甩成钟形。怎么调都按下葫芦起瓢。
