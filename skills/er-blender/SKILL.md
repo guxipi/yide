@@ -12,7 +12,7 @@ description: ER(Extraction)所有非角色的 Blender 活的总入口——POI �
 | 要做的事 | 去哪 |
 |---|---|
 | POI 建筑(有顶屋、母舱、遗址残壳)和联邦硬表面小件:先做部件再按设计坐标拼,不做地板 | 本 skill `references/07-建筑部件拼装.md` + `scripts/kit/`(10-30 勾哥定 Claude 直接做) |
-| 干净上色 paint-over:底稿 → sol 干净上色 → 配准 → 锁色 → 投影回 UV → 图集。**J01 建筑 / 拆件一律干净上色(11-04 勾哥)** | 本 skill `references/08-干净上色paintover.md` + `scripts/paintover/`;换场景只写一个配置 JSON |
+| 干净上色 paint-over:底稿 → sol 干净上色 → 配准 → 锁色 → 投影回 UV → 图集。**J01 建筑 / 拆件一律干净上色(11-04 勾哥);颜色一律从参考图受光面直取 + 进引擎闭环标定,不混灰(11-05 勾哥);小件 / 圆件 / 斜放件不投影贴图,走顶点色 + LabLit** | 本 skill `references/08-干净上色paintover.md` + `scripts/paintover/`;换场景只写一个配置 JSON |
 | 角色(四视图 → Tripo → 绑骨 → 表情 → 入库) | er-character-pipeline(它的 Blender 坑同样以本 skill 的 02 为准) |
 | 模型进了 Unity 发灰、塑料感、pivot 歪、只是法线软塌 | gaoguang-3d;先试 Unity importer 法线,多数"肉感"不用进 Blender |
 | Tripo 道具/武器/家具/POI 件:减面、刻面、色块、尺寸、挂点 | 本 skill `references/03-道具风格化.md` |

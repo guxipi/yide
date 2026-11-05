@@ -2,6 +2,9 @@
 
 > **2026-11-04 勾哥拍板:J01 建筑和建筑拆件的贴图一律「新版干净上色」**(块面近平涂 + 一道大渐变 + 棱上细亮边 + 块间轻微色差 + 玻璃斜反光;禁笔触斑驳、掉漆、擦痕、灰痕、污渍、任何做旧)。标准图在 vault `013 美术/丛林Lab/贴图风格基准/`,规则见 vault 记忆 `013 美术/AI记忆/feedback-j01-building-texture-clean-only-20261104.md`。旧的笔触 / 做旧画法(两张 mo.co 近景参考图、`marks` 字段、旧 J01 示例)已作废并从本管线删掉,不再当参考。
 
+> **2026-11-05 勾哥拍板(对所有 session 有效):颜色一律直接从参考图受光面提取,不许自己混灰。** 原话「我希望未来所有 session 的 paintover 都直接从参考图上提取色,不要自己混入灰色」「哪怕直接全部绿色通刷」。整件中位(混了阴影面)、去饱和、压色相、整体乘 K 压暗来"对颜色"都算混灰。做法:① 开工先出**取色表**:每个材质类从已批参考图(设计格 / 06 哨亭裁区)受光面取色(该色相簇亮度前 25 % 像素的中位,排除高光白点和描边),hex + 来源写进配置 `palette`,出色块板给勾哥过;② 进引擎**闭环标定**:在件的位置用已知色探针量屏幕色,算逐通道传递,材质色 = 参考受光色 ÷ 传递(暖太阳会被反推预补偿),不再手调 K;③ 装饰(高光、亮边)做不成参考那种干净形状就不做,通刷平涂优先。规则记忆 vault `013 美术/AI记忆/feedback-paintover-colors-from-reference-no-grey-20261105.md`。
+> **小件、圆件、斜放件(原木、岩包、翻倒的车、环)不走三视角投影贴图**:投影图集会把底稿明暗烘进去、斜面拉成条纹,进 LabLit 再着一次色就成"旧笔触"斑驳(11-05 三矿点返工);PaintUV 前后面共用像素,平涂图集也不能用。这类件走 **Col 顶点色 + LabLit(`_VertexColorMul` 1)**:固有色按取色表、一道渐变按法线、bevel 条带亮边、装饰按几何规则按顶点写色;样板 `ArtWork/J01v7_Mines_20261105/gen_common/vcol_rules.py` + `SPEC.md §15 / §17`。sol 投影只留给哨亭这类大面正对视角的建筑。
+
 勾哥 10-31:"painter over 的把控尤其好,我需要未来根据不同的场景不断复用"。这一章就是复用手册:换场景只换一个配置 JSON,脚本不动。
 
 **分工**:上色由 sol 画(局内 2D 美术归 sol,代码不许代画或占位);Claude 出底稿、配准、投影、验收。看图验收必须亲眼看。
@@ -20,7 +23,7 @@ B="<blender.exe>"; S=<yide>/skills/er-blender/scripts/paintover; W=<工作目录
 py -3 $S/po_prompts.py $CFG $W                                                                             # 2 提示词(末行打出每单参考张数 N,也写进 refcount_<set>.txt)
 cat $W/joblist_<set>.txt | xargs -P 4 -I{} bash <yide>/skills/er-shop-mkt/scripts/run_codex.sh $W {} $N # 2 sol 上色(放进一个 run_in_background)
 py -3 $S/po_register.py $W --set <set>                                                                     # 3 配准 + 门(绿色 / 黄绿物件加 --strict-key;稀疏侧视 ECC 发散加 --identity)
-py -3 $S/po_colorlock.py $CFG $W <sheet>=<本张实有的类,逗号分隔> ...                                       # 3.5 锁色:L 跟底稿、a/b 跟 cfg.palette,中性灰压到 0.35,glow 跳过
+py -3 $S/po_colorlock.py $CFG $W <sheet>=<本张实有的类,逗号分隔> ...                                       # 3.5 锁色:L 跟底稿、a/b 锁到 cfg.palette(= 参考受光面直取色),不压 chroma(k 1.0;纯中性灰类才 0.35),glow 跳过
 "$B" -b <场景>.blend --factory-startup -P $S/po_project.py --python-exit-code 1 -- --cfg $CFG --work $W   # 4 投影 + 图集
 "$B" -b <场景>_painted.blend --factory-startup -P $S/po_review.py --python-exit-code 1 -- --out $W --groups "标签=前缀"  # 5 评审图
 py -3 $S/po_board.py <板>.png 2 760 "之前" a.png "之后" b.png ...                                          # 对照板
@@ -40,7 +43,7 @@ py -3 $S/po_board.py <板>.png 2 760 "之前" a.png "之后" b.png ...          
 | `prompt.card / card_desc`(可选) | 本件自己的设计格 / 场景图裁区,只用来对哪块是什么颜色,不学它的质感 |
 | `prompt.extra`(可选) | `{sheet 名: 一句补充}`,例如「深灰方块是关着的金属检修盖,不是窗」 |
 | ~~`prompt.marks`~~ | 已作废(旧做旧画法)。配置里还写着会直接报错退出 |
-| `palette` | 锁色用:`{类名: "#RRGGBB"}`,填白模实际写进 Col 的固有色;发光件类名写 `glow`(锁色跳过)。没有这个字段 po_colorlock 报错退出 |
+| `palette` | 锁色用:`{类名: "#RRGGBB"}`,**填从参考图受光面直取的色**(白模 Col 也用它,不用整件中位);发光件类名写 `glow`(锁色跳过)。没有这个字段 po_colorlock 报错退出 |
 | `fallback`、`atlas_scale`、`cut_m` | 第三轮兜底(默认开)、图集缩放(默认 0.75)、长面切段(默认 1 m) |
 
 参考:人造物外形只挂我们认可的概念图 / 场景图(拍板 #14),成品画法统一对标 `贴图风格基准/` 里的 06 哨亭;不再挂那两张 mo.co 近景参考图(它们带出了做旧,已作废)。

@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.7 — 2026-11-05 er-blender 颜色从参考受光面直取、不混灰;小件走顶点色不投影
+- 勾哥 11-05:「发黄发灰」「直接提取参考图的颜色」「未来所有 session 的 paintover 都直接从参考图上提取色,不要自己混入灰色」「哪怕直接全部绿色通刷」。三矿点查实:色板取整件中位 + 锁色压 chroma 0.7 + K 压暗 = 掺灰,暖太阳再把饱和色色相带偏。
+- `08-干净上色paintover`:顶部加两条拍板——取色表(参考受光面亮度前 25 % 中位,hex + 来源进 `palette`)、引擎闭环标定(探针算传递、材质色 = 参考色 ÷ 传递,不手调 K)、装饰做不干净就通刷;小件 / 圆件 / 斜放件不走三视角投影(图集烘明暗 + 斜面拉伸 + PaintUV 重叠),改 Col 顶点色 + LabLit,样板 J01v7_Mines `gen_common/vcol_rules.py`。
+- `po_colorlock.py` K_DEFAULT 0.7 → 1.0(不压 chroma;纯中性灰仍 0.35);SKILL 路由表同步。
+
 ### v0.77.6 — 2026-11-05 本机附加脚本 local-hooks(DuckCenter 跑 ER 记忆清单生成器)
 - 勾哥 11-05:"挂进 yide 插件自己的 hook"(Claude Code 用户级 settings 加 hook 被 auto 模式拦)。新增 `scripts/local-hooks.js`:读本机私有 `~/.yide-local/local-hooks.json`,按事件把配置里的 node 脚本分离到后台跑,不等结果、异常全吞;没有这个文件就什么都不跑,所以只影响配了的那台机器。
 - `session-start.js` 开头 `fire('SessionStart')`,`stop-audit.js` 开头 `fire('Stop')`(Stop 和 SubagentStop 都走它);两处都包在 try 里,不改简报和审计的输出。

@@ -8,7 +8,7 @@ Palette = cfg field "palette": {class name: "#RRGGBB"}, the base colours actuall
 For each sheet every pixel of reg/<sheet>.png is assigned to a palette class (inside the canvas mask by the canvas
 underlay colour, outside it - UV padding - by the painted colour itself). Per class:
   - L follows the canvas (underlay value incl. its soft AO): the painted class mean L is shifted onto the canvas mean L;
-  - a/b follow the palette: the class is moved onto the palette a/b, the hue wander around it compressed to 0.7;
+  - a/b follow the palette: the class is moved onto the palette a/b, the hue wander around it is NOT compressed (k 1.0, 11-05: never grey the palette);
   - neutral greys (palette colours whose R/G/B spread <= 8, e.g. #535556) are compressed to 0.35 so they stay neutral;
   - the class named "glow" is skipped (emissive strips / screens stay as painted);
   - classes with fewer than 200 pixels inside the mask are left alone.
@@ -27,7 +27,7 @@ import numpy as np
 SKIP = {"glow"}
 NEUTRAL_SPREAD = 8
 K_NEUTRAL = 0.35
-K_DEFAULT = 0.7
+K_DEFAULT = 1.0   # 11-05 勾哥:不压 chroma,颜色只锁到参考受光色(原 0.7 会把饱和色往灰拉)
 
 
 def lab(img_bgr):
