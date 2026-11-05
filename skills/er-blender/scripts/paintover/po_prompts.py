@@ -10,7 +10,7 @@ Writes <work>/p_<sheet>.txt for every sheet in canvas/<set>_meta.json. Reference
   4   cfg.prompt.card (optional): this object's own approved scene painting / crop - read for colour layout only
 Run each with:  bash <yide>/skills/er-shop-mkt/scripts/run_codex.sh <work_dir> <sheet> <N>
 N = number of references printed at the end (written to refcount_<set>.txt). 4 in parallel via xargs -P 4 inside ONE
-run_in_background command; REJECT -> rerun once unchanged. After registration run color_lock (see 08).
+run_in_background command; REJECT -> rerun once unchanged. After registration run po_colorlock.py (see 08).
 
 cfg.prompt fields: what (what the sheet shows), colors (base colours to keep, e.g. "warm cream-beige shell #DCC8B3,
 NEUTRAL grey frames #535556"), card + card_desc (optional), style_refs (optional, [full, crop]),

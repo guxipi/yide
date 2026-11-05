@@ -1,13 +1,15 @@
-# 08 paint-over 上色管线:给模型上干净的手绘色,任何场景复用
+# 08 干净上色 paint-over 管线:给模型上干净的色,任何场景复用
 
-> **2026-11-04 勾哥拍板:J01 建筑和建筑拆件的贴图一律「新版干净上色」**(块面近平涂 + 一道大渐变 + 棱上细亮边 + 块间轻微色差 + 玻璃斜反光;禁笔触斑驳、掉漆、擦痕、灰痕、污渍、任何做旧)。标准图在 vault `013 美术/丛林Lab/贴图风格基准/`,规则见 vault 记忆 `013 美术/AI记忆/feedback-j01-building-texture-clean-only-20261104.md`。旧的笔触 / 做旧画法已从本管线删掉,不再当参考。
+> **2026-11-04 勾哥拍板:J01 建筑和建筑拆件的贴图一律「新版干净上色」**(块面近平涂 + 一道大渐变 + 棱上细亮边 + 块间轻微色差 + 玻璃斜反光;禁笔触斑驳、掉漆、擦痕、灰痕、污渍、任何做旧)。标准图在 vault `013 美术/丛林Lab/贴图风格基准/`,规则见 vault 记忆 `013 美术/AI记忆/feedback-j01-building-texture-clean-only-20261104.md`。旧的笔触 / 做旧画法(mo.co 石墙块 / 衣柜近景参考、`marks` 字段、旧 J01 示例)已作废并从本管线删掉,不再当参考。
 
 勾哥 10-31:"painter over 的把控尤其好,我需要未来根据不同的场景不断复用"。这一章就是复用手册:换场景只换一个配置 JSON,脚本不动。
 
-**分工**:上色由 sol 画(局内 2D 美术归 sol,代码不许画笔触或占位);Claude 出底稿、配准、投影、验收。看图验收必须亲眼看。
+**分工**:上色由 sol 画(局内 2D 美术归 sol,代码不许代画或占位);Claude 出底稿、配准、投影、验收。看图验收必须亲眼看。
 
 ## 原理
-在 Blender 里把模型按固定视角正交渲成"画布"(固有色乘柔和 AO,纯绿底,不打方向光)→ sol 在画布上原位上色(干净上色)→ 配准回画布 → 每个面挑最正对、看得见它的视角,把画投影回 UV → 每类物件出一张图集。
+在 Blender 里把模型按固定视角正交渲成"画布"(固有色乘柔和 AO,纯绿底,不打方向光)→ sol 在画布上原位干净上色 → 配准回画布 → 按材质锁色 → 每个面挑最正对、看得见它的视角,把画投影回 UV → 每类物件出一张图集。
+
+sol 每单只喂三类参考(`po_prompts` 自动排好,张数 N 写进 `refcount_<set>.txt`):图 1 = 本张画布(在它上面原位改,版式不动);图 2-3 = 成品画法基准,06 场景图整图 + 06 哨亭裁区(`贴图风格基准/ref06_full.png`、`ref06_booth.png`);图 4(可选)= 本件已批的设计格 / 场景图切图(`prompt.card`),只用来对哪块是什么颜色、每件怎么读,质感照图 2-3。不喂任何别的图。
 
 **ER 的游戏镜头不转**(V5:从南 46° 俯视)。所以主视角就是"游戏镜头方向的正交视图 G",再补 E/W 侧视(0.6 倍密度,只在屏幕边缘斜着看到);朝北的面永远不上屏幕,不画。这样画的正好是玩家看到的那一面,张数也只有六面全画的一半左右。
 
@@ -17,14 +19,14 @@ B="<blender.exe>"; S=<yide>/skills/er-blender/scripts/paintover; W=<工作目录
 "$B" -b <场景>.blend --factory-startup -P $S/po_canvas.py --python-exit-code 1 -- --cfg $CFG --out $W     # 1 底稿
 py -3 $S/po_prompts.py $CFG $W                                                                             # 2 提示词(末行打出每单参考张数 N,也写进 refcount_<set>.txt)
 cat $W/joblist_<set>.txt | xargs -P 4 -I{} bash <yide>/skills/er-shop-mkt/scripts/run_codex.sh $W {} $N # 2 sol 上色(放进一个 run_in_background)
-py -3 $S/po_register.py $W --set <set>                                                                     # 3 配准 + 门
-# 3.5 锁色:L 跟底稿、a/b 跟色板,做法见 vault 记忆 paintover-interior-side-and-colorlock-20261104(S5 工地 gen/color_lock.py)
+py -3 $S/po_register.py $W --set <set>                                                                     # 3 配准 + 门(绿色 / 黄绿物件加 --strict-key;稀疏侧视 ECC 发散加 --identity)
+py -3 $S/po_colorlock.py $CFG $W <sheet>=<本张实有的类,逗号分隔> ...                                       # 3.5 锁色:L 跟底稿、a/b 跟 cfg.palette,中性灰压到 0.35,glow 跳过
 "$B" -b <场景>.blend --factory-startup -P $S/po_project.py --python-exit-code 1 -- --cfg $CFG --work $W   # 4 投影 + 图集
 "$B" -b <场景>_painted.blend --factory-startup -P $S/po_review.py --python-exit-code 1 -- --out $W --groups "标签=前缀"  # 5 评审图
 py -3 $S/po_board.py <板>.png 2 760 "之前" a.png "之后" b.png ...                                          # 对照板
 ```
 
-## 配置(`examples/j01v7_bh_booth.json` 可抄,11-04 哨亭干净上色实跑过)
+## 配置(样板只有两份:`examples/j01v7_bh_booth.json`(11-04 哨亭干净上色实跑过)、`examples/j01v7_mine_m1.json`(11-05 矿点 M1,带 card / extra / palette))
 | 字段 | 说明 |
 |---|---|
 | `set` | 名字;画布叫 `<set>_00.png`… |
@@ -35,9 +37,10 @@ py -3 $S/po_board.py <板>.png 2 760 "之前" a.png "之后" b.png ...          
 | `underlay` | `col` = 顶点色 `Col`(我们 kit 生成的件);`material` = 物件原有的底色或贴图(Tripo 件、外来件) |
 | `prompt.what / colors` | sheet 上画的是什么;要保留的固有色(灰写死 NEUTRAL grey, NOT blue/violet) |
 | `prompt.style_refs` | 成品画法基准两张:06 场景图整图 + 06 哨亭裁区。不写就用 vault `贴图风格基准/ref06_full.png`、`ref06_booth.png`(vault 不在 I 盘时写绝对路径) |
-| `prompt.card / card_desc`(可选) | 本件自己的场景图 / 裁区,只用来对哪块是什么颜色,不学它的笔触 |
+| `prompt.card / card_desc`(可选) | 本件自己的设计格 / 场景图裁区,只用来对哪块是什么颜色,不学它的质感 |
 | `prompt.extra`(可选) | `{sheet 名: 一句补充}`,例如「深灰方块是关着的金属检修盖,不是窗」 |
-| ~~`prompt.marks`~~ | 已删(做旧痕迹)。配置里还写着会直接报错退出 |
+| ~~`prompt.marks`~~ | 已作废(旧做旧画法)。配置里还写着会直接报错退出 |
+| `palette` | 锁色用:`{类名: "#RRGGBB"}`,填白模实际写进 Col 的固有色;发光件类名写 `glow`(锁色跳过)。没有这个字段 po_colorlock 报错退出 |
 | `fallback`、`atlas_scale`、`cut_m` | 第三轮兜底(默认开)、图集缩放(默认 0.75)、长面切段(默认 1 m) |
 
 参考:人造物外形只挂我们认可的概念图 / 场景图(拍板 #14),成品画法统一对标 `贴图风格基准/` 里的 06 哨亭;不再挂 mo.co 石墙块 / 衣柜近景(那两张带出了做旧)。
@@ -67,6 +70,13 @@ py -3 $S/po_board.py <板>.png 2 760 "之前" a.png "之后" b.png ...          
 | 后台 Blender 建不起 GPU 上下文(10-31) | EEVEE 渲染直接崩:`nvoglv64.dll` EXCEPTION_ACCESS_VIOLATION,栈在 `DRW_gpu_context_create`;换 Vulkan、PowerShell、关沙箱都一样,旧 blend 也崩 | 设环境变量 `ER_BL_CPU=1`:`po_blender`(底稿)、`po_review`、`kit/review.py` 改用 Cycles CPU。底稿是固有色×AO 的 Emission,结果和 EEVEE 一致;评审的两阶 toon 改按 N·L 分阶,**没有投影**,只能看形和色,进 Unity 后真光照再看一次 |
 | 单个小件独占一张画布 | sol 把它画大一圈、位置下移,配准 0.78 不过(10-31 固定环 300 px/m) | 提高 ppm 让物件占满画布(固定环 380 px/m 后 0.970 通过);多件同套时按主题分 set,各写只含本 set 的 what |
 | `py -3 -c print(...)` 生成的名单管道给 xargs | 每个名字带 `\r`,Blender 找不到物件 | 管道里加 `tr -d '\r'` |
+| 同组互相遮挡串色(WS 11-05) | 帽顶印上仪器头的色、根上沾绿 | 遮挡在组内判,挂件 / 叶冠这类会挡住主体的件和主体同组就会互相串。会挡主体的件单独成组 |
+| 颜色离抠像绿太近(WS 11-05) | 叶 #3F8B3E 画亮一点就被 key_mask(G>140 且 G-max(R,B)>70)当背景抠掉,补洞后斑驳 | 新色板先过 key_mask 这条;叶改 #3A8A5A(偏青)后亮版也安全 |
+| 稀疏 sheet 上 sol 另画物件(WS 11-05) | 照参考图另画一张概念拆件图,或在空白处加画物件 | 提示词已含"只在图 1 轮廓内上色、不加不删任何部件、轮廓外不画";多画在轮廓外的直接抹回纯绿(投影不用) |
+| ECC 仿射在稀疏侧视 sheet 上发散(WS 11-05) | IoU 配准后反降(0.927→0.908),一次拉成 0.18 | `po_register.py --identity`(跳过 findTransformECC,仿射取单位阵) |
+| 重叠薄片被 sol 画成一片(WS 11-05) | 两两重叠的叶子画成一片一条主脉,投影后叶脉 / 叶缘错位,轮廓门看不出 | 叶片、旗、板片这类会互相叠的薄片件拆成每片一个物件,一片一组单独画 |
+| 绿色物件被去溢色压暗(WS 11-05) | 绿叶整圈叶缘变暗青灰;亮叶绿又被当背景抠掉(补洞 16 万 px) | `po_register.py --strict-key`(背景只认近纯 #00FF00,去溢不碰高红像素)。先分"只贴图 / 只光照 / 合成"三张并排,定是贴图还是光照再改 |
+| 黄绿凝胶被 key_mask 当背景(M2 矿点 11-05) | 画亮的凝胶(#A0F030 一类)被抠成洞,边带去溢把小凝胶球压成橄榄色 | 同上 `--strict-key`;凝胶类在 palette 里单列 |
 
 ## 已知不足
 - 室内面(进屋时屋顶隐藏后才看得到的面)要另出一套拿掉屋顶的底稿。

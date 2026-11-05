@@ -2,6 +2,13 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.5 — 2026-11-05 er-blender paint-over 旧笔触画法残留全清,锁色进 skill
+- 勾哥 11-05:"我要求你强制清除这次"(11-04 已拍板 J01 建筑拆件一律干净上色、完全抹除旧图记忆)。er-blender 的 description、Trigger 词和路由表不再写"手绘质感 / 加 mo.co 笔触",改成"干净上色 paint-over:底稿 → sol 干净上色 → 配准 → 锁色 → 投影回 UV → 图集";`03-道具风格化` 第 4 条改为 paint-over 干净上色。
+- `08-手绘paintover.md` 改名 `08-干净上色paintover.md`,标题和正文去掉"手绘 / 笔触"口径;原理写清 sol 只喂三类参考(画布 / 06 整图 + 哨亭裁区 / 本件设计格);3.5 锁色给出真命令;坑表加 WS 测候站 11-05 六条和 M2 矿点黄绿凝胶一条。
+- 新增 `scripts/paintover/po_colorlock.py`(从 WS 工地 color_lock.py 通用化):色板从配置新字段 `palette` 读,L 跟底稿、a/b 跟色板,中性灰压到 0.35,glow 跳过。
+- `po_register.py` 加两个开关,默认行为不变:`--strict-key`(背景只认近纯 #00FF00,去溢不碰高红像素,给绿色 / 黄绿物件)、`--identity`(不跑 ECC,给稀疏侧视 sheet)。
+- examples 只留新样板:哨亭 `j01v7_bh_booth.json` 补 `palette`,新增矿点 `j01v7_mine_m1.json`(card / extra / palette,无 style_refs / marks)。
+
 ### v0.77.4 — 2026-11-05 专家卡同步按内容比,测试不再写真实 ~/.claude/agents
 - 勾哥 11-05 发现全局 executor 还是旧版。根因:`test/run.js` 没隔离用户主目录,跑 session-start 时把模板专家卡写进了真实 `~/.claude/agents`(10-31 12:35 那次);`sync-experts.js` 只在"大脑比副本新"时才拷,副本时间戳更新,大脑里的新卡就一直过不去。
 - `sync-experts.js` 改成内容不同就用大脑覆盖(忽略 CRLF 差异),不再看 mtime;测试把 HOME / USERPROFILE 指到临时目录;新增测试 14.1(换回旧脚本会失败)。

@@ -25,5 +25,17 @@
   "extra": {
    "bh_01": "The dark grey square on the right-hand block is a CLOSED metal utility hatch: keep it flat neutral dark grey #535556. It is NOT a window: no glass, no teal, no reflection."
   }
+ },
+ "palette": {
+  "shell": "#DCC8B3",
+  "shell_in": "#CDB9A4",
+  "panel": "#6A6C6E",
+  "dark": "#535556",
+  "glow": "#55FDFE",
+  "glass": "#2C6671",
+  "orange": "#CA7610",
+  "mil": "#7F7F62",
+  "mil_dark": "#5F6048",
+  "gun": "#3E4244"
  }
 }

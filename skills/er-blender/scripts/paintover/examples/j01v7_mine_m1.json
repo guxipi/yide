@@ -1,0 +1,36 @@
+{
+ "set": "m1",
+ "group_prefixes": [
+  "M1_"
+ ],
+ "views": [
+  "G",
+  "E",
+  "W"
+ ],
+ "ppm": 110,
+ "side_ratio": 0.6,
+ "underlay": "col",
+ "prompt": {
+  "what": "a rose-red layered rock bank with a cluster of hexagonal cyan silicate crystal columns, three loose small crystals, one grey-brown boulder; a tilted federal A-frame sample rack (beige tubes, charcoal caps, orange rings, a hanging charcoal core box with a beige panel); three steel-grey drill cores",
+  "colors": "rose-red rock #C7475F (lower terracotta band #C2583F, shaded sides the same hue darkened, NOT purple, NOT grey), grey-brown boulder #8C7272, cyan crystal #4FE3D8 with white top highlight #B8F7F2 and an opaque grey core patch #6E7580 on the lower half of each face, beige rack #DCC8B3, neutral charcoal caps and box #535556 (NOT navy), orange stripe #CA7610, steel-grey cores #6A6C6E, one pale cut end #E9B99A. Darker areas are the SAME base colour darkened, never saturated blue or violet",
+  "card": "C:/DuckGames/Extraction/Claude Feature Docs/Jungle Planet/BUILD/J01_v7/engine/T0b/audit_20261103/board/refs_vein/vein_v2_M1.png",
+  "card_desc": "the approved design sheet of this same mine outcrop (rock bank, cyan crystals, sample rack, drill cores)",
+  "extra": {
+   "m1_00": "ROCK: each tier one flat rose-red tone with ONE soft gradient, a crisp light top edge; the lower band flat terracotta; tiers may differ slightly in value; NO cracks, NO strata texture, NO speckles. CRYSTAL (image 3 shows how they read): each prism face flat cyan with one soft gradient toward a lighter top; the top cut face the lightest, near-white; on the LOWER HALF of each visible face ONE opaque, jagged-edged mid-grey ore-core patch (flat grey, crisp edge, like a pebble seen inside the crystal); a thin lighter edge along every prism edge; NO glow, NO transparency, NO dark outline. BOULDER: flat grey-brown with one gradient and one single darker groove line. RACK / CORES: booth rules (beige, neutral charcoal, flat orange, steel grey), cores' cut end flat pale peach."
+  }
+ },
+ "palette": {
+  "rock": "#C7475F",
+  "rock_low": "#C2583F",
+  "boulder": "#8C7272",
+  "crystal": "#4FE3D8",
+  "crystal_top": "#B8F7F2",
+  "core": "#6E7580",
+  "shell": "#DCC8B3",
+  "dark": "#535556",
+  "orange": "#CA7610",
+  "panel": "#6A6C6E",
+  "cut": "#E9B99A"
+ }
+}

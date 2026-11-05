@@ -1,6 +1,7 @@
 """Step 3 · register a sol paint-over back onto its canvas and pad it for UV use.
 
-py -3 po_register.py <work_dir> <sheet> [<sheet> ...]      (or --set <set> for every sheet of canvas/<set>_meta.json)
+py -3 po_register.py <work_dir> [--strict-key] [--identity] <sheet> [<sheet> ...]   (or --set <set> for every sheet
+of canvas/<set>_meta.json)
 Gate: verdict PASS = silhouette IoU after the affine fit >= 0.965 and Lab colour drift < 12; CHECK -> look at it,
 usually rerun that sheet. The silhouette check cannot see shapes moved INSIDE the outline: always eyeball the
 painted sheet next to its canvas (internal drift = ribs / seams in the wrong place).
@@ -8,6 +9,14 @@ Reads canvas/<sheet>.png + canvas/<sheet>_mask.png + img/<sheet>.png; writes reg
 report: IoU of silhouettes before/after an affine ECC fit, colour drift inside the silhouette, verdict.
 Pixels inside the silhouette come from the painting; holes (green left inside) fall back to the underlay;
 outside the silhouette the colours are extended 32 px (UV padding) so no green bleeds into the model.
+
+Switches (default behaviour unchanged when they are left out):
+  --strict-key  background = near-pure #00FF00 only (G > 200 and R < 110 and B < 110), and the edge-band despill only
+                touches pixels with R < 140. Use it when the sheet has yellow-green / green objects (fungal gel, leaves):
+                the stock key (G > 140 and G - max(R, B) > 70) cuts brightly painted green out as background (big
+                hole_px, blotchy holes) and the despill clamps their rims dark (gel balls turn olive, leaf edges grey-teal).
+  --identity    skip findTransformECC and keep the identity affine. Use it on sparse sheets (mostly side views with a
+                few thin objects) where ECC diverges or makes IoU worse than iou_before (WS 11-05: 0.927 -> 0.908, once 0.18).
 """
 import json
 import os
@@ -17,9 +26,16 @@ import cv2
 import numpy as np
 
 
+STRICT_KEY = False
+IDENTITY = False
+
+
 def key_mask(img):
     b, g, r = [img[..., i].astype(np.int32) for i in range(3)]
-    bg = (g > 140) & (g - np.maximum(r, b) > 70)
+    if STRICT_KEY:
+        bg = (g > 200) & (r < 110) & (b < 110)
+    else:
+        bg = (g > 140) & (g - np.maximum(r, b) > 70)
     return (~bg).astype(np.float32)
 
 
@@ -65,11 +81,12 @@ def one(W, name):
     warp = np.eye(2, 3, dtype=np.float32)
     t = cv2.GaussianBlur(m0, (0, 0), 6)
     s = cv2.GaussianBlur(m1, (0, 0), 6)
-    try:
-        _, warp = cv2.findTransformECC(t, s, warp, cv2.MOTION_AFFINE,
-                                       (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 200, 1e-6), None, 5)
-    except cv2.error:
-        pass
+    if not IDENTITY:
+        try:
+            _, warp = cv2.findTransformECC(t, s, warp, cv2.MOTION_AFFINE,
+                                           (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 200, 1e-6), None, 5)
+        except cv2.error:
+            pass
     flags = cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP
     pr = cv2.warpAffine(pnt, warp, (Wd, H), flags=flags, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 255, 0))
     m1r = key_mask(pr)
@@ -86,6 +103,8 @@ def one(W, name):
     lim = np.maximum(o[..., 0], o[..., 2])
     core = cv2.erode((m0 > 0.5).astype(np.uint8), np.ones((23, 23), np.uint8))
     spill = (o[..., 1] > lim) & (m_in > 0.5) & (core == 0)      # only in the band next to the edge
+    if STRICT_KEY:
+        spill &= o[..., 2] < 140                                    # leave high-red yellow-green paint alone
     o[..., 1] = np.where(spill, lim, o[..., 1])
     out = o.astype(np.uint8)
     out = pad_out(out, m_in, 40)
@@ -101,8 +120,12 @@ def one(W, name):
 
 
 if __name__ == "__main__":
-    W = sys.argv[1]
-    names = sys.argv[2:]
+    args = sys.argv[1:]
+    STRICT_KEY = "--strict-key" in args
+    IDENTITY = "--identity" in args
+    args = [a for a in args if a not in ("--strict-key", "--identity")]
+    W = args[0]
+    names = args[1:]
     if names[:1] == ["--set"]:
         meta = json.load(open(os.path.join(W, "canvas", names[1] + "_meta.json"), encoding="utf-8"))
         names = [s["name"] for s in meta["sheets"]]

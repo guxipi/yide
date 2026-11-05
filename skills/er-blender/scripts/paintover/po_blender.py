@@ -1,6 +1,6 @@
 """Paint-over pipeline, Blender side (Blender 5.1/5.2, background-safe). Shared by po_canvas / po_project / po_review.
 
-Config (JSON, one per scene/set; see ../../references/08-手绘paintover.md and examples/):
+Config (JSON, one per scene/set; see ../../references/08-干净上色paintover.md and examples/):
   set            name; sheets are <set>_00.png ...
   groups         {"group": ["obj", ...]}            objects painted together (they occlude each other)
   group_prefixes ["RN_", ...]                        alternative: every mesh whose name starts with a prefix is its own group
