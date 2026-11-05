@@ -2,6 +2,10 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.4 — 2026-11-05 专家卡同步按内容比,测试不再写真实 ~/.claude/agents
+- 勾哥 11-05 发现全局 executor 还是旧版。根因:`test/run.js` 没隔离用户主目录,跑 session-start 时把模板专家卡写进了真实 `~/.claude/agents`(10-31 12:35 那次);`sync-experts.js` 只在"大脑比副本新"时才拷,副本时间戳更新,大脑里的新卡就一直过不去。
+- `sync-experts.js` 改成内容不同就用大脑覆盖(忽略 CRLF 差异),不再看 mtime;测试把 HOME / USERPROFILE 指到临时目录;新增测试 14.1(换回旧脚本会失败)。
+
 ### v0.77.3 — 2026-11-05 gaoguang-3d 补 LabLitMaterial
 - 勾哥 11-05:"全局都是使用同一种 shader LabLit"。gaoguang-3d §1 第 4 步写明工程代码取 shader 走 `Gameplay.Rendering.LabLitMaterial`,并提醒它 `Create` 的默认值是旧参数换算来的,建完要按 battery_goblin 那组覆盖。大脑仓 ER 常驻注入、项目事实、executor 卡同步写入"3D 只用 LabLit"。
 

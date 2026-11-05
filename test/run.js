@@ -18,6 +18,10 @@ fs.mkdirSync(path.join(BRAIN, '.meta'), { recursive: true });
 fs.mkdirSync(path.join(BRAIN, 'core'), { recursive: true });
 process.env.YIDE_HOME = BRAIN; // 给本进程内 require 的模块用
 process.env.YIDE_LOCAL = path.join(TMP, '.yide-local'); // 本机私有状态隔离到临时目录(别碰真实 ~/.yide-local)
+// 用户主目录也隔离:session-start 会把临时大脑的 experts 同步进 ~/.claude/agents,不隔离就把模板写进真实 agents(10-31 出过)
+const FAKE_HOME = path.join(TMP, 'home');
+fs.mkdirSync(FAKE_HOME, { recursive: true });
+process.env.HOME = FAKE_HOME; process.env.USERPROFILE = FAKE_HOME;
 
 let pass = 0, fail = 0;
 const fails = [];
@@ -886,6 +890,27 @@ t('13.3 参考闸:没登记拦、登记未打开拦、打开后放行、免参�
 
 // 清理
 try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
+
+// === 14. 专家卡同步:按内容比,不看 mtime(2026-11-05)===
+t('14.1 专家卡同步:副本内容不同且更新也被大脑覆盖、同内容不重拷、只差换行不算不同、主目录已隔离', () => {
+  assert(os.homedir() === FAKE_HOME, '测试应把用户主目录隔离到临时目录');
+  const xb = path.join(TMP, 'expbrain');
+  fs.mkdirSync(path.join(xb, 'experts'), { recursive: true });
+  fs.writeFileSync(path.join(xb, 'experts', 'zz-probe.md'), '---\nname: zz-probe\n---\nbrain v2\n');
+  const dst = path.join(FAKE_HOME, '.claude', 'agents', 'zz-probe.md');
+  fs.mkdirSync(path.dirname(dst), { recursive: true });
+  fs.writeFileSync(dst, '---\nname: zz-probe\n---\nstale template\n');
+  const future = new Date(Date.now() + 86400000); fs.utimesSync(dst, future, future); // 副本比大脑新
+  const saved = process.env.YIDE_HOME; process.env.YIDE_HOME = xb;
+  try {
+    const { syncExperts } = require(path.join(SCRIPTS, 'sync-experts.js'));
+    assert(syncExperts() === 1, '内容不同应覆盖 1 张');
+    assert(/brain v2/.test(fs.readFileSync(dst, 'utf8')), '副本应变成大脑内容');
+    assert(syncExperts() === 0, '同内容不该重拷');
+    fs.writeFileSync(dst, '---\r\nname: zz-probe\r\n---\r\nbrain v2\r\n');
+    assert(syncExperts() === 0, '只差 CRLF 不该算不同');
+  } finally { process.env.YIDE_HOME = saved; }
+});
 
 console.log(`\n结果:${pass} 过 / ${fail} 败` + (fail ? '  →  ' + fails.join(', ') : ''));
 process.exit(fail ? 1 : 0);
