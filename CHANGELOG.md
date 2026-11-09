@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.18 — 2026-11-09 er-blender 09 POI 交付前检查表;植物 / 颜色 / 地形路由拍板
+- 勾哥 11-09「写进 skill」:把 10-31 ~ 11-09 对 J01 POI 的约 60 条纠正整理成 `references/09-POI交付前检查表.md`(设计 / 出图 / 建模 / 上色 / 进 J01 / 交付六段逐条打勾 + 头号四类 + 来源索引);SKILL 工作纪律加「每轮交付前过 09」。
+- 同日拍板三条路由:POI 灌木 Blender 逐片叶建、树冠走 Tripo;颜色从没有 hue 的概念图本色取(不再以邻居 POI 实机色为目标);地形植物和崖走 Unity 编辑器 + codex。SKILL 路由表同步。
+- 08 顶部加过时说明:生图只喂底稿一张、不喂 mo.co 图,画完 hardhue 硬锁色相(`po_prompts.py` 默认仍喂三张,脚本未改)。
+
 ### v0.77.13 — 2026-11-09 er-blender 高模烘低模 bake_hi_to_lo.py + 总装导出样板
 - 勾哥 11-09「高模烘到低模」:新增 `scripts/blender/bake_hi_to_lo.py`(Cycles selected-to-active,顶点色件走 EMIT、带材质件走 DIFFUSE/COLOR;由 ArtWork 一次性 refine_flora.py 通用化)。PARK 圆花坛 32k → 282 三角。
 - 07 加「高模烘低模 + 总装导出」节:总装导出样板 park_final.py、预算门顺序、hide_render 坑、复用库先渲一眼。

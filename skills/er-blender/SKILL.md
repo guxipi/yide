@@ -1,6 +1,6 @@
 ---
 name: er-blender
-description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件化建模与按设计坐标拼装、小 POI 15 分钟一轮(拆解单 → 体块 → 叠概念图)、干净上色 paint-over、Tripo 件清理与风格化、评审对照图与验收门、导出 Unity、VFX mesh 等离线件、bpy 坑表与 Blender MCP。Trigger on "blender 建模" / "POI 建模" / "建筑建模" / "体块" / "blockout" / "叠概念图" / "建模不准" / "paint over" / "干净上色" / "tripo 模型精修" / "模型太 basic" / "看得出刻面" / "减面" / "导出 FBX 进 Unity" / "道具风格化" / "拆成墙再组合" / "blender 出图" / "blender mcp" / "bpy 报错"。角色走 er-character-pipeline;Unity 里修材质 / pivot 走 gaoguang-3d;树草崖地块走 Unity 生成器,不进 Blender。
+description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件化建模与按设计坐标拼装、小 POI 15 分钟一轮(拆解单 → 体块 → 叠概念图)、干净上色 paint-over、Tripo 件清理与风格化、评审对照图与验收门、导出 Unity、VFX mesh 等离线件、bpy 坑表与 Blender MCP。Trigger on "blender 建模" / "POI 建模" / "建筑建模" / "体块" / "blockout" / "叠概念图" / "建模不准" / "paint over" / "干净上色" / "tripo 模型精修" / "模型太 basic" / "看得出刻面" / "减面" / "导出 FBX 进 Unity" / "道具风格化" / "拆成墙再组合" / "blender 出图" / "blender mcp" / "bpy 报错" / "POI 检查表" / "POI 注意点" / "POI 交付前"。角色走 er-character-pipeline;Unity 里修材质 / pivot 走 gaoguang-3d;树草崖地块走 Unity 生成器,不进 Blender。
 ---
 
 # ER Blender 总入口
@@ -12,15 +12,15 @@ description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件�
 | 要做的事 | 去哪 |
 |---|---|
 | POI 建筑(有顶屋、母舱、遗址残壳)和联邦硬表面小件:先做部件再按设计坐标拼,不做地板 | 本 skill `references/07-建筑部件拼装.md` + `scripts/kit/`(10-30 勾哥定 Claude 直接做) |
-| 干净上色 paint-over:底稿 → sol 干净上色 → 配准 → 锁色 → 投影回 UV → 图集。**画法基准 = mo.co 清透感(11-09 勾哥,06 哨亭作废;发光件连光晕一起画);颜色一律从参考图受光面直取 + 进引擎闭环标定,不混灰(11-05 勾哥);小件 / 圆件 / 斜放件不投影贴图,走顶点色 + LabLit** | 本 skill `references/08-干净上色paintover.md` + `scripts/paintover/`;换场景只写一个配置 JSON |
+| 干净上色 paint-over:底稿 → terra 干净上色 → 配准 → 锁色 → 投影回 UV → 图集。**画法基准 = mo.co 清透感,写成文字、生图只喂底稿一张,不喂 mo.co 图(11-09 晚勾哥);只加明暗不改色相,画完跑 hardhue 硬锁;只画本模型自己的发光体;颜色从没有 hue 的概念图本色取(11-09 勾哥拍板),进引擎闭环标定,不混灰;小件 / 圆件 / 斜放件不投影贴图,走顶点色 + LabLit** | 本 skill `references/08-干净上色paintover.md` + `scripts/paintover/`;**和 08 冲突处以 09 §四为准** |
 | 角色(四视图 → Tripo → 绑骨 → 表情 → 入库) | er-character-pipeline(它的 Blender 坑同样以本 skill 的 02 为准) |
 | 模型进了 Unity 发灰、塑料感、pivot 歪、只是法线软塌 | gaoguang-3d;先试 Unity importer 法线,多数"肉感"不用进 Blender |
 | Tripo 道具/武器/家具/POI 件:减面、刻面、色块、尺寸、挂点 | 本 skill `references/03-道具风格化.md` |
 | 出评审对照图、量数字、判过没过 | `references/04-验收门.md` |
 | 导出 FBX、挂点 Empty、回读核对、交给 Unity | `references/05-导出Unity.md` |
 | VFX mesh(斩击弧/环/冲击波/拖尾)、flipbook、圆润石头单元库 | `references/06-离线件.md`(做法已调研、未在 ER 实测,先做 pilot) |
-| POI 里的植物:花坛 / 花箱的叶团、花、垂藤,树池树,压顶树团 | **Blender 建,和件一起交(11-09 勾哥「植物建模也由 blender 进行」)**;单元 `scripts/kit/plants.py`(v0 未验收) |
-| 地形上的树、草、崖、台地、沙被、散布 | 现行走 Unity 自写生成器(记忆里松树/莲座树/崖体做法卡);11-09 植物改 Blender 的拍板是否也覆盖这里**未确认,先问勾哥** |
+| POI 里的植物:花坛 / 花箱的叶团、花、垂藤,树池树,压顶树团 | 和件一起交。**灌木在 Blender 逐片叶建(先交单片叶并排);树冠走 Tripo 网页版,进 Blender 减面烘色后和硬表面件合成**(11-09 勾哥拍板);`scripts/kit/plants.py` 只当占位 |
+| 地形上的植物、崖(树、草、崖、台地、沙被、散布) | **Unity 编辑器 + codex 合作**,不进 Blender、不走 Tripo(11-09 勾哥拍板) |
 
 ## 通道:live 用 MCP 迭代,出货用 blender -b
 
@@ -49,6 +49,7 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 
 - **第 0 步:用 Skill 工具加载 `yide:reference-replicate`**,按它锁参考、整张找实例、逐层填观察表、用 `refkit.py` 量比例,再动 Blender。没加载就跑 Blender,PreToolUse 的 skill 闸会拦下(10-31 起;此前 14 个跑过 Blender 的会话 0 个加载过它,J01 三脚架、工具匣因此各打回多轮)。只读一遍这句不算,闸只认真实的 Skill 调用。
 - **第 0.5 步:登记参考。** 从全项目参考登记表(Sheet「jungle lab」组件清单 I 列)取本物件那一行的图,打开原图实看,跑 `node <插件>/scripts/ref-check.js lock …`;只导出 / 改 pivot / 减面不改形这类不改外观的活跑 `exempt --why "不改外观:…"`。参考闸会拦没登记的 Blender 调用。规则全文 vault `013 美术/mo.co截图/README_参考怎么选.md`;人造物外形只挂我们认可的概念图,mo.co 只当质感上限。
+- **POI 每一轮交付前过 `references/09-POI交付前检查表.md`**(11-09 勾哥要求把历次纠正写进 skill):开工读对应环节,交付前逐条打勾,交付说明写「09 已过」和没过的条目。头号四类:paint-over 只加明暗不改色相、按 V5 46° 俯视做屋顶和外墙、先拆解再建单件做像、看得见的瑕疵不自己放过。
 - **POI 概念图、拆件图一律物品本色,不画光影、不加 hue(11-09 勾哥「HUE 是 unity 内游戏光影的事情」)**:概念图只画固有色加同色相轻微明暗,拆件图全本色平铺;出图提示词写死,带色调的图打回不取色。见 07「概念图 / 拆件图一律物品本色」。
 - **工具和 skill 的目的是单件精准、细节还原(11-09 勾哥)**:每个件对着拆件图那一格单独做、单独渲、左右并排验收;复用件库里没有就照格新做,不放占位块。摆位和概念图的小偏差不纠结,不把坐标同步回设计数据。见 07「单件精度」。
 - **小 POI 一轮 15 分钟内发截图(11-09 勾哥)**:拆解单 3 分钟(每件写干什么用、参考格号,再写参考里没有什么)→ `blockout.py` 体块 → `overlay.py` 俯视 + 46° 叠图自检 → 细节 → 出图,叠图板和评审图一起发。细节、命令、叠图怎么读、AI 概念图透视不自洽怎么办,见 07「小 POI 一轮 15 分钟」。说不出用途的件不建;叠图没过不做细节。
