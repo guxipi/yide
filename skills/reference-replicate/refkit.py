@@ -11,6 +11,7 @@
   py refkit.py sbs     A.png B.png --out sbs.png [--ha 120 --hb 95]
   py refkit.py flicker A.png B.png --out f.gif
   py refkit.py sheet   IMG --boxes "x0,y0,x1,y1;..." --zoom 3 --out sheet.png
+  py refkit.py cells   IMG --n 8 --out grid.png  [--crop C4 --zoom 3]          格子编号(拆解单写格号)
   py refkit.py shape   MASK.png [--color #RRGGBB --tol 40] [--box ..]   形状自然度指标
   py refkit.py trace   IMG|MASK --pitch-px 65 --cell-m 1.58 --yx 0.92 [--box ..] --out o.txt   描轮廓到地面米
   py refkit.py lobes   IMG|MASK --pitch-px .. --cell-m .. --yx .. --out lib.json               切叶瓣形状库
@@ -172,6 +173,42 @@ def cmd_shape(a):
     G.print_shape(G.shape_metrics(m))
 
 
+def _cell_boxes(W, H, n):
+    """n columns (A, B, ...); rows numbered from 1, square-ish cells."""
+    cw = W / n; rows = max(1, int(round(H / cw))); ch = H / rows
+    out = {}
+    for r in range(rows):
+        for c in range(n):
+            out["%s%d" % (chr(65 + c), r + 1)] = (int(c * cw), int(r * ch), int((c + 1) * cw), int((r + 1) * ch))
+    return out, rows
+
+
+def cmd_cells(a):
+    """参考图打字母+数字格子编号(列 A.. 行 1..),拆解单 / 观察表用格号指位置;--crop B4 放大一格。"""
+    im = Image.open(a.img).convert("RGB"); W, H = im.size
+    boxes, rows = _cell_boxes(W, H, a.n)
+    if a.crop:
+        x0, y0, x1, y1 = boxes[a.crop.upper()]
+        pad = int((x1 - x0) * 0.25)
+        b = (max(0, x0 - pad), max(0, y0 - pad), min(W, x1 + pad), min(H, y1 + pad))
+        c = im.crop(b); c = c.resize((c.width * a.zoom, c.height * a.zoom), Image.NEAREST)
+        d = ImageDraw.Draw(c)
+        d.rectangle(((x0 - b[0]) * a.zoom, (y0 - b[1]) * a.zoom, (x1 - b[0]) * a.zoom, (y1 - b[1]) * a.zoom), outline=(255, 230, 0), width=2)
+        c.save(a.out); print(json.dumps({"out": a.out, "cell": a.crop.upper(), "box": b})); return
+    d = ImageDraw.Draw(im)
+    try:
+        from PIL import ImageFont
+        f = ImageFont.truetype(os.path.join(os.environ.get("WINDIR", "C:/Windows"), "Fonts", "arialbd.ttf"), max(12, int(W / a.n / 6)))
+    except Exception:
+        f = None
+    for name, (x0, y0, x1, y1) in boxes.items():
+        d.rectangle((x0, y0, x1, y1), outline=(255, 255, 255), width=1)
+        for dx, dy, col in ((1, 1, (0, 0, 0)), (0, 0, (255, 240, 0))):
+            d.text((x0 + 4 + dx, y0 + 2 + dy), name, fill=col, font=f)
+    im.save(a.out)
+    print(json.dumps({"out": a.out, "cols": a.n, "rows": rows, "cell_px": round(W / a.n, 1)}))
+
+
 def main():
     p = argparse.ArgumentParser(); s = p.add_subparsers(dest="c", required=True)
     q = s.add_parser("scale"); q.add_argument("img"); q.add_argument("--p1", required=True); q.add_argument("--p2", required=True)
@@ -186,6 +223,8 @@ def main():
     q = s.add_parser("flicker"); q.add_argument("a"); q.add_argument("b"); q.add_argument("--out", required=True); q.set_defaults(f=cmd_flicker)
     q = s.add_parser("sheet"); q.add_argument("img"); q.add_argument("--boxes", required=True); q.add_argument("--zoom", type=int, default=3)
     q.add_argument("--out", required=True); q.set_defaults(f=cmd_sheet)
+    q = s.add_parser("cells"); q.add_argument("img"); q.add_argument("--n", type=int, default=8); q.add_argument("--crop")
+    q.add_argument("--zoom", type=int, default=3); q.add_argument("--out", required=True); q.set_defaults(f=cmd_cells)
     q = s.add_parser("shape"); q.add_argument("img"); q.add_argument("--color"); q.add_argument("--tol", type=int, default=40)
     q.add_argument("--box"); q.set_defaults(f=cmd_shape)
     import cmds

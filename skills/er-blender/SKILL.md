@@ -1,6 +1,6 @@
 ---
 name: er-blender
-description: ER(Extraction)所有非角色的 Blender 活的总入口——POI 建筑与联邦小件的部件化建模和按设计坐标拼装、干净上色 paint-over 管线(底稿 → sol 干净上色 → 配准 → 锁色 → 投影回 UV → 图集;J01 建筑一律干净上色,换场景只换配置)、Tripo 道具/武器/HOME 家具/POI 件的清理与风格化、评审台出对照图、数字验收门、导出进 Unity、VFX mesh 和圆润石头这类离线件;附 Blender 5.1/5.2 bpy 坑表和官方 Blender Lab MCP 的用法。Trigger on "blender 建模" / "建筑建模" / "拆成墙再组合" / "POI 建模" / "做部件库" / "paint over" / "painter over" / "干净上色" / "模型太 basic" / "blender 处理模型" / "tripo 模型精修" / "模型肉感" / "模型太高模/太碎" / "看得出刻面" / "减面" / "道具风格化" / "blender 出图/渲染对照" / "导出 FBX 进 Unity" / "blender mcp" / "bpy 报错" / "stylize this model"。角色从设计图到入库走 er-character-pipeline;只在 Unity 里修材质/法线/pivot 走 gaoguang-3d;树、草、崖、地块这类程序化地编走 Unity 生成器,不进 Blender。
+description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件化建模与按设计坐标拼装、小 POI 15 分钟一轮(拆解单 → 体块 → 叠概念图)、干净上色 paint-over、Tripo 件清理与风格化、评审对照图与验收门、导出 Unity、VFX mesh 等离线件、bpy 坑表与 Blender MCP。Trigger on "blender 建模" / "POI 建模" / "建筑建模" / "体块" / "blockout" / "叠概念图" / "建模不准" / "paint over" / "干净上色" / "tripo 模型精修" / "模型太 basic" / "看得出刻面" / "减面" / "导出 FBX 进 Unity" / "道具风格化" / "拆成墙再组合" / "blender 出图" / "blender mcp" / "bpy 报错"。角色走 er-character-pipeline;Unity 里修材质 / pivot 走 gaoguang-3d;树草崖地块走 Unity 生成器,不进 Blender。
 ---
 
 # ER Blender 总入口
@@ -37,6 +37,9 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 |---|---|
 | `_er_bl.py` | 公共库:`ops_ctx`(统一 temp_override)、`import_any`(焊点、应用变换、原点底部中心,焊点时保住原法线)、`inspect`(三角/开放边/非流形/材质/UV/尺寸)、`make_lablit_preview`(纯 Emission 两阶明暗,近似 Unity LabLit) |
 | `stage.py` | 评审台:V5 46° 游戏镜头、正交俯视、正/侧/3/4、128px 游戏尺寸图,lablit / white(只看明暗)两种模式,另存掩码 |
+| `overlay_render.py` | 只渲一个集合(Workbench,约 1 秒,透明底)并导出相机投影矩阵;视角 top / g46 / cam / concept,给 `kit/overlay.py` 用 |
+| `scripts/kit/blockout.py` | 拆解单 parts JSON → 体块 .blend(盒子 / 竖圆柱,每件一个物件),约 3 秒 |
+| `scripts/kit/overlay.py` | 体块叠概念图:对应点配准(相似 / 仿射 / 单应)、IoU、检查点偏差、反推概念图相机算"概念图画了多高";出三联板 + 闪烁 gif。系统 Python 跑,自己调 Blender(找不到时设 `BLENDER=`) |
 | `scripts/kit/*` | 部件化建模生成器(kitlib 拼装器 + 有顶屋 / 母舱 / 遗址 / 小件 / 家具),见 07 |
 | `scripts/paintover/po_*.py` | 干净上色 paint-over:canvas → prompts → register → colorlock → project → review(+ po_board 对照板),配置样例在 `paintover/examples/`(哨亭 + M1 矿点),见 08 |
 
@@ -44,6 +47,8 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 
 - **第 0 步:用 Skill 工具加载 `yide:reference-replicate`**,按它锁参考、整张找实例、逐层填观察表、用 `refkit.py` 量比例,再动 Blender。没加载就跑 Blender,PreToolUse 的 skill 闸会拦下(10-31 起;此前 14 个跑过 Blender 的会话 0 个加载过它,J01 三脚架、工具匣因此各打回多轮)。只读一遍这句不算,闸只认真实的 Skill 调用。
 - **第 0.5 步:登记参考。** 从全项目参考登记表(Sheet「jungle lab」组件清单 I 列)取本物件那一行的图,打开原图实看,跑 `node <插件>/scripts/ref-check.js lock …`;只导出 / 改 pivot / 减面不改形这类不改外观的活跑 `exempt --why "不改外观:…"`。参考闸会拦没登记的 Blender 调用。规则全文 vault `013 美术/mo.co截图/README_参考怎么选.md`;人造物外形只挂我们认可的概念图,mo.co 只当质感上限。
+- **小 POI 一轮 15 分钟内发截图(11-09 勾哥)**:拆解单 3 分钟(每件写干什么用、参考格号,再写参考里没有什么)→ `blockout.py` 体块 → `overlay.py` 俯视 + 46° 叠图自检 → 细节 → 出图,叠图板和评审图一起发。细节、命令、叠图怎么读、AI 概念图透视不自洽怎么办,见 07「小 POI 一轮 15 分钟」。说不出用途的件不建;叠图没过不做细节。
+- Blender 路径因机器而异(`F:/Apps/blender.exe` 或 `C:/Program Files/Blender Foundation/Blender 5.2/blender.exe`),先 `ls` 确认;`overlay.py` 两处都会找,也认 `BLENDER` 环境变量。
 - 评审先用现成的 `stage.py`(46° 游戏镜头、white 只看明暗、128px 游戏尺寸图),别另写一套;两轮不中换方法,不在一条路上盲调。
 - 一件东西的固有色两三个,体积靠顶亮底暗和边缘提亮,不靠纹理;面数只为预算服务,减完要把面藏住。
 - 改了别人开着的 .blend 前先确认;不关别人的 Blender GUI;重要 .blend 不只放 scratchpad。

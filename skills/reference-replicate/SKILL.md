@@ -65,6 +65,7 @@ py refkit.py crop    REF.png --box x0,y0,x1,y1 --zoom 4 --out c.png   # 放大�
 py refkit.py measure REF.png --p1 x,y --p2 x,y                       # 量像素
 py refkit.py color   REF.png --box x0,y0,x1,y1 --k 3                 # 中位色+暗/中/亮三簇
 py refkit.py sheet   REF.png --boxes "..;..;.." --out inst.png       # N 个实例拼一张对比
+py refkit.py cells   REF.png --n 10 --out grid.png [--crop C4]       # 打格号:观察表 / 拆解单用格号指位置
 ```
 
 **描轮廓到地面米(trace)**:参考里目标的掩膜(现成 mask png,或 `--color #RRGGBB --tol N` 颜色阈值)按同深度单元节距反算成贴地点列。比例参数就是下面透视量法里量出的三个数:同深度单元 x 节距 `--pitch-px`、单元米数 `--cell-m`、y/x 比 `--yx`(或局部俯角 `--pitch-deg`,取 yx=sin)。
