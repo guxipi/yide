@@ -7,7 +7,8 @@ clean flat tone, no seams / strokes) is described in words only. NO BAKED SHADIN
 操心的事情」): every part is one flat base colour edge to edge - no gradient, no AO / inner-corner darkening, no edge band,
 no shadow; the engine does all light and shade. Every base colour = the canvas colour = the no-hue concept colour (勾哥 11-09 「颜色从没有 hue 的概念图取」).
 Lights: only the model's own emitters, only right beside them (勾哥 11-09 「不要考虑环境光...不要给建筑或是物体加没有来由
-的光晕的颜色」). After registration run po_hardhue.py (paint-over may add VALUE only, never hue).
+的光晕的颜色」). After registration run po_hardhue.py (default restores the canvas colour incl. L outside the own lights;
+勾哥 11-09 晚:「paintover 一定要平涂，绝对禁止烘焙阴影和hue,paintover 就直接提取采用参考图的颜色」).
 Ported from ArtWork/J01v7_WS2_20261109/gen/ws2_po_prompts.py.
 
 Writes <work>/p_<sheet>.txt for every sheet in canvas/<set>_meta.json, joblist_<set>.txt and refcount_<set>.txt (= 1).
@@ -30,7 +31,7 @@ BODY = """WHAT THIS IS: image 1 is a sheet of orthographic flat renders of 3D ga
 TASK: EDIT image 1 into a clean, clear stylized mobile-game texture. This is a light colour pass on top of the existing render, not a redraw.
 - Keep EVERY shape, edge, opening, gap, seam and the outer silhouette at EXACTLY the same pixel position and size. Same framing, same scale, no perspective change, no camera move, do not crop, do not add or remove any part, paint nothing outside the existing silhouette.
 - Keep the background flat pure #00FF00 everywhere outside the models.
-- COLOURS ARE ALREADY CORRECT IN IMAGE 1: keep every part exactly the hue and saturation it has in image 1 ({colors}). Do not warm it, cool it, tint it or push it toward pink, purple, violet, lilac or blue; neutral greys stay neutral grey.
+- COLOURS ARE ALREADY CORRECT IN IMAGE 1: keep every part exactly the hue and saturation it has in image 1 ({colors}). Do not warm it, cool it, tint it or push it toward pink, purple, violet, lilac or blue; neutral greys stay neutral grey. Do not deepen, brighten, saturate or desaturate any colour either: use the colours of image 1 exactly as they are.
 {extra}
 FINISH (clean and clear, flat colour only):
 - every panel and block is ONE completely flat colour, the same from edge to edge: no gradient, no lighter top or darker bottom, no ambient occlusion, no darkening in inner corners, under overhangs or where parts meet, no shadow of any kind, no lighter band along edges, no highlight, no outline. ALL light and shade comes from the game engine, not from this texture;
