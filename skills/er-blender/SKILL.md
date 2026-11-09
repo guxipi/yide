@@ -51,6 +51,8 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 - **第 0.5 步:登记参考。** 从全项目参考登记表(Sheet「jungle lab」组件清单 I 列)取本物件那一行的图,打开原图实看,跑 `node <插件>/scripts/ref-check.js lock …`;只导出 / 改 pivot / 减面不改形这类不改外观的活跑 `exempt --why "不改外观:…"`。参考闸会拦没登记的 Blender 调用。规则全文 vault `013 美术/mo.co截图/README_参考怎么选.md`;人造物外形只挂我们认可的概念图,mo.co 只当质感上限。
 - **工具和 skill 的目的是单件精准、细节还原(11-09 勾哥)**:每个件对着拆件图那一格单独做、单独渲、左右并排验收;复用件库里没有就照格新做,不放占位块。摆位和概念图的小偏差不纠结,不把坐标同步回设计数据。见 07「单件精度」。
 - **小 POI 一轮 15 分钟内发截图(11-09 勾哥)**:拆解单 3 分钟(每件写干什么用、参考格号,再写参考里没有什么)→ `blockout.py` 体块 → `overlay.py` 俯视 + 46° 叠图自检 → 细节 → 出图,叠图板和评审图一起发。细节、命令、叠图怎么读、AI 概念图透视不自洽怎么办,见 07「小 POI 一轮 15 分钟」。说不出用途的件不建;叠图没过不做细节。
+- **POI 上色后直接进实地测(11-09 勾哥)**:paint-over 做完,模型直接放进 J01 地图里这个 POI 的实际位置,在那里的真光照、V5 镜头下截图验收;不再先放进 HBLab / JungleLab 这类样板间。灯效全部在 paint-over 画好(见 08)。
+- **有盖子 / 有门的件一律做成可打开的容器(11-09 勾哥「所有的有盖子，有门的都要做成 container，可以打开」)**:箱、柜、罐、冰柜、储物格、带门小屋等,建模时盖 / 门单独成物件、轴心放在铰链处,并出关着 / 开着两态(开态露出内部,内部也要上色);进 Unity 挂 `LootableContainer` + `LootContainerLidVisual`(`_closedVisual` / `_openVisual` 两态切换,Extraction `Assets/Scripts/Gameplay/Containers/`)。拆解单里每个有盖 / 有门的件标「容器」,漏标就打回。
 - Blender 路径因机器而异(`F:/Apps/blender.exe` 或 `C:/Program Files/Blender Foundation/Blender 5.2/blender.exe`),先 `ls` 确认;`overlay.py` 两处都会找,也认 `BLENDER` 环境变量。
 - 评审先用现成的 `stage.py`(46° 游戏镜头、white 只看明暗、128px 游戏尺寸图),别另写一套;两轮不中换方法,不在一条路上盲调。
 - 一件东西的固有色两三个,体积靠顶亮底暗和边缘提亮,不靠纹理;面数只为预算服务,减完要把面藏住。
