@@ -19,7 +19,8 @@ description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件�
 | 出评审对照图、量数字、判过没过 | `references/04-验收门.md` |
 | 导出 FBX、挂点 Empty、回读核对、交给 Unity | `references/05-导出Unity.md` |
 | VFX mesh(斩击弧/环/冲击波/拖尾)、flipbook、圆润石头单元库 | `references/06-离线件.md`(做法已调研、未在 ER 实测,先做 pilot) |
-| 树、草、崖、台地、沙被、散布 | 不进 Blender。走 Unity 自写生成器(记忆里松树/莲座树/崖体做法卡);Blender 做树叶在 10 月被放弃过 |
+| POI 里的植物:花坛 / 花箱的叶团、花、垂藤,树池树,压顶树团 | **Blender 建,和件一起交(11-09 勾哥「植物建模也由 blender 进行」)**;单元 `scripts/kit/plants.py`(v0 未验收) |
+| 地形上的树、草、崖、台地、沙被、散布 | 现行走 Unity 自写生成器(记忆里松树/莲座树/崖体做法卡);11-09 植物改 Blender 的拍板是否也覆盖这里**未确认,先问勾哥** |
 
 ## 通道:live 用 MCP 迭代,出货用 blender -b
 
@@ -40,6 +41,7 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 | `overlay_render.py` | 只渲一个集合(Workbench,约 1 秒,透明底)并导出相机投影矩阵;视角 top / g46 / cam / concept,给 `kit/overlay.py` 用 |
 | `scripts/kit/blockout.py` | 拆解单 parts JSON → 体块 .blend(盒子 / 竖圆柱,每件一个物件),约 3 秒 |
 | `scripts/kit/overlay.py` | 体块叠概念图:对应点配准(相似 / 仿射 / 单应)、IoU、检查点偏差、反推概念图相机算"概念图画了多高";出三联板 + 闪烁 gif。系统 Python 跑,自己调 Blender(找不到时设 `BLENDER=`) |
+| `scripts/kit/plants.py` | 植物单元:尖头叶片、五瓣花、叶团(底团盖土 + 放射莲座)、垂藤;PARK 花坛 v0 |
 | `scripts/kit/*` | 部件化建模生成器(kitlib 拼装器 + 有顶屋 / 母舱 / 遗址 / 小件 / 家具),见 07 |
 | `scripts/paintover/po_*.py` | 干净上色 paint-over:canvas → prompts → register → colorlock → project → review(+ po_board 对照板),配置样例在 `paintover/examples/`(哨亭 + M1 矿点),见 08 |
 
@@ -47,6 +49,7 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 
 - **第 0 步:用 Skill 工具加载 `yide:reference-replicate`**,按它锁参考、整张找实例、逐层填观察表、用 `refkit.py` 量比例,再动 Blender。没加载就跑 Blender,PreToolUse 的 skill 闸会拦下(10-31 起;此前 14 个跑过 Blender 的会话 0 个加载过它,J01 三脚架、工具匣因此各打回多轮)。只读一遍这句不算,闸只认真实的 Skill 调用。
 - **第 0.5 步:登记参考。** 从全项目参考登记表(Sheet「jungle lab」组件清单 I 列)取本物件那一行的图,打开原图实看,跑 `node <插件>/scripts/ref-check.js lock …`;只导出 / 改 pivot / 减面不改形这类不改外观的活跑 `exempt --why "不改外观:…"`。参考闸会拦没登记的 Blender 调用。规则全文 vault `013 美术/mo.co截图/README_参考怎么选.md`;人造物外形只挂我们认可的概念图,mo.co 只当质感上限。
+- **工具和 skill 的目的是单件精准、细节还原(11-09 勾哥)**:每个件对着拆件图那一格单独做、单独渲、左右并排验收;复用件库里没有就照格新做,不放占位块。摆位和概念图的小偏差不纠结,不把坐标同步回设计数据。见 07「单件精度」。
 - **小 POI 一轮 15 分钟内发截图(11-09 勾哥)**:拆解单 3 分钟(每件写干什么用、参考格号,再写参考里没有什么)→ `blockout.py` 体块 → `overlay.py` 俯视 + 46° 叠图自检 → 细节 → 出图,叠图板和评审图一起发。细节、命令、叠图怎么读、AI 概念图透视不自洽怎么办,见 07「小 POI 一轮 15 分钟」。说不出用途的件不建;叠图没过不做细节。
 - Blender 路径因机器而异(`F:/Apps/blender.exe` 或 `C:/Program Files/Blender Foundation/Blender 5.2/blender.exe`),先 `ls` 确认;`overlay.py` 两处都会找,也认 `BLENDER` 环境变量。
 - 评审先用现成的 `stage.py`(46° 游戏镜头、white 只看明暗、128px 游戏尺寸图),别另写一套;两轮不中换方法,不在一条路上盲调。
