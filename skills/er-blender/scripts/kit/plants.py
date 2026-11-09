@@ -83,3 +83,104 @@ def vine(p, start, drop, sway, n, seed):
         pz = z - drop * t
         side = 1 if i % 2 else -1
         leaf(p, (px, py, pz), (side * 0.7, -0.4, -0.25), rnd.uniform(0.12, 0.17), 0.1, "leaf_dk" if i % 3 else "leaf")
+
+
+# ------------------------------------------------------------------ low-poly units (11-09: 勾哥 要面数预算)
+# Triangle cost: leaf_card 4, flower_star 20, dome(u=10) ~50, vine leaf 4. Use these for anything that ships;
+# the blob versions above are only for look-dev renders.
+def leaf_card(p, base, direction, length, width, cid, fold=0.25):
+    """Pointed leaf as a folded diamond: base, tip and two side points lifted along the midrib (4 tris,
+    both sides drawn so it reads from below too)."""
+    d = Vector(direction).normalized()
+    side = d.cross(Vector((0, 0, 1)))
+    if side.length < 1e-4:
+        side = Vector((1, 0, 0))
+    side.normalize()
+    up = side.cross(d).normalized()
+    b = Vector(base)
+    t = b + d * length
+    m = b + d * (length * 0.42)
+    l_ = m + side * (width / 2) - up * (width * fold)
+    r_ = m - side * (width / 2) - up * (width * fold)
+    bm = p.bm
+    vb, vt, vl, vr = (bm.verts.new(v) for v in (b, t, l_, r_))
+    fs = [bm.faces.new((vb, vl, vt)), bm.faces.new((vb, vt, vr))]
+    p._tag(fs, cid, smooth=True)
+    return fs
+
+
+def flower_star(p, center, r, petal, heart="yolk", tilt=(0.0, 0.0), petals=5):
+    """Flat five-petal outline (3 verts per petal: two shoulders + rounded tip) fanned from the centre,
+    plus a small raised heart. ~20 tris."""
+    rt = Matrix.Rotation(math.radians(tilt[0]), 3, "X") @ Matrix.Rotation(math.radians(tilt[1]), 3, "Y")
+    c = Vector(center)
+    bm = p.bm
+    ph = random.random() * math.tau
+    ring = []
+    for i in range(petals):
+        a = ph + math.tau * i / petals
+        for da, rr in ((-0.32, 0.72), (0.0, 1.0), (0.32, 0.72)):
+            ring.append(c + rt @ Vector((math.cos(a + da) * r * rr, math.sin(a + da) * r * rr, 0.0)))
+    for i in range(petals):                       # notch between petals
+        pass
+    vc = bm.verts.new(c + rt @ Vector((0, 0, r * 0.05)))
+    vr = [bm.verts.new(v) for v in ring]
+    fs = [bm.faces.new((vc, vr[i], vr[(i + 1) % len(vr)])) for i in range(len(vr))]
+    p._tag(fs, petal, smooth=True)
+    hc = [bm.verts.new(c + rt @ Vector((math.cos(math.tau * k / 5) * r * 0.26, math.sin(math.tau * k / 5) * r * 0.26, r * 0.1)))
+          for k in range(5)]
+    top = bm.verts.new(c + rt @ Vector((0, 0, r * 0.18)))
+    hf = [bm.faces.new((top, hc[k], hc[(k + 1) % 5])) for k in range(5)]
+    p._tag(hf, heart, smooth=True)
+    return fs + hf
+
+
+def dome(p, cx, cy, z, rx, ry, h, cid, u=10, v=3):
+    """Low-poly half ellipsoid (foliage base mass that hides the soil)."""
+    bm = p.bm
+    rings = []
+    for j in range(v):
+        e = (math.pi / 2) * j / v
+        rings.append([bm.verts.new((cx + rx * math.cos(e) * math.cos(math.tau * i / u),
+                                    cy + ry * math.cos(e) * math.sin(math.tau * i / u), z + h * math.sin(e)))
+                      for i in range(u)])
+    top = bm.verts.new((cx, cy, z + h))
+    fs = []
+    for j in range(v - 1):
+        a, b = rings[j], rings[j + 1]
+        fs += [bm.faces.new((a[i], a[(i + 1) % u], b[(i + 1) % u], b[i])) for i in range(u)]
+    fs += [bm.faces.new((rings[-1][i], rings[-1][(i + 1) % u], top)) for i in range(u)]
+    p._tag(fs, cid, smooth=True)
+    return fs
+
+
+def mound_lp(p, cx, cy, z, rx, ry, h, n_leaves, seed, spill=0.0, leaf_scale=1.0):
+    """Low-poly mound: dome + n folded leaf cards in a radial rosette (~50 + 4n tris)."""
+    rnd = random.Random(seed)
+    dome(p, cx, cy, z, rx * 0.98, ry * 0.98, h * 0.85, "leaf_dk")
+    for i in range(n_leaves):
+        t = math.sqrt((i + rnd.random()) / n_leaves)             # stratified: even coverage with few leaves
+        a = rnd.random() * math.tau
+        bx, by = cx + math.cos(a) * rx * t * 0.8, cy + math.sin(a) * ry * t * 0.8
+        bz = z + h * (1 - t * t) * 0.85
+        out = Vector((math.cos(a), math.sin(a), 0))
+        upz = 0.55 - t * (0.75 + spill)
+        L = rnd.uniform(0.5, 0.68) * leaf_scale
+        cid = rnd.choice(("leaf", "leaf", "leaf_dk", "leaf_lt"))
+        leaf_card(p, (bx, by, bz), out + Vector((0, 0, upz)), L, L * 0.55, cid)
+
+
+def vine_lp(p, start, drop, n, seed):
+    rnd = random.Random(seed)
+    x, y, z = start
+    for i in range(n):
+        t = i / max(1, n - 1)
+        side = 1 if i % 2 else -1
+        leaf_card(p, (x + 0.03 * side, y, z - drop * t), (side * 0.7, -0.5, -0.3), rnd.uniform(0.13, 0.18), 0.1,
+                  "leaf_dk" if i % 3 else "leaf")
+
+
+def tris(obj):
+    """Triangle count of an object's mesh (for the budget gate)."""
+    obj.data.calc_loop_triangles()
+    return len(obj.data.loop_triangles)
