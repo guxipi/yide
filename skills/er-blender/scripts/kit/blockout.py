@@ -15,7 +15,8 @@ parts.json:
   ],
   "absent": ["台基四周没有栏杆", "塔身没有第二扇门"]
 }
-  shape  box | cyl (vertical cylinder; size = [dx, dy, height]) | slab (alias of box)
+  shape  box | cyl (vertical cylinder; size = [dx, dy, height]) | cone (pointed top) | slab (alias of box)
+  seg    cyl / cone side count (default 32; 8 = octagon measured across flats, flat side facing north)
   at     [x, y] centre of the footprint, or a list of centres for repeated parts
   z0     bottom height (default 0); rot = yaw in degrees about Z (default 0); tilt = [rx, ry] degrees
   color  optional sRGB hex for the vertex colour (default light grey); every part gets its own object
@@ -62,14 +63,20 @@ def parse(argv):
     return a
 
 
-def make_part(name, shape, size, col_lin):
+def make_part(name, shape, size, col_lin, seg=32):
     bm = bmesh.new()
     sx, sy, sz = size
     if shape in ("box", "slab"):
         bmesh.ops.create_cube(bm, size=1.0)
         bmesh.ops.scale(bm, vec=(sx, sy, sz), verts=bm.verts)
-    elif shape == "cyl":
-        bmesh.ops.create_cone(bm, cap_ends=True, segments=32, radius1=0.5, radius2=0.5, depth=1.0)
+    elif shape in ("cyl", "cone"):
+        r2 = 0.5 if shape == "cyl" else 0.0
+        bmesh.ops.create_cone(bm, cap_ends=True, segments=seg, radius1=0.5, radius2=r2, depth=1.0)
+        if seg <= 12:  # polygon prism (octagon...): put a flat side, not a corner, on +Y
+            bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0),
+                             matrix=Matrix.Rotation(math.pi / seg, 3, "Z"))
+            k = 1.0 / math.cos(math.pi / seg)  # size = across flats
+            bmesh.ops.scale(bm, vec=(k, k, 1), verts=bm.verts)
         bmesh.ops.scale(bm, vec=(sx, sy, sz), verts=bm.verts)
     else:
         raise ValueError("bad shape " + shape)
@@ -82,7 +89,7 @@ def make_part(name, shape, size, col_lin):
         d.color = (col_lin[0], col_lin[1], col_lin[2], 1.0)
     me.color_attributes.active_color = attr
     for p in me.polygons:
-        p.use_smooth = shape == "cyl"
+        p.use_smooth = shape in ("cyl", "cone") and seg > 12
     return me
 
 
@@ -103,7 +110,7 @@ def main(argv):
         c = hexlin(p.get("color", "#D8D8D8"))
         for k, at in enumerate(ats):
             name = "%s_%s%s" % (p["id"], p["name"], "_%d" % (k + 1) if len(ats) > 1 else "")
-            me = make_part(name, p.get("shape", "box"), p["size"], c)
+            me = make_part(name, p.get("shape", "box"), p["size"], c, int(p.get("seg", 32)))
             ob = bpy.data.objects.new(name, me)
             col.objects.link(ob)
             tilt = p.get("tilt", [0, 0])

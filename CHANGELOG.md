@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.10 — 2026-11-09 er-blender PARK 实跑一轮后补口径;kitlib 加 vcyl / vring / beam
+- PARK 公园花园第一次按「小 POI 一轮 15 分钟」完整跑完:开工到出图约 7.5 分钟,叠图第 2.5 分钟就暴露了 6 处设计坐标和概念图的冲突。
+- `07` 补:看板 topdown 是 V5 46° 视角要用 `--view g46`、位置检查点标脚点 z=0、ref-mask 只圈渲染了的东西、评审图用 Workbench FLAT 看本色、自查四条(细长件成片、屋顶坡度、穿插、颜色被光压暗)。
+- `kitlib` 新增 `vcyl` / `vring` / `beam`;`blockout.py` 加 `shape: cone` 和 `seg`(八角亭这类正多边形)。
+
 ### v0.77.9 — 2026-11-09 er-blender 小 POI 一轮 15 分钟:拆解单 → 体块 → 叠图
 - 勾哥 11-09:POI 建模返工多是"对参考的观察、理解、解构不到位就开建";要求每个小 POI 一轮建模 15 分钟内回截图。做法:把"看图"换成能核对的产物——拆解单(每件写用途、格号、参考里没有什么)、体块、叠到概念图上量偏差。
 - 新增 `er-blender/scripts/kit/blockout.py`(parts JSON → 体块 .blend,约 3 秒)、`scripts/kit/overlay.py`(对应点配准相似 / 仿射 / 单应,三联叠图板 + 闪烁 gif、IoU、检查点偏差;≥4 个同高对应点时反推概念图相机,估"概念图把它画了多高",透视不自洽时标 UNRELIABLE)、`scripts/blender/overlay_render.py`(Workbench 只渲一个集合 + 导出投影矩阵,视角 top / g46 / cam / concept)。

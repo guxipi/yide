@@ -276,3 +276,51 @@ def arc_z(y, half_span, spring_z, rise):
     R = (c * c + rise * rise) / (2 * rise)
     cz = spring_z + rise - R
     return cz + math.sqrt(max(0.0, R * R - y * y))
+
+
+# ------------------------------------------------------------------ round / oriented helpers (11-09 PARK)
+# Module functions taking a Part: vertical cylinder / frustum / polygon prism, vertical ring (planters,
+# tree pits, wheels lying flat), and an oriented box between two 3D points (ropes, hip ridges, A-frame legs).
+def vcyl(p, cx, cy, z0, z1, r0, cid, seg=24, r1=None, smooth=True, rot=0.0):
+    """Vertical cylinder / frustum (r1 top radius; 0 = cone). seg <= 12 -> polygon, flat side north."""
+    r1 = r0 if r1 is None else r1
+    bm = p.bm
+    off = (math.pi / seg if seg <= 12 else 0.0) + rot
+    a = [bm.verts.new((cx + r0 * math.cos(off + 2 * math.pi * i / seg), cy + r0 * math.sin(off + 2 * math.pi * i / seg), z0)) for i in range(seg)]
+    fs = [bm.faces.new(list(reversed(a)))]
+    if r1 > 1e-4:
+        b = [bm.verts.new((cx + r1 * math.cos(off + 2 * math.pi * i / seg), cy + r1 * math.sin(off + 2 * math.pi * i / seg), z1)) for i in range(seg)]
+        fs.append(bm.faces.new(b))
+        sides = [bm.faces.new((a[i], a[(i + 1) % seg], b[(i + 1) % seg], b[i])) for i in range(seg)]
+    else:
+        t = bm.verts.new((cx, cy, z1))
+        sides = [bm.faces.new((a[i], a[(i + 1) % seg], t)) for i in range(seg)]
+    p._tag(fs, cid)
+    p._tag(sides, cid, smooth=smooth and seg > 12)
+    return fs + sides
+
+
+def vring(p, cx, cy, z0, z1, ro, ri, cid, seg=32):
+    bm = p.bm
+    def ring(r, z):
+        return [bm.verts.new((cx + r * math.cos(2 * math.pi * i / seg), cy + r * math.sin(2 * math.pi * i / seg), z)) for i in range(seg)]
+    oa, ob, ia, ib = ring(ro, z0), ring(ro, z1), ring(ri, z0), ring(ri, z1)
+    fs = []
+    for i in range(seg):
+        j = (i + 1) % seg
+        fs += [bm.faces.new((oa[i], oa[j], ob[j], ob[i])), bm.faces.new((ia[j], ia[i], ib[i], ib[j])),
+               bm.faces.new((ob[i], ob[j], ib[j], ib[i])), bm.faces.new((oa[j], oa[i], ia[i], ia[j]))]
+    p._tag(fs, cid, smooth=True)
+    return fs
+
+
+def beam(p, a, b, w, h, cid):
+    """Box of width w / height h whose long axis runs from point a to point b (3D)."""
+    a, b = Vector(a), Vector(b)
+    d = b - a
+    L = d.length
+    fs = p.cbox(0, 0, -h / 2, L, w, h, cid)
+    rot = d.normalized().to_track_quat("X", "Z").to_matrix().to_4x4()
+    m = Matrix.Translation((a + b) / 2) @ rot
+    bmesh.ops.transform(p.bm, matrix=m, verts=list({v for f in fs for v in f.verts}))
+    return fs
