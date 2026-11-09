@@ -2,6 +2,10 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.13 — 2026-11-09 er-blender 高模烘低模 bake_hi_to_lo.py + 总装导出样板
+- 勾哥 11-09「高模烘到低模」:新增 `scripts/blender/bake_hi_to_lo.py`(Cycles selected-to-active,顶点色件走 EMIT、带材质件走 DIFFUSE/COLOR;由 ArtWork 一次性 refine_flora.py 通用化)。PARK 圆花坛 32k → 282 三角。
+- 07 加「高模烘低模 + 总装导出」节:总装导出样板 park_final.py、预算门顺序、hide_render 坑、复用库先渲一眼。
+
 ### v0.77.12 — 2026-11-09 er-blender 面数预算门 + 低面数植物单元 + 长凳四版复盘
 - 勾哥 11-09「要需要面数预算的限制」:07 加面数预算节(S ≤ 300 / M ≤ 1200,超了不交);PARK 实测 look-dev 版花坛 32k、低面数长凳 276 合格、花坛压到 300 掉质量待定。
 - `plants.py` 加 `leaf_card` / `flower_star` / `dome` / `mound_lp` / `vine_lp` / `tris`。
