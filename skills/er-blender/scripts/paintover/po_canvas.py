@@ -4,7 +4,7 @@ blender -b <scene.blend> --factory-startup -P po_canvas.py --python-exit-code 1 
 
 Per group and per view one tile (only that group's objects rendered), fixed pixel density, tiles wider than a
 sheet cut into chunks along the view's right axis with 0.6 m overlap, first-fit packed onto 1536x1024 sheets.
-Underlay = base colour x soft AO, no directional light, pure #00FF00 background.
+Underlay = flat base colour only (no AO, no light, no shading), pure #00FF00 background.
 Writes <work>/canvas/<set>_NN.png, <set>_NN_mask.png and <work>/canvas/<set>_meta.json.
 """
 import json

@@ -7,7 +7,7 @@ palette value while keeping sol's in-block shading (the big soft gradient and th
 Palette = cfg field "palette": {class name: "#RRGGBB"}, the base colours actually written into the model (Col / notes).
 For each sheet every pixel of reg/<sheet>.png is assigned to a palette class (inside the canvas mask by the canvas
 underlay colour, outside it - UV padding - by the painted colour itself). Per class:
-  - L follows the canvas (underlay value incl. its soft AO): the painted class mean L is shifted onto the canvas mean L;
+  - L follows the canvas (the flat underlay value): the painted class mean L is shifted onto the canvas mean L;
   - a/b follow the palette: the class is moved onto the palette a/b, the hue wander around it is NOT compressed (k 1.0, 11-05: never grey the palette);
   - neutral greys (palette colours whose R/G/B spread <= 8, e.g. #535556) are compressed to 0.35 so they stay neutral;
   - the class named "glow" is skipped (emissive strips / screens stay as painted);
@@ -45,7 +45,7 @@ def pal_lab(palette):
 
 
 def classify(L, names, P, allowed=None):
-    # chroma-weighted nearest palette colour (L half weight: canvas AO / painted shading change L, not hue)
+    # chroma-weighted nearest palette colour (L half weight: painted value drift changes L, not hue)
     d = ((L[..., None, 0] - P[None, None, :, 0]) * 0.5) ** 2 + (L[..., None, 1] - P[None, None, :, 1]) ** 2 + \
         (L[..., None, 2] - P[None, None, :, 2]) ** 2
     if allowed is not None:
@@ -88,8 +88,8 @@ def main():
             m_in = mask & (cls == i)
             if n in SKIP or m_in.sum() < 200:
                 continue
-            # L from the canvas (keeps the underlay value incl. soft AO); a/b from the palette itself (canvas
-            # class means get contaminated by neighbouring AO pixels, e.g. warm beige corners pulling grey yellow)
+            # L from the canvas (keeps the flat underlay value); a/b from the palette itself (canvas
+            # class means get contaminated by neighbouring edge pixels, e.g. warm beige corners pulling grey yellow)
             tgt = np.array([Lc[m_in][:, 0].mean(), P[i][1], P[i][2]], np.float32)
             mean = Lr[m_in].mean(0)
             shift = tgt - mean

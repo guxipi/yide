@@ -85,25 +85,12 @@ def _sock(node, ident):
     raise KeyError(ident)
 
 
-def _ao_emission(nt, color_socket):
+def _flat_emission(nt, color_socket):
+    """Underlay = pure base colour as Emission. No AO, no light, no shading baked in (勾哥 11-09: 明暗全交给引擎)."""
     out = nt.nodes.new("ShaderNodeOutputMaterial")
     em = nt.nodes.new("ShaderNodeEmission")
-    ao = nt.nodes.new("ShaderNodeAmbientOcclusion")
-    ao.inputs["Distance"].default_value = 0.9
-    ao.samples = 16
-    mr = nt.nodes.new("ShaderNodeMapRange")
-    mr.inputs["To Min"].default_value = 0.72
-    mr.inputs["To Max"].default_value = 1.0
-    mul = nt.nodes.new("ShaderNodeMix")
-    mul.data_type = "RGBA"
-    mul.blend_type = "MULTIPLY"
-    _sock(mul, "Factor_Float").default_value = 1.0
     L = nt.links
-    L.new(color_socket, ao.inputs["Color"])
-    L.new(ao.outputs["AO"], mr.inputs["Value"])
-    L.new(color_socket, _sock(mul, "A_Color"))
-    L.new(mr.outputs["Result"], _sock(mul, "B_Color"))
-    L.new(_sock(mul, "Result_Color"), em.inputs["Color"])
+    L.new(color_socket, em.inputs["Color"])
     L.new(em.outputs[0], out.inputs["Surface"])
 
 
@@ -115,12 +102,12 @@ def underlay_col():
     attr = nt.nodes.new("ShaderNodeAttribute")
     attr.attribute_type = "GEOMETRY"
     attr.attribute_name = "Col"
-    _ao_emission(nt, attr.outputs["Color"])
+    _flat_emission(nt, attr.outputs["Color"])
     return mat
 
 
 def underlay_from_material(src):
-    """Copy of `src` whose Principled base colour (texture or value) feeds the AO x emission underlay."""
+    """Copy of `src` whose Principled base colour (texture or value) feeds the flat emission underlay (no AO)."""
     mat = src.copy()
     mat.name = "PO_U_" + src.name
     nt = mat.node_tree
@@ -135,7 +122,7 @@ def underlay_from_material(src):
     for n in list(nt.nodes):
         if n.type in ("OUTPUT_MATERIAL",):
             nt.nodes.remove(n)
-    _ao_emission(nt, sock)
+    _flat_emission(nt, sock)
     return mat
 
 
