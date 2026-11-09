@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.19 — 2026-11-09 er-blender paint-over 只喂底稿 + po_hardhue 硬锁色相进 skill
+- 勾哥 11-09 晚「不要给 paintover 生图的时候喂 moco 的图」「参考图什么色,paintover 就应该是什么色」「paintover hue 不是你要考虑的事情」:`po_prompts.py` 改为只喂底稿(N=1,移植 WS2 `ws2_po_prompts.py`,加 NO ENVIRONMENT LIGHT、独立灯件不画第二条、木件只留板缝);配置写 `style_refs` / `card` 报错退出。用 WS2 配置实跑,和 WS2 原提示词只差这三处。
+- 新增 `scripts/paintover/po_hardhue.py`(移植 WS1):轮廓内 a/b 换回底稿、只留 L,本模型灯保留;取代 po_colorlock 作默认锁色。WS1 五张 sheet 实跑与原脚本输出逐字节一致。
+- 08 / 09 / SKILL 同步;M1 样例配置删 card。
+
 ### v0.77.18 — 2026-11-09 er-blender 09 POI 交付前检查表;植物 / 颜色 / 地形路由拍板
 - 勾哥 11-09「写进 skill」:把 10-31 ~ 11-09 对 J01 POI 的约 60 条纠正整理成 `references/09-POI交付前检查表.md`(设计 / 出图 / 建模 / 上色 / 进 J01 / 交付六段逐条打勾 + 头号四类 + 来源索引);SKILL 工作纪律加「每轮交付前过 09」。
 - 同日拍板三条路由:POI 灌木 Blender 逐片叶建、树冠走 Tripo;颜色从没有 hue 的概念图本色取(不再以邻居 POI 实机色为目标);地形植物和崖走 Unity 编辑器 + codex。SKILL 路由表同步。
