@@ -3,7 +3,8 @@
 Finish = the mo.co CLEAR / LUMINOUS look (勾哥 2026-11-09: "这种写实的笔触已经作废了,我们要的是 moco 清透感笔触",
 said looking at the old 06 guard-booth benchmark ref06_booth.png; the 11-04 "06 哨亭新版干净上色" benchmark is VOID).
 Benchmark images: vault `013 美术/丛林Lab/贴图风格基准/moco清透感_20261109/` (README there). Lights are painted with their
-halo on the surrounding surfaces (勾哥 11-09 「所有发光的地方都要有光效的 paint over」).
+halo on the surrounding surfaces (勾哥 11-09 「所有发光的地方都要有光效的 paint over」); NO ambient / environment
+light and no glow without a source on the model itself (勾哥 11-09 「不要考虑环境光...不要给建筑或是物体加没有来由的光晕的颜色」).
 
 Writes <work>/p_<sheet>.txt for every sheet in canvas/<set>_meta.json. References, in order:
   1   the canvas sheet itself (EDITED, layout kept)
@@ -50,6 +51,10 @@ AVOID (this matters most): realistic or painterly rendering, brush strokes, visi
 
 LIGHTS = """- LIGHTS - paint every light, glowing like image 4: {lights}. Each light itself is bright: an almost-white core fading to its saturated colour at its rim, never flat. ITS LIGHT IS PAINTED ONTO EVERYTHING AROUND IT that faces it (walls, piers, roof edges, poles, frames, floor), the way the pink lamp in image 4 tints the table, the armchair and the floor: those surfaces shift toward the light's colour and get brighter - strongest right next to the light, fading out smoothly within about 2-3 m (roughly the height of a door). The glow keeps its colour and never washes out to flat white; a sign or screen keeps its picture colours readable.
 """
+NO_AMBIENT = """- ONLY THE MODEL'S OWN LIGHTS: do not paint environment light, ambient light, sky light, sunset light, bounce light or coloured atmosphere of any kind. The ONLY light you may paint is light coming from a light source that is part of this model (listed below). A surface that has no such light source right next to it keeps its plain base colour - no coloured glow, halo, rim tint or haze from nowhere.
+"""
+NO_LIGHTS = """- This sheet has NO light sources: paint NO glow, halo or light tint anywhere.
+"""
 LIGHTS_DEFAULT = "every light strip, lamp, screen, sign and lit window among the base colours (the parts marked glow / light)"
 
 MULTI = (" The sheet holds SEVERAL SEPARATE views laid out side by side; each view is one part seen straight on "
@@ -80,7 +85,10 @@ def main():
     if pr.get("card"):
         refs.append(pr["card"])
         card = CARD.format(n=len(refs) + 1, card_desc=pr.get("card_desc", "the approved scene painting of this same object"))
-    lights = LIGHTS.format(lights=pr.get("lights") or LIGHTS_DEFAULT)
+    if pr.get("lights") or "glow" in (cfg.get("palette") or {}):
+        lights = NO_AMBIENT + LIGHTS.format(lights=pr.get("lights") or LIGHTS_DEFAULT)
+    else:
+        lights = NO_AMBIENT + NO_LIGHTS
     for r in refs:
         if not os.path.exists(r):
             sys.exit("missing reference: " + r)
