@@ -12,7 +12,7 @@ description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件�
 | 要做的事 | 去哪 |
 |---|---|
 | POI 建筑(有顶屋、母舱、遗址残壳)和联邦硬表面小件:先做部件再按设计坐标拼,不做地板 | 本 skill `references/07-建筑部件拼装.md` + `scripts/kit/`(10-30 勾哥定 Claude 直接做) |
-| 干净上色 paint-over:底稿 → terra 干净上色 → 配准 → 锁色 → 投影回 UV → 图集。**画法基准 = mo.co 清透感,写成文字、生图只喂底稿一张,不喂 mo.co 图(11-09 晚勾哥);每块平涂固有色、不烘任何明暗 / AO / 渐变(11-09 晚 LOG,明暗全交给引擎),颜色直接取参考图不调色，画完跑 hardhue(默认整色换回底稿)硬锁;只画本模型自己的发光体;颜色从没有 hue 的概念图本色取(11-09 勾哥拍板),进引擎闭环标定,不混灰;小件 / 圆件 / 斜放件不投影贴图,走顶点色 + LabLit** | 本 skill `references/08-干净上色paintover.md` + `scripts/paintover/`;换场景只写一个配置 JSON |
+| 干净上色 paint-over:底稿 → terra 干净上色 → 配准 → 锁色 → 投影回 UV → 图集。**画法基准 = mo.co 清透感,写成文字、生图只喂底稿一张,不喂 mo.co 图(11-09 晚勾哥);不烘 AO / 内角压暗 / 投影,渐变和柔亮带按本件参考图质感画(11-09 晚 LOG),只加明暗不改色相,画完跑 hardhue 硬锁;只画本模型自己的发光体;颜色从没有 hue 的概念图本色取(11-09 勾哥拍板),进引擎闭环标定,不混灰;小件 / 圆件 / 斜放件不投影贴图,走顶点色 + LabLit** | 本 skill `references/08-干净上色paintover.md` + `scripts/paintover/`;换场景只写一个配置 JSON |
 | 角色(四视图 → Tripo → 绑骨 → 表情 → 入库) | er-character-pipeline(它的 Blender 坑同样以本 skill 的 02 为准) |
 | 模型进了 Unity 发灰、塑料感、pivot 歪、只是法线软塌 | gaoguang-3d;先试 Unity importer 法线,多数"肉感"不用进 Blender |
 | Tripo 道具/武器/家具/POI 件:减面、刻面、色块、尺寸、挂点 | 本 skill `references/03-道具风格化.md` |
@@ -43,7 +43,7 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 | `scripts/kit/overlay.py` | 体块叠概念图:对应点配准(相似 / 仿射 / 单应)、IoU、检查点偏差、反推概念图相机算"概念图画了多高";出三联板 + 闪烁 gif。系统 Python 跑,自己调 Blender(找不到时设 `BLENDER=`) |
 | `scripts/kit/plants.py` | 植物单元:尖头叶片、五瓣花、叶团(底团盖土 + 放射莲座)、垂藤;PARK 花坛 v0 |
 | `scripts/kit/*` | 部件化建模生成器(kitlib 拼装器 + 有顶屋 / 母舱 / 遗址 / 小件 / 家具),见 07 |
-| `scripts/paintover/po_*.py` | 干净上色 paint-over:canvas → prompts(只喂底稿)→ register → hardhue(默认整色锁回底稿)→ project → review(+ po_board 对照板),配置样例在 `paintover/examples/`(哨亭 + M1 矿点),见 08 |
+| `scripts/paintover/po_*.py` | 干净上色 paint-over:canvas → prompts(只喂底稿)→ register → hardhue(硬锁色相)→ project → review(+ po_board 对照板),配置样例在 `paintover/examples/`(哨亭 + M1 矿点),见 08 |
 
 ## 工作纪律
 
@@ -57,7 +57,7 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 - **有盖子 / 有门的件一律做成可打开的容器(11-09 勾哥「所有的有盖子，有门的都要做成 container，可以打开」)**:箱、柜、罐、冰柜、储物格、带门小屋等,建模时盖 / 门单独成物件、轴心放在铰链处,并出关着 / 开着两态(开态露出内部,内部也要上色);进 Unity 挂 `LootableContainer` + `LootContainerLidVisual`(`_closedVisual` / `_openVisual` 两态切换,Extraction `Assets/Scripts/Gameplay/Containers/`)。拆解单里每个有盖 / 有门的件标「容器」,漏标就打回。
 - Blender 路径因机器而异(`F:/Apps/blender.exe` 或 `C:/Program Files/Blender Foundation/Blender 5.2/blender.exe`),先 `ls` 确认;`overlay.py` 两处都会找,也认 `BLENDER` 环境变量。
 - 评审先用现成的 `stage.py`(46° 游戏镜头、white 只看明暗、128px 游戏尺寸图),别另写一套;两轮不中换方法,不在一条路上盲调。
-- 一件东西的固有色两三个,体积靠形和引擎光影,贴图 / 顶点色只给平涂固有色,不烘顶亮底暗、边缘提亮、AO(11-09);面数只为预算服务,减完要把面藏住。
+- 一件东西的固有色两三个,体积靠形、引擎光影和参考图质感的柔渐变 / 边缘提亮,不烘 AO 和阴影(11-09),不靠纹理;面数只为预算服务,减完要把面藏住。
 - 改了别人开着的 .blend 前先确认;不关别人的 Blender GUI;重要 .blend 不只放 scratchpad。
 - 做完交给 Unity 后,在真光照下再截一次和 Blender 评审图并排;模型在引擎里和在 Blender 里不是一回事。
 

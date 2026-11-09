@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """Step 3.5 · hard hue lock for registered paint-over sheets (run after po_register, before po_project).
 
-py -3 po_hardhue.py <work_dir> <sheet> [<sheet> ...] [--t 24] [--keep-l]
+py -3 po_hardhue.py <work_dir> <sheet> [<sheet> ...] [--t 24] [--lock-l]
 
 勾哥 11-09 (WS1): 「为什么墙上有粉色的 HUE?我要说多少遍 paintover hue 不是你要考虑的事情」 - terra painted a pink wash /
 cream drift across the walls; paint-over may only add VALUE, never hue. Matching the average hex is not enough: sample
 both ends of the same face, a visible hue difference means the lock did not hold.
 
-勾哥 11-09 晚 (po-moco-clear): 「paintover 一定要平涂，绝对禁止烘焙阴影和hue,paintover 就直接提取采用参考图的颜色」 -
-so by default the lock now restores the canvas L too (flat base colour, no painted shading survives): every model pixel
-whose painted Lab is within dE T of the canvas becomes the canvas colour exactly; pixels further away (the model's own
-lights: cores and halos) keep their painted colour. --keep-l = the old 11-09 behaviour (lock a/b only, keep painted L).
+--lock-l (opt-in): also restore the canvas L, i.e. the result is the flat canvas colour everywhere except the own lights
+(full Lab dE > T). Default stays a/b only, so the material gradient / edge band terra paints survives (勾哥 11-09
+「要体现参考图里得质感啊」).
 
-Old behaviour (--keep-l): every pixel inside the canvas mask takes the canvas a/b (= approved no-hue base colour + own-light spill baked into the
+Default: every pixel inside the canvas mask takes the canvas a/b (= approved no-hue base colour + own-light spill baked into the
 underlay) and keeps the painted L. Pixels whose painted a/b is far from the canvas (dE_ab > T, i.e. the model's own
 lights: red beacon, light strips, seams, screens) keep their painted colour. Backs up reg/<sheet>.png to
 reg/<sheet>_prehue.png once and always starts from that copy, so it can be rerun. Replaces po_colorlock as the default
@@ -29,8 +28,8 @@ import numpy as np
 
 def main(argv):
     T = 24.0
-    keep_l = "--keep-l" in argv
-    argv = [a for a in argv if a != "--keep-l"]
+    keep_l = "--lock-l" not in argv
+    argv = [a for a in argv if a != "--lock-l"]
     if "--t" in argv:
         i = argv.index("--t")
         T = float(argv[i + 1])

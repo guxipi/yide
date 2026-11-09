@@ -3,12 +3,13 @@
 CANVAS ONLY (勾哥 2026-11-09 evening, WS2: 「明明好好的航空灰,为什么带了紫调?不要给 paintover 生图的时候喂 moco 的图」
 「参考图什么色,paintover 就应该是什么色」「不要有环境光的 hue」). terra gets exactly ONE image - the canvas sheet - and
 edits it in place. The mo.co clarity finish (vault 013 美术/AI记忆/feedback-paintover-moco-clarity-benchmark-20261109:
-clean flat tone, no seams / strokes) is described in words only. NO BAKED SHADING (勾哥 11-09, LOG: 「阴影 hue 都不是你
-操心的事情」): every part is one flat base colour edge to edge - no gradient, no AO / inner-corner darkening, no edge band,
-no shadow; the engine does all light and shade. Every base colour = the canvas colour = the no-hue concept colour (勾哥 11-09 「颜色从没有 hue 的概念图取」).
+clean tone + one big soft gradient + soft edge band as the material's own surface quality, no seams / strokes) is described
+in words only. NO BAKED SHADOW (勾哥 11-09, LOG: 「阴影 hue 都不是你操心的事情」, then 「要体现参考图里得质感啊」): the canvas has
+no AO, the prompt forbids AO / inner-corner and overhang darkening / cast shadow, but keeps the gradient and edge band as the
+material feel of the approved reference (no fixed top-light / bottom-dark direction). Write each material's surface feel
+from its approved design cell / parts sheet into prompt.extra - terra never sees those images. Every base colour = the canvas colour = the no-hue concept colour (勾哥 11-09 「颜色从没有 hue 的概念图取」).
 Lights: only the model's own emitters, only right beside them (勾哥 11-09 「不要考虑环境光...不要给建筑或是物体加没有来由
-的光晕的颜色」). After registration run po_hardhue.py (default restores the canvas colour incl. L outside the own lights;
-勾哥 11-09 晚:「paintover 一定要平涂，绝对禁止烘焙阴影和hue,paintover 就直接提取采用参考图的颜色」).
+的光晕的颜色」). After registration run po_hardhue.py (locks hue a/b to the canvas, keeps the painted value; --lock-l restores L too).
 Ported from ArtWork/J01v7_WS2_20261109/gen/ws2_po_prompts.py.
 
 Writes <work>/p_<sheet>.txt for every sheet in canvas/<set>_meta.json, joblist_<set>.txt and refcount_<set>.txt (= 1).
@@ -31,14 +32,17 @@ BODY = """WHAT THIS IS: image 1 is a sheet of orthographic flat renders of 3D ga
 TASK: EDIT image 1 into a clean, clear stylized mobile-game texture. This is a light colour pass on top of the existing render, not a redraw.
 - Keep EVERY shape, edge, opening, gap, seam and the outer silhouette at EXACTLY the same pixel position and size. Same framing, same scale, no perspective change, no camera move, do not crop, do not add or remove any part, paint nothing outside the existing silhouette.
 - Keep the background flat pure #00FF00 everywhere outside the models.
-- COLOURS ARE ALREADY CORRECT IN IMAGE 1: keep every part exactly the hue and saturation it has in image 1 ({colors}). Do not warm it, cool it, tint it or push it toward pink, purple, violet, lilac or blue; neutral greys stay neutral grey. Do not deepen, brighten, saturate or desaturate any colour either: use the colours of image 1 exactly as they are.
+- COLOURS ARE ALREADY CORRECT IN IMAGE 1: keep every part exactly the hue and saturation it has in image 1 ({colors}). Do not warm it, cool it, tint it or push it toward pink, purple, violet, lilac or blue; neutral greys stay neutral grey. Do not shift any colour lighter, darker, more or less saturated overall: each part's base colour stays the colour of image 1.
 {extra}
-FINISH (clean and clear, flat colour only):
-- every panel and block is ONE completely flat colour, the same from edge to edge: no gradient, no lighter top or darker bottom, no ambient occlusion, no darkening in inner corners, under overhangs or where parts meet, no shadow of any kind, no lighter band along edges, no highlight, no outline. ALL light and shade comes from the game engine, not from this texture;
+FINISH (clean and clear, keep the material feel of the approved reference):
+- every panel and block is ONE clean, even tone with only ONE very large, very soft gradient that shows the surface quality of this material as in its approved reference (described in the notes above); the gradient is part of the material, not lighting: do not make tops lighter and bottoms darker as a rule;
+- to vary value, use a slightly lighter or deeper value of the SAME colour; never mix in grey, brown, black, purple or blue;
+- where an edge or corner rounds over, a soft, slightly wide lighter band like the material edge in the reference; no thin hard highlight line, no outline;
+- NO BAKED SHADOW: no ambient occlusion, no darkening in inner corners, under overhangs or where parts meet, no cast shadow; the game engine adds all light and shade;
 - surfaces are smooth and uninterrupted: no panel seams, grids, stone joints, cracks or chips unless the line is real geometry already visible in image 1; wood = separate planks, each one flat tone, thin plank gaps only (no grain, no knots);
-- glass only where listed: one flat colour, no reflection.
+- glass only where listed: clean flat colour with one soft wide reflection.
 {lights}
-AVOID: any gradient, shading, ambient occlusion or shadow; realistic or painterly rendering, brush strokes, texture, mottling, noise, grain, grunge, dirt, wear, rust, ageing; any colour cast or tint (pink, purple, violet, warm orange, blue); ambient, sky or environment light; directional sunlight and cast shadows (the game engine adds lighting); coloured glows or halos on anything that is not right next to one of the model's own lights; black lines; text, numbers, logos; changing any shape; anything outside the silhouettes."""
+AVOID: ambient occlusion, darkened inner corners or overhang undersides, any baked shadow; realistic or painterly rendering, brush strokes, texture, mottling, noise, grain, grunge, dirt, wear, rust, ageing; any colour cast or tint (pink, purple, violet, warm orange, blue); ambient, sky or environment light; directional sunlight and cast shadows (the game engine adds lighting); coloured glows or halos on anything that is not right next to one of the model's own lights; black lines; text, numbers, logos; changing any shape; anything outside the silhouettes."""
 
 NO_AMBIENT = """- NO ENVIRONMENT LIGHT: do not paint ambient, sky, sunset or bounce light or any coloured atmosphere. The ONLY light you may paint comes from a light source that is part of this model (listed below); every surface that is not right beside one keeps its plain base colour.
 """
