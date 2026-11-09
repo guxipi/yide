@@ -6,7 +6,8 @@ blender -b <scene.blend> --factory-startup -P po_project.py --python-exit-code 1
 Per face: candidate views where the WHOLE face projects inside one tile; pass 1 strict (face centre + most corner
 samples see the camera), pass 2 lenient (centre only), pass 3 fallback (cfg.fallback, default on: no visibility,
 best-facing view -> edge-on side faces take the neighbouring paint). Occlusion is tested per group only.
-Long faces are first cut every cfg.cut_m (1 m) along world X and Y so every face fits in one tile.
+Long faces are first cut every cfg.cut_m (1 m) along world X and Y so every face fits in one tile (cut_m 0 = off:
+small props that fit one tile anyway; the cut always splits at world 0 and pushes props past their tri budget).
 Result: UV layer 'PaintUV', one atlas <work>/atlas_<set>.png (sheets in a grid, scaled by cfg.atlas_scale,
 default 0.75), material slot 0 = painted atlas, slot 1 = the object's original first material for faces no
 pass could map. NEVER call mesh.materials.clear() afterwards: it resets every face's material_index to 0.
@@ -107,8 +108,10 @@ def main():
     meta = json.load(open(os.path.join(paint, "canvas", set_name + "_meta.json"), encoding="utf-8"))
     objs = [bpy.data.objects[n] for n in meta["objects"]]
     orig_mat = {o.name: (o.data.materials[0] if len(o.data.materials) else None) for o in objs}
+    cut_m = float(cfg.get("cut_m", 1.0))
     for o in objs:
-        cut_long_faces(o, float(cfg.get("cut_m", 1.0)))
+        if cut_m > 0:                                # cut_m 0 = no cutting (small props: the cut adds tris past budget)
+            cut_long_faces(o, cut_m)
     atlas, place, (AW, AH) = build_atlas(paint, meta, scale)
     # occlusion BVH per group (a group = objects that belong together, e.g. hull shell + legs); sets made
     # with paint_canvas.py have no groups -> one group of all objects
