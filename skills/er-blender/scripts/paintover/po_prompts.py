@@ -12,7 +12,7 @@ Lights: only the model's own emitters, only right beside them (勾哥 11-09 「�
 的光晕的颜色」). After registration run po_hardhue.py (locks hue a/b to the canvas, keeps the painted value; --lock-l restores L too).
 Ported from ArtWork/J01v7_WS2_20261109/gen/ws2_po_prompts.py.
 
-Writes <work>/p_<sheet>.txt for every sheet in canvas/<set>_meta.json, joblist_<set>.txt and refcount_<set>.txt (= 1).
+Writes <work>/p_<sheet>.txt for every sheet in canvas/<set>_meta.json, joblist_<set>.txt and refcount_<set>.txt (= 1, or 2 with prompt.card).
 Run each with:  bash <yide>/skills/er-shop-mkt/scripts/run_codex.sh <work_dir> <sheet> 1   (terra copy for paint-over)
 4 in parallel via xargs -P 4 inside ONE run_in_background command; REJECT -> rerun once unchanged.
 
@@ -21,7 +21,11 @@ steel door #8A8E94, cyan light strip #55FDFE (glow)"; pale low-saturation colour
 line in extra: "#CCAFA5 stays this exact colour, NOT salmon / pink"), lights (optional: the model's own emitters and
 where they sit, e.g. "the red lamp on the cap top, centred, about 2/3 down from the top edge"), extra (optional dict
 sheet_name -> extra instruction lines, e.g. "the dark square is a closed metal hatch, NOT a window").
-REMOVED (exit with an error): style_refs and card (no reference images of any kind, 11-09), marks (no weathering, 11-04).
+card (optional, 11-09 晚 LOG / 勾哥选 B「要体现参考图里得质感啊」): this object's OWN approved parts-sheet / design cell, a
+path string (all sheets) or a dict sheet_name -> path (relative to the config file or absolute). It is fed as image 2 for
+SURFACE QUALITY ONLY (gradient softness, edge band width); terra is told not to take shapes, layout, colours, tint or
+lighting from it, and po_hardhue relocks hue afterwards. refcount becomes 2 when every sheet has a card. Never a mo.co image.
+REMOVED (exit with an error): style_refs (no mo.co / style images, 11-09), marks (no weathering, 11-04).
 """
 import json
 import os
@@ -35,7 +39,7 @@ TASK: EDIT image 1 into a clean, clear stylized mobile-game texture. This is a l
 - COLOURS ARE ALREADY CORRECT IN IMAGE 1: keep every part exactly the hue and saturation it has in image 1 ({colors}). Do not warm it, cool it, tint it or push it toward pink, purple, violet, lilac or blue; neutral greys stay neutral grey. Do not shift any colour lighter, darker, more or less saturated overall: each part's base colour stays the colour of image 1.
 {extra}
 FINISH (clean and clear, keep the material feel of the approved reference):
-- every panel and block is ONE clean, even tone with only ONE very large, very soft gradient that shows the surface quality of this material as in its approved reference (described in the notes above); the gradient is part of the material, not lighting: do not make tops lighter and bottoms darker as a rule;
+- every panel and block is ONE clean, even tone with only ONE very large, very soft gradient that shows the surface quality of this material as in its approved reference ({refsrc}); the gradient is part of the material, not lighting: do not make tops lighter and bottoms darker as a rule;
 - to vary value, use a slightly lighter or deeper value of the SAME colour; never mix in grey, brown, black, purple or blue;
 - where an edge or corner rounds over, a soft, slightly wide lighter band like the material edge in the reference; no thin hard highlight line, no outline;
 - NO BAKED SHADOW: no ambient occlusion, no darkening in inner corners, under overhangs or where parts meet, no cast shadow; the game engine adds all light and shade;
@@ -50,6 +54,9 @@ LIGHTS = """- OWN LIGHTS ONLY: {lights}. Each light itself is bright: an almost-
 """
 NO_LIGHTS = """- This sheet has NO light sources: paint NO glow, halo or light tint anywhere.
 """
+CARD = ("- IMAGE 2 is the approved design of this same object. Use it ONLY to see the SURFACE QUALITY: how soft and large the "
+        "gradient on each surface is and how wide the soft edge band is. Do NOT take its shapes, layout, proportions, colours, tint, "
+        "lighting or shadows; image 1 decides every shape and every colour.\n")
 LIGHTS_DEFAULT = "every light strip, lamp, screen, sign and lit window among the base colours (the parts marked glow / light)"
 MULTI = (" The sheet holds SEVERAL SEPARATE views laid out side by side; each view is one part seen straight on "
          "(some from the game camera angle, some from the side or back). Paint each view as its own object and keep the green gaps between them.")
@@ -70,33 +77,51 @@ def main():
     pr = cfg["prompt"]
     if "marks" in pr:
         sys.exit("prompt.marks is gone (no weathering on J01 buildings since 2026-11-04) - delete it from the config")
-    for k in ("style_refs", "card"):
-        if k in pr:
-            sys.exit("prompt.%s is gone: paint-over gets the canvas ONLY (勾哥 11-09: 不要给 paintover 生图喂 moco 的图 /"
-                     " 参考图什么色 paintover 就什么色; parts sheets carry a warm-pink cast that terra copies)."
-                     " Delete it from the config; write colours into prompt.colors and layout notes into prompt.extra" % k)
+    if "style_refs" in pr:
+        sys.exit("prompt.style_refs is gone: no mo.co / style images in paint-over (勾哥 11-09: 不要给 paintover 生图喂 moco 的图)."
+                 " Delete it; for surface quality use prompt.card = this object's own parts-sheet cell")
+    card = pr.get("card")
+    cfgdir = os.path.dirname(os.path.abspath(sys.argv[1]))
+
+    def card_for(n):
+        c = card.get(n) if isinstance(card, dict) else card
+        if not c:
+            return None
+        c = c if os.path.isabs(c) else os.path.join(cfgdir, c)
+        if not os.path.exists(c):
+            sys.exit("prompt.card for %s not found: %s" % (n, c))
+        return os.path.abspath(c).replace(os.sep, "/")
     if pr.get("lights") or "glow" in (cfg.get("palette") or {}):
         lights = NO_AMBIENT + LIGHTS.format(lights=pr.get("lights") or LIGHTS_DEFAULT)
     else:
         lights = NO_AMBIENT + NO_LIGHTS
     extra = pr.get("extra", {})
     meta = json.load(open(os.path.join(W, "canvas", cfg["set"] + "_meta.json"), encoding="utf-8"))
-    names = []
+    names, nref = [], set()
     for sh in meta["sheets"]:
         n = sh["name"]
         multi = MULTI if len(sh["tiles"]) > 1 else ""
         ex = extra.get(n, "")
         ex = ("- " + ex.strip().lstrip("- ") + "\n") if ex else ""
-        txt = head([W + "/canvas/" + n + ".png"], n) + BODY.format(
-            what=pr["what"], multi=multi, colors=pr["colors"], extra=ex, lights=lights)
+        c = card_for(n)
+        refl = [W + "/canvas/" + n + ".png"] + ([c] if c else [])
+        nref.add(len(refl))
+        if c:
+            ex = CARD + ex
+        txt = head(refl, n) + BODY.format(
+            what=pr["what"], multi=multi, colors=pr["colors"], extra=ex, lights=lights,
+            refsrc="image 2" if c else "described in the notes above")
         open(os.path.join(W, "p_%s.txt" % n), "w", encoding="utf-8", newline="\n").write(txt)
         names.append(n)
     os.makedirs(os.path.join(W, "img"), exist_ok=True)
     # LF only: xargs on Git Bash keeps the trailing \r of CRLF lines -> every job name breaks
     open(os.path.join(W, "joblist_%s.txt" % cfg["set"]), "w", newline="\n").write("\n".join(names) + "\n")
-    open(os.path.join(W, "refcount_%s.txt" % cfg["set"]), "w", newline="\n").write("1\n")
+    if len(nref) > 1:
+        sys.exit("prompt.card covers only some sheets: one ref count per set - give every sheet a card or none")
+    N = nref.pop() if nref else 1
+    open(os.path.join(W, "refcount_%s.txt" % cfg["set"]), "w", newline="\n").write("%d\n" % N)
     print("\n".join(names))
-    print("refs per job (run_codex.sh last arg): 1")
+    print("refs per job (run_codex.sh last arg): %d" % N)
 
 
 if __name__ == "__main__":
