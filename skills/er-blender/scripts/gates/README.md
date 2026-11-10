@@ -45,4 +45,5 @@ python <yide>/skills/er-blender/scripts/gates/navdump_reach.py <navdump.json> <P
 
 ## 验证记录
 
-- 11-10 TS(`TS_final.blend` 19:10 / W1 `navdump_r16.json` 19:17):离线判失物招领一翼(LF / HC 门)孤岛、宿舍两门净宽 1.50 / 1.57(W1 实测 1.56)、1F 门从 0.1 地坪量净高 2.2、南门墙楣 0.05;`navdump_reach.py` 用 W1 真实三角形算出入口可达 489.5 m²,2F 整层(49.5 m²)和失物招领(13.7 m²)是孤岛——W1 逐门测法「16/16 PathComplete」没抓到。
+- 11-10 TS(`TS_final.blend` 19:10 / W1 `navdump_r16/r17`):离线闸门判 2F 经外挂梯可达(和 W1 实走一致);西侧一块(HC 门、LF 门东侧、室内楼梯脚,约 (5–9, 9–12))孤岛,两种方法一致,TS 实走只测了 (11.2, 9.0) 的失物间,这块待 W1 实走复核;1F 门从 0.1 地坪量净高 2.2(TS 确认);宿舍两门门洞射线量 1.50 / 1.57。
+- **教训**:第一版 `navdump_reach.py` 把 2F 判成孤岛是假阳性——TS 的 NavDump 按三角形中心裁框(x −9..23、y −11..15),外挂梯下半段在框外。现在碰到导出框边(`dump_box`)的连通块报 `unknown_cropped`;导出框要包住所有入口外 10 m。

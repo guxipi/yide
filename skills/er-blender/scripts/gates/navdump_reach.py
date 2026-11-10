@@ -4,6 +4,7 @@
 失物招领一翼 + 室内楼梯脚 + 整个 2F 和入口根本不连通——门两侧两个点都在同一个孤岛里,逐门测法看不出来。
 这个闸门只认一件事:从入口出发,每个房间探点 / 每扇门两侧 / 每个精英位都在同一块连通的 NavMesh 上。
 
+**导出框必须包住所有入口外 10 m(含外挂梯落地端)**:框裁掉的部分没法判,碰到框边的连通块报 unknown_cropped,不算孤岛。
 输入:NavMesh.CalculateTriangulation() 导出的 JSON(TS / RES 的 Play 脚本 NavDump() 已有这个格式):
   {"tris": [[ax, ay, az, bx, by, bz, cx, cy, cz], ...], "doors": [[name, x0, y0, x1, y1, z], ...](可选)}
 坐标用 POI 本地、Z 朝上(和 Blender 导出坐标一致,poi_nav_gate.py 的配置可以直接复用 seeds / probes / elites)。
@@ -63,8 +64,6 @@ def main(argv):
                 if near_seg(c, a, b) + near_seg(d, a, b) + near_seg(a, c, d) + near_seg(b, c, d) >= 2:
                     par[find(i)] = find(j)
 
-    cen = [tuple(sum(t[k::3]) / 3 for k in range(3)) for t in T]
-    area = [0.5 * abs((t[3] - t[0]) * (t[7] - t[1]) - (t[6] - t[0]) * (t[4] - t[1])) for t in T]
 
     def inside(px, py, t):
         ax, ay, bx, by, cx, cy = t[0], t[1], t[3], t[4], t[6], t[7]
@@ -86,9 +85,26 @@ def main(argv):
         d = min(range(len(T)), key=lambda i: (cen[i][0] - x) ** 2 + (cen[i][1] - y) ** 2 + 4 * (cen[i][2] - z) ** 2)
         return d if math.dist(cen[d][:2], (x, y)) <= snap + 1.0 and abs(cen[d][2] - z) < 1.0 else -1
 
+    cen = [tuple(sum(t[k::3]) / 3 for k in range(3)) for t in T]
+    area = [0.5 * abs((t[3] - t[0]) * (t[7] - t[1]) - (t[6] - t[0]) * (t[4] - t[1])) for t in T]
     comp_area = defaultdict(float)
     for i in range(len(T)):
         comp_area[find(i)] += area[i]
+    # a component touching the dump's crop box may continue outside it (11-10 TS: the outside stair's lower flight was cut off
+    # by NavDump's box, so 2F looked like an island) - those are "unknown", not islands; re-dump with a wider box
+    box = nav.get("box") or cfg.get("dump_box")            # [x0, y0, x1, y1] the crop NavDump applied (centroid test)
+    if box:
+        bx0, by0, bx1, by1 = box
+    else:
+        xs = [v for t in T for v in t[0::3]]
+        ys = [v for t in T for v in t[1::3]]
+        bx0, bx1, by0, by1 = min(xs), max(xs), min(ys), max(ys)
+    edge_margin = float(cfg.get("dump_edge_margin", 1.5))
+    touches = defaultdict(bool)
+    for i, t in enumerate(T):
+        pts = [(t[k], t[k + 1]) for k in (0, 3, 6)] + [cen[i][:2]]
+        if any(x - bx0 < edge_margin or bx1 - x < edge_margin or y - by0 < edge_margin or by1 - y < edge_margin for x, y in pts):
+            touches[find(i)] = True
     if cfg.get("seeds"):
         seeds = [tri_at(*s) for s in cfg["seeds"]]
     else:
@@ -102,7 +118,11 @@ def main(argv):
         i = tri_at(x, y, z)
         if i < 0:
             return "no_navmesh"
-        return "reach" if find(i) in main_comps else "island(%.1f m²)" % comp_area[find(i)]
+        if find(i) in main_comps:
+            return "reach"
+        if touches[find(i)]:
+            return "unknown_cropped(%.1f m², 连通块碰到导出框边,框外可能还连着;放大框重导再判)" % comp_area[find(i)]
+        return "island(%.1f m²)" % comp_area[find(i)]
 
     fails, res = [], {"probes": {}, "doors": {}, "elites": {}}
     for name, p in (cfg.get("probes") or {}).items():
