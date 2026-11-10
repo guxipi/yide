@@ -4,7 +4,7 @@
 两项判定(Lab 空间,忽略近白背景和近黑描边):
   1. 整图偏色:低彩度像素(C* < 6,= 本该中性的混凝土 / 灰钢 / 白墙 / 石板)的 a*/b* 中位数偏离 0
      → 偏紫(b* < -3 且 a* > 2)或任意方向 |ab| > 阈值 = 有光色罩在中性物体上。
-  2. 粉紫占比:色相 285°–350° 且 C* > 15(粉 / 紫 / 品红),加上 295°–350° 的淡紫灰(C* > 4、L* > 50),合计占前景 > 阈值(默认 8 %)。
+  2. 粉紫占比:色相 285°–350° 且 C* > 15(粉 / 紫 / 品红),加上 295°–350° 的淡紫灰(C* > 6、L* > 50,肉眼可见),合计占前景 > 阈值(默认 8 %)。
   注意:像素统计分不清「光把物体染紫」和「物体本身淡紫」,阴影偏色仍要按 07 目检(同一件亮面 / 暗面 refkit color 取色,色相差 > 10° 打回)。
 退出码 0 = 全过;1 = 有图不过(逐张打印数值)。
 python img_colorcheck.py img/*.png [--cast 6] [--pink 0.06]
@@ -36,7 +36,7 @@ def check(path, cast_lim, pink_lim):
     am = float(np.median(a[neutral])) if neutral.sum() > 500 else 0.0
     bm = float(np.median(b[neutral])) if neutral.sum() > 500 else 0.0
     hue = (np.degrees(np.arctan2(b, a)) + 360) % 360
-    purple = fg & (((C > 15) & (hue >= 285) & (hue <= 350)) | ((C > 4) & (L > 50) & (hue >= 295) & (hue <= 350)))
+    purple = fg & (((C > 15) & (hue >= 285) & (hue <= 350)) | ((C > 6) & (L > 50) & (hue >= 295) & (hue <= 350)))
     pr = float(purple.sum() / max(fg.sum(), 1))
     errs = []
     if (bm < -3 and am > 2) or np.hypot(am, bm) > cast_lim:
