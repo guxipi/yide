@@ -44,6 +44,7 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 | `scripts/kit/plants.py` | 植物单元:尖头叶片、五瓣花、叶团(底团盖土 + 放射莲座)、垂藤;PARK 花坛 v0 |
 | `scripts/kit/*` | 部件化建模生成器(kitlib 拼装器 + 有顶屋 / 母舱 / 遗址 / 小件 / 家具),见 07 |
 | `scripts/paintover/po_*.py` | 干净上色 paint-over:canvas → prompts(底稿 + 可选本件拆件格当质感参考)→ register → hardhue(硬锁色相)→ project → review(+ po_board 对照板),配置样例在 `paintover/examples/`(哨亭 + M1 矿点),见 08 |
+| `scripts/gates/poi_nav_gate.py` + `navdump_reach.py` | POI 共用寻路闸:装机前用导出 .blend 按 W1 NavMesh 参数离线判(门两侧通不通、门宽 / 高 / 墙楣、门口净区、精英位离边、各层走不到的地面),W1 烘完读 navdump 判入口连通;阈值只在 `gates/thresholds.json`,每个 POI 一份配置,见 `gates/README.md` |
 
 ## 工作纪律
 

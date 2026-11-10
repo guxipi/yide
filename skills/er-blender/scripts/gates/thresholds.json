@@ -1,0 +1,36 @@
+{
+  "version": "mid-poi-spec-v2.0",
+  "source": "中 POI 建模执行口径 v2.0 §2c(v1.6–v1.9,总控 11-10 晚)+ W1 ProjectSettings/NavMeshAreas.asset(agentTypeID 0)",
+  "agent": {
+    "radius": 0.5,
+    "height": 2.0,
+    "climb": 0.75,
+    "slope_deg": 45,
+    "cell": 0.16666667,
+    "min_region_area_m2": 2.0
+  },
+  "door": {
+    "min_width": 1.6,
+    "min_height": 2.3,
+    "min_lintel_above": 0.2,
+    "probe_offset": 0.9,
+    "zone_depth": 1.5,
+    "zone_offset": 0.3,
+    "zone_max_blocked_share": 0.05,
+    "block_band": [0.05, 2.0]
+  },
+  "stair": {
+    "min_width": 1.6,
+    "min_return_width": 1.5,
+    "ext_min_width": 1.6,
+    "ext_min_landing": 3.4
+  },
+  "room": {
+    "min_net_area_m2": 2.0,
+    "dark_room_min_width": 1.5,
+    "corridor_min_width": 1.3
+  },
+  "elite": {
+    "min_edge_distance": 1.0
+  }
+}

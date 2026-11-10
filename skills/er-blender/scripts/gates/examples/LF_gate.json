@@ -1,0 +1,9 @@
+{
+ "poi": "LF",
+ "_note": "Blend: ArtWork/J01v7_LF_20261110/export/LF_final.blend. Room doors only (LF_04 building doors + LF_05 cab door); container / locker / canopy doors are furniture. Add not_walkable_boxes for the shuttle hull and cargo container interior if they are not meant to be walked.",
+ "floors": [0.1, 3.82],
+ "ground_z": 0.0,
+ "door_leaf_regex": "^LF_0[45]_Door",
+ "ignore_regex": "Rug|_Mat|Decal|PadMark|Glow$",
+ "structure_regex": "^LF_0[3-5]_(Wall|Win|Floor|Slab|Parapet)|_Wall|_Floor$"
+}

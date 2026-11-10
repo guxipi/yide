@@ -2,6 +2,10 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.77.34 — 2026-11-10 er-blender 共用寻路闸 gates/
+- 新增 `scripts/gates/poi_nav_gate.py`(装机前用 .blend 按 W1 NavMesh 参数离线模拟 Recast:各层走不到的地面、门两侧连通、门宽 / 高 / 墙楣、门口净区、精英位离边)和 `navdump_reach.py`(W1 烘完读真实三角形判入口连通);阈值只在 `gates/thresholds.json`(口径 v2.0)。
+- 起因:11-10 五个中 POI 各写一套量法、口径打架;TS 逐门 16/16 全过,用 navdump 一算 2F 整层和失物招领一翼是孤岛。09 §八 指向闸门,离线不过不申请 W1 锁。
+
 ### v0.77.33 — 2026-11-10 er-blender 09 §八:入口到每个房间连通性
 - TS 逐门全通但失物招领孤岛、2F 上不去:验收改测入口 → 每房间 / 每层 / 精英位 PathComplete + navdump 连通块。
 

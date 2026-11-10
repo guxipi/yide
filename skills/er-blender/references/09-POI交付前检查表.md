@@ -133,6 +133,8 @@
 
 ## 八、W1 落位 nav / 材质硬口径(11-10 TS 收完提炼,勾哥验收「很好,可以过了」)
 
+> **门洞宽高 / 墙楣 / 小房间被剪 / 梯宽 / 门口净区 / 精英位 / 入口连通这几条用共用闸门判,不再各写量数脚本**:装机前 `scripts/gates/poi_nav_gate.py` 用导出 .blend 离线跑,W1 烘完 `scripts/gates/navdump_reach.py` 读 navdump 再跑;两者共用 `scripts/gates/thresholds.json`(口径改了只改这张表)。离线闸门不过不申请 W1 锁。每个 POI 写一份配置,`ignore_regex` 照抄自己安装器的 nav ignore 名单。见 `scripts/gates/README.md`。
+
 - [ ] **所有门洞 ≥ 1.6 宽 × 2.3 高,门扇 ≤ 2.2**:含暗室 / 只进玩家的门(玩家和怪走同一张 NavMesh)。门洞高 2.0 = agent 高,体素取整过不去。
 - [ ] **门不超墙高**(勾哥「门不应该超过墙的高度」):门洞顶到墙顶 ≥ 0.2 m 墙楣,矮墙上开门就加高墙。
 - [ ] **小房间扣 0.5 收缩后净面积 ≥ 2 m²**:小于烘焙 minRegionArea 的房间整块被剪(暗室、卫生间最常中)。
