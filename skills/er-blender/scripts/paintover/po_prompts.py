@@ -50,7 +50,7 @@ AVOID: ambient occlusion, darkened inner corners or overhang undersides, any bak
 
 NO_AMBIENT = """- NO ENVIRONMENT LIGHT: do not paint ambient, sky, sunset or bounce light or any coloured atmosphere. The ONLY light you may paint comes from a light source that is part of this model (listed below); every surface that is not right beside one keeps its plain base colour.
 """
-LIGHTS = """- OWN LIGHTS ONLY: {lights}. Each light itself is bright: an almost-white core fading to its saturated colour at the rim. Its light tints ONLY the surfaces directly beside it (within about one metre) and only where image 1 already shows a faint tint of that colour; nothing else gets any glow. A light that is its own separate object (a strip, a lamp) is painted on that object only: on the wall behind it paint just the faint halo, never a second copy of the light.
+LIGHTS = """- OWN LIGHTS ONLY: {lights}. Each light itself is bright: an almost-white core fading to its saturated colour at the rim, painted ON THE LIGHT ITSELF ONLY. Its light tints NO other surface (iron rule 0, 11-10: every object keeps its own base colour; light spill is the game engine's job). A light that is its own separate object (a strip, a lamp) is painted on that object only: on the wall behind it paint nothing of it - no halo, no second copy.
 """
 NO_LIGHTS = """- This sheet has NO light sources: paint NO glow, halo or light tint anywhere.
 """

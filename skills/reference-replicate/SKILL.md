@@ -14,6 +14,10 @@ description: 对标参考图/竞品画面做复刻或借鉴时(地面、植被�
 
 一句话:**先量后说,在景对比,盲列差异,逐层过表。**
 
+## ER 生图铁规 0(11-10 勾哥,强制执行)
+
+出图 / 派生图单时,画面里**每样东西都是它自己的本色**:楼、屋顶、地面、草、树、岩、水、道具、家具、车,没有例外。灯光、时段、氛围、阴影不改任何东西的颜色;不罩整图色调;发光件只画自己亮,不往别处染色。参考图(范本 / 方向图 / mo.co 帧)**只学形、材质和收尾质感,不学被光染出来的颜色**,工单里写明。少用粉 / 紫(「这个主要是男生玩的游戏」)。发单前跑 `er-blender/scripts/imagegen/prompt_lint.py`,回图跑 `img_colorcheck.py`,不过不发 / 不交。勾哥原话见 `er-blender/references/09-POI交付前检查表.md` 铁规 0。
+
 ## 0 锁参考(开工前一次;ER 项目照 vault `013 美术/mo.co截图/README_参考怎么选.md`)
 
 **ER 的参考只从全项目参考登记表取**:Google Sheet「jungle lab」→「组件清单」tab(`1olWlOYGpraTlgkNIUQCYwZVyqGqGdibDeKTmInzX7zk`)的 I 列,一行一个物件(类别 / 组件 / 变体)。
