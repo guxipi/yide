@@ -49,6 +49,11 @@
 - [ ] 与平台同高的那级踏步并进平台;楼梯上不许有接缝。
 - [ ] 外露棱倒 6 cm / 2 段;家具倒 7 cm / 2 段。不比 mo.co 更圆、更软糯(红线 4)。
 
+**屋顶**(11-09 LOG「我最不能接受的就是这个夹心饼干一样的房顶」「为什么还有绿色的土色」)
+- [ ] **平顶不做夹心饼干**:屋面色从边到边铺满整个顶面,墙顶不另起一圈压顶色;顶棱只留一道 5 cm、45° 的硬斜棱(同屋面色),竖角照常圆;不做 0.2–0.3 m 的大圆角带(J01 黄日下削成黄白高光 + 半补偿紫线)。屋面走顶点色(LOG `log_final.py` 的 `VC_ONLY={"roof"}`),色照参考图。南沿雨棚 / 挑檐 / 灯盒离檐口 ≥ 0.4 m,读成门头不读成又一层屋顶。拆件格里画的大圆角顶棱照这条改成硬斜棱。
+- [ ] **屋顶吞没(L5)只用立体件**:叶团(5–6 叶环 + 错半步二环 + 顶 3 片交叉叶)、垂藤、真有体积的堆;不贴平面苔斑 / 污渍片 / 扁盘(实机读成「绿色的土」「平橙盘」)。屋顶不单调靠本职业设备件,不靠给屋面分层或描边。
+- [ ] **屋顶细件(管、筒、杆、灯杆)进 W1 关投影**(`shadowCastingMode Off`),否则灰屋面上压出一道道紫影条;大体块照常投影。小件别落在大件投影里。
+
 **件**
 - [ ] **有门 / 有盖的件都能打开**(11-09):门扇 / 盖子单独成件、轴心在铰链、墙上开真门洞、箱子做空心;出关 / 开两态,开态内部也上色;进 Unity 挂 `LootableContainer` + `LootContainerLidVisual`。拆解单里标「容器」。
 - [ ] 筒形建筑(灯塔)内部空心可放东西;开盖箱的盖要有真实结构(托盘盖 + 铰链)(11-09 LH)。
@@ -76,6 +81,8 @@
 - [ ] 木头干净平涂,只留板缝(11-09 驳船「笔触太多」);但按材料出质感:布像布、木头像木头(11-07)。
 - [ ] terra 乱画的三种 sheet 在 extra 写死(稀疏 sheet 另画拆件图 / 俯视大平面画上整个塔正面 / 柜背板补画隔板和货)。
 - [ ] 细件投影后跑 `J01v7_WS2_20261109/gen/po_degreen.py`,评审图不许有绿。
+- [ ] **顶棱不画亮带**:屋顶顶棱在提示词 `edge_rule` 写死「不画亮带 / 暗线 / 边框」(棱上柔亮带的质感规则不用在屋顶顶棱上)。
+- [ ] **投影后跑归属检查,防串色**(11-09 HB「这些地方应该都是实体墙,不要出现这些乱七八糟的纹路」):游戏里会隐藏的屋顶 / 迎镜侧墙,连带藤蔓、吊车环、天窗灯,挡在实体墙前会把颜色印到墙上。跑 `ArtWork/J01v7_HB_v2_20261107/gen/hb_po_owner.py` → `hb_po_bleed.py --fix`(实体面被别的颜色族占 > 8 % 退顶点色,外来颜料按同组回填)。光晕(paint-over 画的和 glow_spill 烘的)先问「这灯会不会跟着某件隐藏」,会隐藏的灯只照它自己那一件。
 - [ ] 提示词发出前对一遍现行铁规(旧要求和新铁规冲突以新为准或先问)。
 - [ ] 上色派 terra,不派 sol(11-07)。
 
@@ -84,16 +91,17 @@
 - [ ] **先删旧 POI 整个根,再放新的**(11-09);旧根上的搜点(loot prefab)不跟着删,在新件位置重新挂上、隐藏网格。
 - [ ] **直接放进 J01 这个 POI 的实际位置测**,不进 HBLab / JungleLab 样板间(11-09)。
 - [ ] **颜色目标 = 没有 hue 的概念图本色**(11-09 勾哥拍板,见 §七-2):增益标定把实机受光面还原到概念图本色。邻居 POI 的实机色不再当目标,只用来查同类材质有没有明显不像同一种东西,不像就回到概念图本色找原因、问勾哥。量法 k-means k=3 + 最亮 15 % 中位,CIE76 ΔE ≤ 10,出对照板。
+- [ ] **光影不动,按现行光反推材质**(11-09 最终口径「现在我决定了光影不动,你要根据光影反推 paintover 让它最终呈现参考图的颜色」):LOG 做法 `gen/log_meas.py` 取点 → `log_calib.py` → `log_final.py` 按「材质 × 色类」增益(`PO:<mat>:<CLASS>`)→ 装 W1 实拍,循环到每个点和参考差 ≤ 10。**阴影的 hue、影面偏紫、顶面过曝归光影会话**(全局 `_LabShadowTint`、LabLit 软肩 `_LabKnee`),POI 侧发现了转告,不在材质里补、不在贴图里烘阴影。
 - [ ] **对色截图同一次 Play、同一光**:要比的几家在同一次 Play 里连拍,板上写 t / storm_blend / fog / sun。跨 session 截图只看布局不比色。审色只认对照板数字。
-- [ ] **顶面和立面分开标定**:W1 顶面受黄光、立面受紫光;浅色大顶面和高饱和小件各给一份材质系数,不用一组全局系数。
-- [ ] **受光顶面过曝闸**(11-09「这个未来不能再出现」):两通道 ≥ 248 或三通道 ≥ 225 = 洗白 = 不交。
+- [ ] **增益按「材质 × 色类」分,不按法线做顶面补偿**:旧 BH 的顶面 TG 蓝增益会在圆角上裂出紫线、把深色钢压成黑块,`topcomp.py` 默认不开。散料(木屑)不跟原木共用增益;浅色大顶面和高饱和小件各给一份系数,不用一组全局系数。
+- [ ] **受光顶面过曝闸**(11-09「这个未来不能再出现」):两通道 ≥ 248 或三通道 ≥ 225 = 洗白 = 不交。修法归光影会话(软肩),POI 侧不按组压暗材质;卡住就在交付里明说。
 - [ ] **大面积换主色先给 2–3 个引擎色样问**(棚 A 参考是粉紫,勾哥要航空灰)。
 - [ ] 45 m V5 实拍看屋顶 + 两面外墙再交。
 
 ## 六、交付前全量审查
 
 - [ ] 按 reference-replicate L1–L7 逐层过;**L5 光照必过**(发光件周围有没有光:窗 / 屏 / 灯 / 灯条)。
-- [ ] 按件类在实拍里逐类找、和参考比:楼梯栏杆 / 发光件 / 玻璃 / 木件 / 地板 / 墙 / 侧面 / 舱内 / 屋顶 / 容器开合。
+- [ ] 按件类在实拍里逐类找、和参考比:楼梯栏杆 / 发光件 / 玻璃 / 木件 / 地板 / 墙 / 侧面 / 舱内 / 屋顶 / 容器开合。**每个屋顶从 45 m V5 实拍里裁出来放大逐块看**;另截一张屋顶剖开(隐藏屋顶)的 V5 图查墙面串色。
 - [ ] 一个根因 → 列出同因会出在哪些件(所有楼梯、所有发光、所有朝东西的侧面、所有同类材质)→ 一次全修。
 - [ ] 看得见的补丁 / 色块 / 楔块 / 条纹 / 蓝条 / 残留窄色带:要么修,要么交付里明说并问。不许写「小毛病可接受」。
 - [ ] 管线改动先在一件上做小样 + 数值 + 实拍,一次只改一个变量,再整条跑。
@@ -102,11 +110,11 @@
 ## 七、11-09 勾哥拍板的三条路由(原先互相冲突,已定)
 
 1. **POI 植物**:**灌木逐片叶建(Blender),树冠走 Tripo**(网页版 Studio,进 Blender 减面 / 烘色后和硬表面件合成一件)。
-2. **颜色源头 = 没有 hue 的概念图**(本色图):取色从无 hue 的概念图 / 拆件图本色取。带色调的图不取色;不再以「邻居 POI 实机色」当颜色目标。进引擎后的增益标定只为还原这个本色,同一 Play 同一光的对拍、顶立面分标、过曝闸照旧。
+2. **颜色源头 = 没有 hue 的概念图**(本色图):取色从无 hue 的概念图 / 拆件图本色取。带色调的图不取色;不再以「邻居 POI 实机色」当颜色目标。进引擎后光影不动,按现行光反推材质增益只为还原这个本色(差 ≤ 10);同一 Play 同一光的对拍、按材质 × 色类分标、过曝闸照旧,阴影 hue 和过曝的修法归光影会话(11-09 最终口径)。
 3. **地形上的植物、崖**:走 Unity 编辑器 + codex 合作,不进 Blender、不走 Tripo。
 
 ## 来源索引(vault 相对 `01 - 星际拓荒重构/`)
 
 - 工作法:`07 - AI上下文/AI记忆/工作法/feedback-hb-pilot-back-and-forth-retro-20261109.md`
-- 美术通用:`013 美术/AI记忆/` 下 `feedback-paintover-clean-not-painterly-glow-20261109`、`feedback-paintover-moco-clarity-benchmark-20261109`、`feedback-poi-blockout-15min-round-20261109`、`feedback-poi-tool-goal-single-item-fidelity-20261109`、`feedback-poi-concept-is-concept-no-design-sync-20261109`、`feedback-poi-concept-parts-base-colour-no-hue-20261109`、`feedback-poi-plants-modeled-in-blender-20261109`、`feedback-poi-test-in-place-not-lab-20261109`、`feedback-lid-door-items-are-openable-containers-20261109`、`feedback-no-blown-roof-clip-gate-20261109`、`feedback-planter-one-piece-no-bricks-20261109`、`feedback-poi-images-need-topdown-20261105`、`feedback-paintover-terra-material-texture-light-20261107`、`feedback-small-props-full-detail-and-paintover`
-- 丛林:`013 美术/丛林Lab/AI记忆/` 下 `feedback-roof-exterior-for-game-camera-20261109`、`feedback-direction-image-not-parts-catalog-20261109`、`feedback-poi-image-blind-recognition-gate-20261109`、`feedback-all-poi-redo-except-hb-small-poi-parts-20261109`、`feedback-poi-walls-cast-concrete-piers-purpose-20261107`、`feedback-poi-interior-density-moco-texture-20261107`、`feedback-big-poi-upper-floors-walkable-20261107`、`feedback-big-poi-multifloor-winding-interior-hidden-room-20261106`、`feedback-poi-style-by-building-function-f-plus-d-20261106`、`feedback-poi-design-from-ingame-space-20261106`、`feedback-no-old-poi-or-ingame-images-to-codex-20261106`、`feedback-no-small-plants-along-buildings-20261106`、`feedback-stairs-grey-steel-vcol-20261109`、`feedback-hb-shedA-aviation-grey-glow-paintover-20261109`、`feedback-openable-doors-lids-light-paintover-20261109`、`feedback-poi-parts-hollow-lid-rope-wood-20261109`、`feedback-plants-leaf-by-leaf-single-leaf-first-20261109`、`feedback-poi-boulders-need-facets-20261109`、`feedback-m2-rocks-liquid-stripes-redo-20261109`、`feedback-poi-layout-not-ai-crystal-not-blown-20261109`、`feedback-delete-old-poi-before-new-keep-loot-20261109`、`poi-colour-calibrate-against-neighbour-same-play-20261109`
+- 美术通用:`013 美术/AI记忆/` 下 `feedback-paintover-clean-not-painterly-glow-20261109`、`feedback-paintover-moco-clarity-benchmark-20261109`、`feedback-poi-blockout-15min-round-20261109`、`feedback-poi-tool-goal-single-item-fidelity-20261109`、`feedback-poi-concept-is-concept-no-design-sync-20261109`、`feedback-poi-concept-parts-base-colour-no-hue-20261109`、`feedback-poi-plants-modeled-in-blender-20261109`、`feedback-poi-test-in-place-not-lab-20261109`、`feedback-lid-door-items-are-openable-containers-20261109`、`feedback-no-blown-roof-clip-gate-20261109`、`feedback-planter-one-piece-no-bricks-20261109`、`feedback-poi-images-need-topdown-20261105`、`feedback-paintover-terra-material-texture-light-20261107`、`feedback-small-props-full-detail-and-paintover`、`feedback-paintover-flat-no-baked-shade-20261109`
+- 丛林:`013 美术/丛林Lab/AI记忆/` 下 `feedback-roof-exterior-for-game-camera-20261109`、`feedback-direction-image-not-parts-catalog-20261109`、`feedback-poi-image-blind-recognition-gate-20261109`、`feedback-all-poi-redo-except-hb-small-poi-parts-20261109`、`feedback-poi-walls-cast-concrete-piers-purpose-20261107`、`feedback-poi-interior-density-moco-texture-20261107`、`feedback-big-poi-upper-floors-walkable-20261107`、`feedback-big-poi-multifloor-winding-interior-hidden-room-20261106`、`feedback-poi-style-by-building-function-f-plus-d-20261106`、`feedback-poi-design-from-ingame-space-20261106`、`feedback-no-old-poi-or-ingame-images-to-codex-20261106`、`feedback-no-small-plants-along-buildings-20261106`、`feedback-stairs-grey-steel-vcol-20261109`、`feedback-hb-shedA-aviation-grey-glow-paintover-20261109`、`feedback-openable-doors-lids-light-paintover-20261109`、`feedback-poi-parts-hollow-lid-rope-wood-20261109`、`feedback-plants-leaf-by-leaf-single-leaf-first-20261109`、`feedback-poi-boulders-need-facets-20261109`、`feedback-m2-rocks-liquid-stripes-redo-20261109`、`feedback-poi-layout-not-ai-crystal-not-blown-20261109`、`feedback-delete-old-poi-before-new-keep-loot-20261109`、`poi-colour-calibrate-against-neighbour-same-play-20261109`、`feedback-roof-no-sandwich-crisp-edge-20261109`、`feedback-roof-kit-no-flat-patches-20261109`、`feedback-paintover-bleed-hidden-occluders-20261109`、`feedback-material-equals-reference-no-light-comp-20261109`、`feedback-reference-colour-is-ingame-colour-light-calibration-20261109`
