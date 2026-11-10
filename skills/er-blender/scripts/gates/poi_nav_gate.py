@@ -356,7 +356,8 @@ while merged:                                              # double doors: two l
         if merged:
             break
 
-ZONE_H = (0.1, 0.5, 1.0, 1.5, 1.95)
+_B0, _B1 = DT.get("block_band", [0.05, 2.0])
+ZONE_H = (_B0 + RN, 0.5, 1.0, 1.5, _B1 - RN)   # sample spheres stay inside block_band: rugs / doormats / floor decals (top < 0.05) are not furniture
 waive = set(CFG.get("waive_zone", []))
 doors = []
 for d in leaves:
