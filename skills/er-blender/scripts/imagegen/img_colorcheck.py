@@ -2,9 +2,10 @@
 """ER 生图铁规 0 · 回图颜色检查(11-10 勾哥:主体什么颜色就是什么颜色;灯光不许把楼体染成淡紫灰;少用粉紫,男性向)。
 
 两项判定(Lab 空间,忽略近白背景和近黑描边):
-  1. 整图偏色:低彩度像素(C* < 10,= 本该中性的混凝土 / 灰钢 / 白墙 / 石板)的 a*/b* 中位数偏离 0
+  1. 整图偏色:低彩度像素(C* < 6,= 本该中性的混凝土 / 灰钢 / 白墙 / 石板)的 a*/b* 中位数偏离 0
      → 偏紫(b* < -3 且 a* > 2)或任意方向 |ab| > 阈值 = 有光色罩在中性物体上。
-  2. 粉紫占比:色相 285°–350°(紫 / 品红 / 粉)且 C* > 15 的像素占前景 > 阈值(默认 6 %)。
+  2. 粉紫占比:色相 285°–350° 且 C* > 15(粉 / 紫 / 品红),加上 295°–350° 的淡紫灰(C* > 4、L* > 50),合计占前景 > 阈值(默认 8 %)。
+  注意:像素统计分不清「光把物体染紫」和「物体本身淡紫」,阴影偏色仍要按 07 目检(同一件亮面 / 暗面 refkit color 取色,色相差 > 10° 打回)。
 退出码 0 = 全过;1 = 有图不过(逐张打印数值)。
 python img_colorcheck.py img/*.png [--cast 6] [--pink 0.06]
 """
@@ -31,11 +32,12 @@ def check(path, cast_lim, pink_lim):
     L, a, b = srgb_to_lab(im)
     C = np.hypot(a, b)
     fg = (L > 12) & ~((L > 93) & (C < 4))
-    neutral = fg & (C < 10) & (L > 35)
+    neutral = fg & (C < 6) & (L > 35)
     am = float(np.median(a[neutral])) if neutral.sum() > 500 else 0.0
     bm = float(np.median(b[neutral])) if neutral.sum() > 500 else 0.0
     hue = (np.degrees(np.arctan2(b, a)) + 360) % 360
-    pr = float((fg & (C > 15) & (hue >= 285) & (hue <= 350)).sum() / max(fg.sum(), 1))
+    purple = fg & (((C > 15) & (hue >= 285) & (hue <= 350)) | ((C > 4) & (L > 50) & (hue >= 295) & (hue <= 350)))
+    pr = float(purple.sum() / max(fg.sum(), 1))
     errs = []
     if (bm < -3 and am > 2) or np.hypot(am, bm) > cast_lim:
         errs.append(f"中性物体被染色:中位 a*={am:+.1f} b*={bm:+.1f}" + (" (偏紫)" if bm < -3 and am > 2 else ""))
@@ -49,7 +51,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("images", nargs="+")
     ap.add_argument("--cast", type=float, default=6.0)
-    ap.add_argument("--pink", type=float, default=0.06)
+    ap.add_argument("--pink", type=float, default=0.08)
     A = ap.parse_args()
     files = [f for g in A.images for f in (sorted(Path().glob(g)) if any(c in g for c in "*?[") else [Path(g)])]
     bad = 0
