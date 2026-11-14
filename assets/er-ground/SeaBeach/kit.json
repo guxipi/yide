@@ -1,0 +1,108 @@
+{
+ "id": "B1",
+ "name": "沙滩海岸",
+ "dir": "SeaBeach",
+ "project": "Extraction / 基地 v3(W1)",
+ "version": "v1",
+ "approved": {
+  "date": "2026-11-14",
+  "by": "勾哥",
+  "words": [
+   "把 base 里的海洋和沙滩的做法也写入无伤复用，做得非常好"
+  ],
+  "in_scope": [
+   "岸线形状规则(海侧边圆角 / 楔形沙滩进深 / 侧面包沙 / 水线凹角圆弧)",
+   "草沙交界线(草平压在沙上，无土边)",
+   "沙面网格 + 颜色剖面",
+   "入水剖面 + 水下床",
+   "海面 shader Lab/LabBaseWater + 材质参数 + 波纹贴图"
+  ],
+  "rejected": {
+   "beach_clutter": "沙滩上的岩石 / 碎石 / 植物:11-13 勾哥「这些都删掉」",
+   "earth_strip": "草沙之间的土色细边:11-13「boom beach 也有这个台地吗?」,已改成沙色",
+   "narrow_beach": "等宽细沙边:11-13「沙滩太窄了」,改楔形",
+   "sea_in_default_view": "默认镜头必须看到海不是验收项(11-13「玩家滑动镜头能看到就行」)"
+  },
+  "not_approved_yet": "夜间压色 _NightTint / _NightFoamDim(灯光会话加的,W1 未提交;勾哥夸的是白天)"
+ },
+ "reference": {
+  "colour_and_proportion": "Boom Beach 整岛图 W1 Library/BaseV3Env/refs_bb/gou_1113_6.png;沙占陆地约 13.7%,楔形",
+  "surface_language": "mo.co 登记表 沙面 / 水面 / 海岸 行(只学形和交界,不学颜色)",
+  "screen_targets_1113": {
+   "sand": ["#E9E3D1", "#E8D3BA"],
+   "water": ["#C4CCBD", "#9CC7B4", "#68C6B6", "#43C0B3", "#27BBB0"],
+   "far": "#26677F"
+  }
+ },
+ "source": {
+  "files": {
+   "src/LabBaseWater.shader": "c9fb0ef55c78d7069439fd767b2741468d31f416e8da1a3526c13eb12d465c5b",
+   "src/BV3S4_WaterRipple.png": "c6fb1fea0ca11068833aff4606cf53bc8fb47fc6530d32d3c52ea0f8607a9182",
+   "src/BaseV3EnvStep4Builder.cs": "576b31920a7759dae4a3fa3c6ab38703f857c59fc77b353daa490e860975230f",
+   "src/BaseV3EnvStep3Builder.cs": "916c3e117d84d58b8729badb3676f21aecf32bd878da7f21e94ee9f1e47ebf5c"
+  },
+  "project_paths": {
+   "shader": "Assets/Shaders/Lab/LabBaseWater.shader",
+   "ripple": "Assets/Art/Meta/BaseV3Env/Step4/BV3S4_WaterRipple.png",
+   "builder": "Assets/Scripts/Editor/Setup/BaseV3Env/BaseV3EnvStep4Builder.cs",
+   "helpers": "Assets/Scripts/Editor/Setup/BaseV3Env/BaseV3EnvStep3Builder.cs"
+  },
+  "w1_head_at_copy": "4803db35b7(shader 带灯光会话未提交的夜间改动)",
+  "needs": [
+   "Shader Lab/LabLit + J02 地面套件 DrySand.mat",
+   "Assets/Shaders/Include/EREnvGrade.hlsl",
+   "Assets/Shaders/Lab/LabLookCommon.hlsl(LabMist)",
+   "全局 _ER_NightMix(BASE 外 0)"
+  ]
+ },
+ "shape": {
+  "concave_fillet_m": 5.5,
+  "convex_fillet": "min(5.5, 最窄外伸段宽 / 2)",
+  "beach_depth_m": "营地正前 5.8,两侧 1.6(WV − 6,PCHIP)",
+  "side_beach_min_m": 2.5,
+  "waterline_concave_fillet_m": 4.0,
+  "grass_edge": "营地前外鼓 ≤0.35 m + 远处 0.3 m 慢波 + ≤0.04 m 低频抖动(波长 0.4–1.2 m)",
+  "grass_lift_m": 0.004,
+  "water_below_ground_m": 0.08,
+  "descent": "水线前约 0.93 m 起坡;1.5 m 长降 0.15 m 的 Hermite 弯,再 0.1 坡到 1.5 m 深平底",
+  "shallow_band_m": "2.1–3.0,沿岸正弦变化(2.55 ± 0.30 ± 0.15)"
+ },
+ "material": {
+  "shader": "Lab/LabBaseWater",
+  "_RampMode": 1,
+  "_RampC0": "#BABBB1", "_RampC1": "#95B7A8", "_RampC2": "#66B6A9", "_RampC3": "#4DAFA5", "_RampC4": "#45BCB1",
+  "_RampStops": [1.3, 3.0, 5.0, 7.0],
+  "_RampRefWidth": 2.55,
+  "_FarColor": "#3D958F", "_FarStartM": 5, "_FarEndM": 11,
+  "_FarColor2": "#2F6878", "_Far2StartM": 11, "_Far2EndM": 24,
+  "_WetSandCol": "#D2C3A2", "_BedSlope": 0.12, "_ShallowDepthM": 0.32,
+  "_RippleAmt": 0.055, "_RippleScale1": 14, "_RippleScale2": 9.5, "_RippleSpeed": 0.06,
+  "_FoamCol": "#F4F6F0", "_FoamWidthM": 0.45, "_FoamAlpha": 0.6, "_FoamNoiseM": 1.6, "_FoamAmpM": 0.15, "_FoamPeriodS": 7,
+  "_FarPatchAmount": 0.05, "_FarPatchScaleM": 12,
+  "_BlockAmount": [0.05, -0.06, 0.055, -0.05],
+  "_Block_and_Axis": "世界坐标，按场景重算(基地值见 W1 BV3S4_BaseWater.mat)",
+  "ripple_import": "非 sRGB / Repeat / mip / 不压缩"
+ },
+ "sand": {
+  "material": "J02SurfaceStyleLab/DrySand.mat(Lab/LabLit,_NormalUp 0.9),颜色全走顶点色",
+  "profile": "草边→水线:前 60% sandNear,后 40% smoothstep 到 sandFar;±4% 大块亮度噪声(0.08 /m)",
+  "bed_colour": "sandFar"
+ },
+ "instances": [
+  {
+   "name": "Extraction 基地海岸",
+   "node": "3DSceneContainer/BaseSceneRoot/EnvironmentV3/Shore_{NoD4,D4}/Shore",
+   "assets": "Assets/Art/Meta/BaseV3Env/Step4/BV3S4_{Sand,Bed,Water}_{NoD4,D4}.asset, BV3S4_BaseWater.mat",
+   "colours": {
+    "from": "Library/BaseV3Env/step4b_calib.json(线性顶点色)",
+    "sandNear": [0.38815, 0.36361, 0.33453],
+    "sandFar": [0.36627, 0.31099, 0.24965],
+    "grass": [0.12002, 0.21662, 0.05344]
+   },
+   "rig": "基地白天 = J01 灯光 rig;相机俯角 60° FOV 50 距离约 27.5 m",
+   "tris_per_shore": { "sand": 30420, "bed": 7020, "water": 10076 },
+   "rebuild": "HomeScreen 打开、非 Play:Editor.Setup.BaseV3Env.BaseV3EnvStep4Builder.Build() 后存场景(存完跑 Tools/BaseV3/homescreen_noise_restore.py --restore)"
+  }
+ ],
+ "preview": "preview.jpg(W1 实拍 2026-11-13 晚 switch4/D4locked_dragSea_noui 裁下半)"
+}
