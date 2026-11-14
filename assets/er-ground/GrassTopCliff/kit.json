@@ -1,0 +1,137 @@
+{
+ "id": "C1",
+ "name": "草顶崖壁",
+ "dir": "GrassTopCliff",
+ "project": "Extraction / 基地 v3(W1)",
+ "version": "v1",
+ "approved": {
+  "date": "2026-11-14",
+  "by": "勾哥",
+  "words": [
+   "这里草包崖壁做的稀碎……抛开之前的所有 approach，尝试使用新的 approach 来做",
+   "这些叶片有点过大了",
+   "但是非常好，除了零碎的叶片，其它的进无伤复用，叫草顶崖壁",
+   "把这些横向的纹路删掉，太丑了，横纹不要入复用库"
+  ],
+  "in_scope": [
+   "岩体(每面墙一个素平面)",
+   "草盖(顶面 / 圆肩 / 垂边 / 宽弧下沿 / 悬出)",
+   "岩 / 草两个材质的设法",
+   "投影收影设置"
+  ],
+  "not_approved": {
+   "leaves": "垂边下沿叶片:11-14 嫌大,已缩到约 0.55 倍,缩小后未单独表态;Params.leaves 默认 false"
+  },
+  "rejected": {
+   "rock_strata": "岩壁横向岩层线:试过三版(贴墙方块 / 探出薄层靠投影 / 斜切带靠朝向),勾哥否决,代码已删,不再加"
+  }
+ },
+ "reference": {
+  "shape": [
+   "013 美术/丛林Lab/观察/崖壁/frames/cl_1-28.png 裁 1250,410,2050,1000",
+   "013 美术/丛林Lab/观察/崖壁/frames/moco_11-01_orig.png 裁 560,600,1500,900"
+  ],
+  "registry_row": "Sheet「jungle lab」组件清单:崖壁台地 / 台地崖壁(层序、草皮垂盖、砂顶包沿)",
+  "colour": "不取 mo.co;基地实例取 Boom Beach(Library/BaseV3Env/refs_bb/gou_1113_6.png),别处传场景自己的草色 / 岩色",
+  "rule": "形和结构学 mo.co,颜色不学;成品不得比 mo.co 更厚更软"
+ },
+ "source": {
+  "file": "GrassTopCliffKit.cs",
+  "sha256": "d5799e1605bb46af9ac8d9f00a2f7f5de43e219fd890f3721c6b0db4c4a764c3",
+  "project_path": "Assets/Scripts/Editor/Lab/Kits/GrassTopCliffKit.cs",
+  "namespace": "Lab.Kits.Editor",
+  "needs": [
+   "Shader Lab/LabLit",
+   "地面草材质(Lab/LabLit 植被变体)"
+  ]
+ },
+ "params_default": {
+  "lift": 0.1,
+  "overhang": 0.3,
+  "shoulderX": 0.28,
+  "shoulderY": 0.45,
+  "drop": 0.85,
+  "scallopDrop": 0.24,
+  "cornerBlend": 0.45,
+  "stepSeen": 0.14,
+  "stepUnseen": 0.6,
+  "skirtRoot": [
+   0.92,
+   0.94,
+   0.97
+  ],
+  "wall_from": "baseY - 0.3",
+  "wall_to": "topY - 0.45",
+  "turf_cap_inset": 0.8,
+  "leaves": false,
+  "leaf_sizes_if_on": {
+   "accentLen": 0.26,
+   "accentWidth": 0.15,
+   "edgeLen": [
+    0.18,
+    0.3
+   ],
+   "edgeLenBig": 0.36
+  }
+ },
+ "materials": {
+  "turf": {
+   "from": "地面草材质的副本",
+   "_NormalUp": 0.12,
+   "_ShadowThreshold": 0.1,
+   "_ShadowSoftness": 0.7,
+   "why": "顶面 = 地面;垂边靠真实法线受光变暗"
+  },
+  "rock": {
+   "shader": "Lab/LabLit",
+   "_VertexColorMul": 1,
+   "_ShadowThreshold": 0.0,
+   "_ShadowSoftness": 0.1,
+   "_AmbientStrength": 0.15
+  },
+  "renderers": {
+   "rock": "cast + receive",
+   "turf": "cast + receive",
+   "leaves": "receive only"
+  }
+ },
+ "scale": {
+  "Hc_m": 3.0,
+  "wall": "1.1 Hc",
+  "skirt": "0.85 m(0.42 Hc 的第一版被判过厚)",
+  "note": "换场景先定 Hc;垂边从 0.85 m 起试,不按比例放大"
+ },
+ "instances": [
+  {
+   "name": "Extraction 基地背后的山崖",
+   "layout": "Assets/Scripts/Editor/Setup/BaseV3Env/BaseCliffD6.cs",
+   "tiers_top_m": [
+    4.3,
+    7.6
+   ],
+   "colours_linear": {
+    "grass": [
+     0.12002,
+     0.21662,
+     0.05344
+    ],
+    "rock": [
+     0.38448,
+     0.26621,
+     0.16697
+    ],
+    "from": "Library/BaseV3Env/step4b_calib.json grass / cliff.main"
+   },
+   "rig": "基地白天:主光欧拉 (68,60,0) 强度 1.8 软阴影,相机俯角 50° FOV 50 沿 +z",
+   "tris": {
+    "rock": 68,
+    "turf": 9778,
+    "leaves_on": 3168
+   },
+   "rebuild": "HomeScreen 打开、非 Play:Editor.Setup.BaseV3Env.BaseV3EnvStep4Builder.Build() 后存场景",
+   "leaves": "开着(缩小后的),等勾哥定",
+   "commit": "worktree/w1 6f79520e33(本地,未 push)"
+  }
+ ],
+ "preview": "preview.jpg"
+}
