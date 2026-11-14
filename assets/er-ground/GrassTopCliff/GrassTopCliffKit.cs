@@ -11,12 +11,12 @@ namespace Lab.Kits.Editor
 {
     /// <summary>
     /// 草顶崖壁 (grass-top cliff) kit. 勾哥 2026-11-14: 「非常好，除了零碎的叶片，其它的进无伤复用，叫草顶崖壁」.
-    /// Give it stacked tier outlines (world XZ) and it returns the meshes:
+    /// Give it stacked tier outlines (world XZ) and it returns two meshes:
     ///   rock   - every wall of a tier is one plain plane; long straight edges, 45 degree chamfers and jogs are the caller's outline.
     ///            No lines or layers on the walls: 勾哥 11-14 had horizontal rock-layer lines tried and ruled 「太丑了，横纹不要入复用库」.
     ///   turf   - per tier one cap volume: flat top (the ground's own grass), quarter-ellipse shoulder, hanging skirt whose lower edge
     ///            swells in a few broad scallops, underside back to the wall. It overhangs the wall.
-    ///   leaves - optional hanging leaves on the skirt's lower edge (NOT part of the approved kit; off by default).
+    ///            Nothing hangs from the skirt: 勾哥 11-14 had leaves on its lower edge tried (「叶片有点过大了」, then, shrunk) 「叶片全删」.
     /// No vertex colour stands in for light or shadow: the skirt goes dark because the turf material is lit by its real normals
     /// (<see cref="SetupTurfMaterial"/>), the line under the skirt is a cast shadow (rock and turf cast + receive).
     /// Kit card: yide repo assets/er-ground/GrassTopCliff/README.md.
@@ -41,9 +41,6 @@ namespace Lab.Kits.Editor
             public float cornerBlend = 0.45f;   // normals blend over +- this arc length at outline corners (how round the turf turns a corner)
             public float stepSeen = 0.14f, stepUnseen = 0.6f;   // rim sampling on seen / unseen edges
             public Vector3 skirtRoot = new Vector3(0.92f, 0.94f, 0.97f);   // the skirt's own tip-to-root grade (x grass)
-            // hanging leaves (not approved yet)
-            public bool leaves = false;
-            public float accentLen = 0.26f, accentWidth = 0.15f, edgeLenMin = 0.18f, edgeLenMax = 0.30f, edgeLenBig = 0.36f;
             // linear vertex colours
             public Color grass = new Color(0.12002f, 0.21662f, 0.05344f, 1f);
             public Color rock = new Color(0.38448f, 0.26621f, 0.16697f, 1f);
@@ -51,7 +48,7 @@ namespace Lab.Kits.Editor
             public Func<Vector2, bool> wallSeen = n => n.y < 0.35f;
         }
 
-        public sealed class Meshes { public Mesh rock, turf, leaves; }
+        public sealed class Meshes { public Mesh rock, turf; }
 
         // ── buffers and polygon helpers ─────────────────────────────────────
         sealed class Buf
@@ -138,26 +135,12 @@ namespace Lab.Kits.Editor
         static Vector3 P3(Vector2 p, float y) => new Vector3(p.x, y, p.y);
         static Color Mul(Color c, Vector3 k) => new Color(c.r * k.x, c.g * k.y, c.b * k.z, 1f);
 
-        // ── rim signal: scallops (approved) and leaves (optional) ────────────
+        // ── rim signal: where the skirt's lower edge swells ──────────────────
         sealed class RimSignal
         {
             readonly List<(float s, float w, float h)> scallops = new List<(float, float, float)>();
-            public readonly List<(float s, float len, float tilt, float lean)> accents = new List<(float, float, float, float)>();
-            public readonly List<(float s, float len, float tilt)> edge = new List<(float, float, float)>();
             public RimSignal(float length, int seed, Params p)
             {
-                // edge leaves: groups of 2-4 overlapping leaves, one to two group widths of plain edge between groups
-                float q = 0.3f + Hash(seed, 41) * 0.8f; int c = 0; float k0 = p.edgeLenMax / 0.30f;
-                while (q < length - 0.5f)
-                {
-                    int count = 2 + (int)(Hash(seed + c, 42) * 2.99f); float q0 = q;
-                    for (int i = 0; i < count; i++)
-                    {
-                        float big = Hash(seed + c * 11 + i, 43); float len = big > 0.8f ? p.edgeLenBig : Mathf.Lerp(p.edgeLenMin, p.edgeLenMax, big / 0.8f);
-                        edge.Add((q, len, (Hash(seed + c * 11 + i, 44) - 0.5f) * 44f)); q += (0.10f + 0.08f * Hash(seed + c * 11 + i, 45)) * k0;
-                    }
-                    q += (q - q0) * (1f + Hash(seed + c, 46)) + 0.5f; c++;
-                }
                 float s = 0.5f + Hash(seed, 1) * 1.5f; int k = 0;
                 while (s < length - 0.8f)
                 {
@@ -167,15 +150,9 @@ namespace Lab.Kits.Editor
                         for (int i = 0; i < count; i++) { float w = 1.6f + 1.2f * Hash(seed + k * 7 + i, 4); scallops.Add((s + w * 0.5f, w, p.scallopDrop * (0.6f + 0.6f * Hash(seed + k * 7 + i, 5)))); s += w * 0.9f; }
                     }
                     else
-                    {   // one or two brighter leaves that lean out
-                        float r = Hash(seed + k, 3); int count = r < 0.65f ? 1 : 2; float side = Hash(seed + k, 6) < 0.5f ? -1f : 1f;
-                        for (int i = 0; i < count; i++)
-                        {
-                            float size = i == 0 ? 1f + 0.35f * Hash(seed + k * 7, 4) : 0.55f + 0.3f * Hash(seed + k * 7 + i, 4);
-                            float tilt = side * (i == 0 ? 6f + 16f * Hash(seed + k * 7, 5) : -(14f + 22f * Hash(seed + k * 7 + i, 5)));
-                            float lean = Hash(seed + k * 7 + i, 7) < 0.22f ? 38f + 14f * Hash(seed + k * 7 + i, 8) : 6f + 16f * Hash(seed + k * 7 + i, 8);
-                            accents.Add((s, p.accentLen * size, tilt, lean)); s += 0.2f + 0.22f * Hash(seed + k * 7 + i, 9);
-                        }
+                    {   // a plain stretch (leaves used to hang here; the step is kept so the approved scallops stay where they are)
+                        int count = Hash(seed + k, 3) < 0.65f ? 1 : 2;
+                        for (int i = 0; i < count; i++) s += 0.2f + 0.22f * Hash(seed + k * 7 + i, 9);
                     }
                     s += 2.2f + 2.4f * Hash(seed + k, 8);   // calm run
                     k++;
@@ -230,7 +207,7 @@ namespace Lab.Kits.Editor
         }
 
         // ── turf cap ────────────────────────────────────────────────────────
-        static void AddTurf(Buf turf, Buf leaves, Tier tier, Vector2[] poly, Params p)
+        static void AddTurf(Buf turf, Tier tier, Vector2[] poly, Params p)
         {
             var rim = Rim(poly, p); int m = rim.Count; float total = 0f; for (int i = 0; i < poly.Length; i++) total += Vector2.Distance(poly[i], poly[(i + 1) % poly.Length]);
             int seed = tier.seed; var sig = new RimSignal(total, seed, p); float top = tier.topY + p.lift;
@@ -264,52 +241,20 @@ namespace Lab.Kits.Editor
             // flat top: the outline inset 0.8 m (overlaps ring 0, same plane, same colour)
             var cap = Offset(poly, -0.8f); int c0 = turf.v.Count; foreach (var q in cap) turf.Add(P3(q, top), Vector3.up, p.grass);
             var ears = Ears(cap); for (int i = 0; i < ears.Count; i += 3) turf.Tri(c0 + ears[i], c0 + ears[i + 2], c0 + ears[i + 1]);
-            if (!p.leaves) return;
-            int li = 0;
-            RimPt Nearest(float s) { int best = 0; float bd = float.MaxValue; for (int i = 0; i < m; i++) { float dd = Mathf.Abs(rim[i].s - s); if (dd < bd) { bd = dd; best = i; } } return rim[best]; }
-            foreach (var lf in sig.accents)
-            {
-                var r = Nearest(lf.s); if (!r.seen) continue; float d = p.drop * Slow(r.s) + sig.At(r.s);
-                var n3 = new Vector3(r.n.x, 0f, r.n.y); var tan = new Vector3(-r.n.y, 0f, r.n.x);
-                AddLeaf(leaves, P3(r.p + r.n * (p.overhang + 0.02f), top - d + lf.len * 0.55f), n3, tan, lf.len, p.accentWidth * (lf.len / p.accentLen) * (0.9f + 0.25f * Hash(seed * 13 + li, 14)), lf.tilt, lf.lean, true, p); li++;
-            }
-            foreach (var lf in sig.edge)
-            {
-                var r = Nearest(lf.s); if (!r.seen) continue; float d = p.drop * Slow(r.s) + sig.At(r.s);
-                var n3 = new Vector3(r.n.x, 0f, r.n.y); var tan = new Vector3(-r.n.y, 0f, r.n.x);
-                AddLeaf(leaves, P3(r.p + r.n * (p.overhang + 0.01f), top - d + lf.len * 0.62f), n3, tan, lf.len, lf.len * 0.74f, lf.tilt, -4f, false, p); li++;
-            }
-        }
-
-        /// <summary>One hanging leaf at the skirt's lower edge. Accent leaves lean out and catch the sun; edge leaves lie on the skirt and take
-        /// its shade, so they read as its lobed lower edge.</summary>
-        static void AddLeaf(Buf buf, Vector3 root, Vector3 n3, Vector3 tan, float len, float width, float tiltDeg, float leanDeg, bool accent, Params p)
-        {
-            float a = tiltDeg * Mathf.Deg2Rad, f = (leanDeg + 14f) * Mathf.Deg2Rad;
-            var inPlane = Vector3.down * Mathf.Cos(a) + tan * Mathf.Sin(a);
-            var dir = (inPlane * Mathf.Cos(f) + n3 * Mathf.Sin(f)).normalized; var wide = Vector3.Cross(n3, dir).normalized;
-            var nn = Vector3.Cross(dir, wide).normalized; if (Vector3.Dot(nn, n3) < 0f) nn = -nn; nn = accent ? (nn + Vector3.up * 0.55f).normalized : n3;
-            var col = accent ? Mul(p.grass, new Vector3(1.10f, 1.07f, 0.92f)) : Mul(p.grass, p.skirtRoot);
-            float[] us = { 0f, 0.14f, 0.38f, 0.66f, 0.86f }; float[] ws = accent ? new[] { 0.2f, 0.72f, 1f, 0.66f, 0.3f } : new[] { 0.6f, 0.9f, 1f, 0.78f, 0.42f };
-            int b0 = buf.v.Count;
-            for (int i = 0; i < us.Length; i++) { var c = root + dir * (len * us[i]); buf.Add(c - wide * (width * 0.5f * ws[i]), nn, col); buf.Add(c + wide * (width * 0.5f * ws[i]), nn, col); }
-            int tip = buf.Add(root + dir * len, nn, col);
-            for (int i = 0; i < us.Length - 1; i++) { int q = b0 + i * 2; buf.Quad(q, q + 1, q + 3, q + 2); buf.Quad(q, q + 2, q + 3, q + 1); }
-            int l = b0 + (us.Length - 1) * 2; buf.Tri(l, l + 1, tip); buf.Tri(l, tip, l + 1);
         }
 
         // ── public entry points ─────────────────────────────────────────────
-        /// <summary>Builds the meshes for stacked tiers (lowest first). <c>leaves</c> is null when <see cref="Params.leaves"/> is off.</summary>
+        /// <summary>Builds the two meshes for stacked tiers (lowest first).</summary>
         public static Meshes Make(IList<Tier> tiers, Params p, string namePrefix)
         {
-            var rb = new Buf(); var tb = new Buf(); var lb = new Buf();
+            var rb = new Buf(); var tb = new Buf();
             foreach (var tier in tiers)
             {
                 var poly = Ccw(tier.outline);
                 AddRock(rb, tier, poly, p);
-                AddTurf(tb, lb, tier, poly, p);
+                AddTurf(tb, tier, poly, p);
             }
-            return new Meshes { rock = rb.Finish(namePrefix + "_Rock"), turf = tb.Finish(namePrefix + "_Turf"), leaves = p.leaves && lb.v.Count > 0 ? lb.Finish(namePrefix + "_Leaves") : null };
+            return new Meshes { rock = rb.Finish(namePrefix + "_Rock"), turf = tb.Finish(namePrefix + "_Turf") };
         }
 
         /// <summary>Rock: plain Lab/LabLit with vertex colour.</summary>
@@ -351,20 +296,18 @@ namespace Lab.Kits.Editor
             EditorUtility.SetDirty(existing); Object.DestroyImmediate(mesh); return existing;
         }
 
-        /// <summary>One root with Rock / Turf (/ Leaves) children. Rock and turf cast and receive shadows; leaves receive only (the sun grazes
-        /// the walls, a leaf would draw a 1.5 m streak).</summary>
+        /// <summary>One root with Rock and Turf children, both casting and receiving shadows.</summary>
         public static GameObject Attach(Transform parent, Meshes m, Material rockMat, Material turfMat, string name, HideFlags flags = HideFlags.None)
         {
             var root = new GameObject(name) { hideFlags = flags }; if (parent != null) root.transform.SetParent(parent, false);
             root.transform.position = Vector3.zero; root.transform.rotation = Quaternion.identity;
-            void Child(string n, Mesh mesh, Material mat, bool cast)
+            void Child(string n, Mesh mesh, Material mat)
             {
-                if (mesh == null) return;
                 var go = new GameObject(n) { hideFlags = flags }; go.transform.SetParent(root.transform, false);
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
-                var r = go.AddComponent<MeshRenderer>(); r.sharedMaterial = mat; r.shadowCastingMode = cast ? ShadowCastingMode.On : ShadowCastingMode.Off; r.receiveShadows = true;
+                var r = go.AddComponent<MeshRenderer>(); r.sharedMaterial = mat; r.shadowCastingMode = ShadowCastingMode.On; r.receiveShadows = true;
             }
-            Child("Rock", m.rock, rockMat, true); Child("Turf", m.turf, turfMat, true); Child("Leaves", m.leaves, turfMat, false);
+            Child("Rock", m.rock, rockMat); Child("Turf", m.turf, turfMat);
             return root;
         }
     }
