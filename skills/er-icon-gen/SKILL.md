@@ -76,3 +76,5 @@ cut 做的事:按蓝色面板程序抠框(不再调 AI 去框)、切图、按 `�
 ## 6. 现在不覆盖的
 
 CLI 只包了物品 icon 工具的 prompt。装备整套(编辑真实截图那套)、枪械、UI 黑白 glyph、buff 九宫格仍在 GUI(`er_launch.pyw` 双击开 hub),要用这些先告诉勾哥 CLI 还没接,别拿物品 prompt 硬套。头像框(中间镂空、套头像)走 er-frame-gen。
+
+非 icon 的单张图(概念图、场景图、宣传图、拿一张图改图)走同目录的通用生图 CLI `er_gen_cli.py`(11-16 加):prompt 原样发、不加风格词,`gen "<prompt>" [--ref 图 ...] [--aspect 16:9] [--size 1K|2K] [--n 1~4] [--name xxx] --yes`,改图把原图放第一张 `--ref`。key / 32s 限流 / 估价和本 CLI 共用,产物在 `$T/imagegen_out/_cli/`,每张旁边有记 prompt 的 .json。细节见 HANDOFF §0.00。
