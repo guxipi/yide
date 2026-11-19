@@ -62,7 +62,8 @@ try {
       const r = sessionTitle.onPrompt(sid, prompt);
       if (r) {
         title = r.title;
-        // 2026-10-30:不再让模型另跑命令起正式名,首句粗取的名字够用
+        // 2026-10-30 关过(当时认为首句粗取够用);勾哥 11-19:粗取的半句话不好读、同时管很多会话找不到 → 首句再让模型起「系统:具体事」
+        if (r.ask) parts.push(sessionTitle.instruction(sid, path.join(__dirname, 'session-title.js')));
       }
     } catch {}
   }

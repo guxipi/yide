@@ -778,19 +778,23 @@ t('12.1 会话标题:底标保留,目标名前缀,模型名下一句生效,resum
   assert(/已就位 · \d{4}-\d{2}-\d{2}$/.test(base), '首个标题应是底标,实为 ' + base);
   const h1 = prompt('我想要给翼德加个会话命名功能,保留时间戳');
   assert(h1.sessionTitle === '给翼德加个会话命名功能_' + base, '首句应粗取名字,实为 ' + h1.sessionTitle);
-  assert(!(h1.additionalContext || '').includes('session-title.js'), '首句不应再让模型另跑命令起名');
-  execFileSync('node', [path.join(SCRIPTS, 'session-title.js'), 'set', '--session', sid, '优化翼德'], { encoding: 'utf8', env });
+  const c1 = h1.additionalContext || '';
+  assert(c1.includes('session-title.js') && c1.includes('set --session ' + sid) && c1.includes('系统:具体事'), '首句应提醒模型按「系统:具体事」起名(勾哥 11-19),实为 ' + c1);
+  const setOut = execFileSync('node', [path.join(SCRIPTS, 'session-title.js'), 'set', '--session', sid, '翼德：会话命名优化'], { encoding: 'utf8', env });
+  assert(setOut.includes('完整标题:翼德:会话命名优化_' + base), 'set 应打印完整标题(全角冒号归一成半角),实为 ' + setOut);
   const h2 = prompt('继续');
-  assert(h2.sessionTitle === '优化翼德_' + base, '模型名应在下一句生效,实为 ' + h2.sessionTitle);
+  assert(h2.sessionTitle === '翼德:会话命名优化_' + base, '模型名应在下一句生效,实为 ' + h2.sessionTitle);
   assert(!(h2.additionalContext || '').includes('session-title.js'), '起名提醒只给一次');
   const h3 = prompt('再看看');
   assert(!h3.sessionTitle, '标题没变就不重复下发');
-  assert(start() === '优化翼德_' + base, 'resume 应保留目标名和原底标');
+  assert(start() === '翼德:会话命名优化_' + base, 'resume 应保留目标名和原底标');
 });
-t('12.2 粗取名字:口头前缀去掉、短回复/命令不取', () => {
+t('12.2 粗取名字:口头前缀去掉、短回复/命令不取、不留半个英文词', () => {
   const { guessGoal } = require(path.join(SCRIPTS, 'session-title.js'));
   assert(guessGoal('帮我修一下金币HUD越来越大的bug') === '修一下金币HUD越来越大', '截 12 字,实为 ' + guessGoal('帮我修一下金币HUD越来越大的bug'));
   assert(guessGoal('继续') === '' && guessGoal('/loop 5m') === '' && guessGoal('ok') === '', '短回复/命令不应取名');
+  assert(guessGoal('现在翼德给每个session起名的方式不太好读') === '现在翼德给每个', '截点在英文词中间应退到词头,实为 ' + guessGoal('现在翼德给每个session起名的方式不太好读'));
+  assert(guessGoal('把w1 w2都更新到main') === '把w1 w2都更新到', '同上,实为 ' + guessGoal('把w1 w2都更新到main'));
 });
 
 // === 13. skill 闸:跑 Blender 前本会话必须已加载 reference-replicate(2026-10-31)===
