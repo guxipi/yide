@@ -7,7 +7,7 @@ description: Rework an Extraction UI screen to production quality (成品级 = c
 
 > CARGO 屏的几何、样式、接线都改该屏的 `Cargo<Screen>Setup.cs` builder 再重跑(见 ui-placement 开头),不手摆、不手改 prefab;本 skill 的整屏重做只用于勾哥点名要重做的屏。
 
-> **改版先出稿(勾哥 2026-11-14,11-19 补):页面改版先 research → 出可点击、带动效的 HTML → 勾哥批了才进 Unity;实机改版被打回要重排的,也先回到 HTML。** 下文「第一轮可以出 mock、方向一定就只改真 prefab」说的是批复之后的事。
+> **改版先出稿(勾哥 2026-11-14,11-19 补;11-20 改成走 `ui-screen-redo`):页面改版先走 `ui-screen-redo`(页面卡 → 五 persona 盲测 / UI/UX lead 结构 / 主美画风三路独立评审 → 可点击、带动效的 HTML → 二轮盲测)→ 勾哥批了才进 Unity;实机改版被打回要重排的,也先回到 HTML。** 下文「第一轮可以出 mock、方向一定就只改真 prefab」说的是批复之后的事。
 
 > **本 skill 里的 SuperCasual kit 配方只对旧屏成立。** 现行视觉 kit 是 CARGO(vault `013 美术/UI_CARGO/`,现行稿 `mock/kit_v12.html`);下文「勾哥定的硬口径」是 10-13 两个弹窗那一单的口径,和 11-16 之后的拍板冲突时以新拍板为准(每个会话自动加载的 vault MEMORY 清单美术分区):文字任何情况下都不描边(11-18)、后退和关闭键放右上角(11-19)、切边统一 12 设计像素(11-19)、礼包和促销弹窗做异形(11-18)。
 

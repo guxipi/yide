@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.79.0 — 2026-11-20 新 skill ui-screen-redo:改 UI 屏前的三路独立评审(勾哥:「让整个 work 可以脱离各种 back & forth 一次成形」)
+- 流程:页面卡(转化目标、入口、分量、真数据、最新实机图、现有元素全清单)→ 五个 persona 盲看盲玩(搜打撤老玩家 0 氪、新手、小 R、中 R、大 R)、UI/UX lead 重排信息结构、主美按绝区零 + ER 画风审计 visual,三路互不看结论 → 主控合成可点击 HTML(动效、visual 全成品)→ 同一批 persona 第二轮盲测过线 → 六页签评审页交勾哥。
+- references:页面卡、persona 卡与派单、UI/UX lead 派单、主美派单、评审页骨架。
+- ui-placement、ui-visual-rework、lead-orchestration 开头的「先出 HTML」改成指向本 skill。
+
 ### v0.78.2 — 2026-11-20 拆掉参考闸和开工复用闸(勾哥弹窗拍板「两道都拆掉」)
 - 删 `scripts/ref-gate.js`、`reuse-gate.js`、`ref-check.js`、`reuse-check.js`,`pre-tool-use.js` 去掉 1d / 1e 两段,测试去掉 13.2 / 13.3(80 过 / 0 败)。`.meta/skill-gates.json` 里的 `refGate` / `reuseGate` 开关和 `YIDE_REF_GATE` / `YIDE_REUSE_GATE` 环境变量不再有任何作用。
 - 起因:这两道闸在 kryst 机 11-12 起是关着的(本地没入库的 skill-gates.json),另两台默认开着,红线 4 和 er-blender、reference-replicate 却都写「参考闸会拦」,三台机行为不一样,AI 以为有兜底。

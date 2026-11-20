@@ -5,7 +5,7 @@ description: Wiring, placing, aligning or building Unity uGUI UI in Extraction �
 
 # UI Placement (Extraction)
 
-> **第 0 步(勾哥 2026-11-14,11-19 补):新界面 / 页面改版,Unity 里的 UI 一行都不写之前先做三步——research(竞品同类界面 + ER 现有同类屏)→ 出可点击、带按压和出入场动效的 HTML → 勾哥批复。** 派单写「成品级、走 ui-placement」也不豁免;数据层和服务端可以先做。HTML 和它的源稿、构建脚本放 vault 对应 feature 目录,不放 C 盘。只接线、修 bug、照已批的稿落地,不用重走这三步。
+> **第 0 步(勾哥 2026-11-14,11-19 补;11-20 改成走 `ui-screen-redo`):新界面 / 页面改版,Unity 里的 UI 一行都不写之前先走 `ui-screen-redo`——页面卡 → 五 persona 盲测、UI/UX lead 重排结构、主美审画风三路独立评审 → 可点击、带按压和出入场动效的 HTML → 二轮盲测 → 勾哥批复。** 派单写「成品级、走 ui-placement」也不豁免;数据层和服务端可以先做。HTML 和它的源稿、构建脚本放 vault 对应 feature 目录,不放 C 盘。只接线、修 bug、照已批的稿落地,不用重走这三步。
 
 > **先判这屏用哪套视觉:** 走 `Cargo<Screen>Setup.cs` builder 的屏是 CARGO 屏,按 vault `013 美术/UI_CARGO/`(现行稿 `mock/kit_v12.html`,token `CARGO_tokens.md`;两者冲突或和勾哥 11-16 之后的拍板冲突时,以更新的拍板为准,拍板在每个会话自动加载的 vault MEMORY 清单美术分区)。还没迁的旧屏才用下文 SuperCasual kit 的量法。下文凡是写「kit 是绝对标准」的地方,都只对旧屏和直接拿 SuperCasual 现成件的情况成立。
 
