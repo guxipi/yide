@@ -92,10 +92,10 @@
 - 执行者汇报里的「偏离与欠账」原样转给勾哥,不洗白;发现别的工地的东西(DTO 缺字段、ProjectSettings 被编辑器改)只上报不代修。
 
 ## 7. 美术与建模通道(项目缺素材时自产到满意为止,不等美术)
-工具分工以 vault 记忆 `01 - 星际拓荒重构/013 美术/AI记忆/art-model-tool-routing.md` 为唯一真源(勾哥改口只改那一份);下面只是指路,和它或和各 skill 冲突时以它们为准。
+工具分工以 vault `01 - 星际拓荒重构/013 美术/AI记忆/现行口径_参考与工具分工.md` 第一节为唯一真源(11-20 分工表并进了这份,`art-model-tool-routing.md` 只剩入口说明;勾哥改口只改现行口径那一份);下面只是指路,和它或和各 skill 冲突时以它们为准。
 - **画风标尺**:改外观前,mo.co 参考只用参考登记表(Sheet「jungle lab」组件清单 I 列)里本物件那一行的图,打开原图看(红线 4;怎么选、哪些活不用拉见 vault `013 美术/mo.co截图/README_参考怎么选.md`)。对照只和 mo.co 实机画面并排,不拿 Brawl Stars / Clash of Clans 这类旧口径当标尺。
-- **2D**(概念图、关键帧、UI 材质、VFX 贴图、decal、局内 sprite):sol 走 `er-shop-mkt/references/03-出图管线.md` 的 `run_codex.sh` + `check_rollout.py`。喂哪些参考图按那份管线和 `reference-replicate` 写的来;paint-over 上色单不喂 mo.co 图(`er-blender` 08)。
-- **图标(物品/资源/货币/奖励)**:`er-icon-gen`(gemini 工具箱);**头像框**:`er-frame-gen`;**礼包/营销 KV**:`er-shop-mkt`。
+- **2D**:概念图(所有线)走 codex terra,配方见现行口径 `现行口径_生图与概念图.md`;其余 2D(关键帧、UI 材质、VFX 贴图、decal、局内 sprite / HUD 件)走 codex terra,用 `er-shop-mkt/references/03-出图管线.md` 的 `run_codex.sh` + `check_rollout.py`(发单前核 `-m` 是 terra)。喂哪些参考图按那份管线和 `reference-replicate` 写的来;paint-over 上色单不喂 mo.co 图(`er-blender` 08)。
+- **图标(物品/资源/货币/奖励)**:`er-icon-gen`(gemini 工具箱);**UI 功能图标和头像**:codex(功能图标以底栏 tab 图标当 style ref,头像以六张英雄头像当画风参考);**头像框**:`er-frame-gen`;**礼包/营销 KV**:`er-shop-mkt`。
 - **地形上的植物、地面、崖壁、大量散布件**:Unity 里的 Lab 生成器,不走 Tripo、不走 Blender。POI 里的植物(花坛、垂藤、树池树)是另一类,走 `er-blender`(11-09),分法看它的路由表。
 - **复杂刚性单件**(怪物底模、陶罐、残骸、巢穴、基地建筑底模):Tripo **网页版 Studio**,禁 Tripo CLI;POI 建筑不走 Tripo,在 Blender 里部件化做(`er-blender` 07);之后 `er-blender` 精修 → `gaoguang-3d` 入库。
 - **制式硬表面、简单道具、Blender 精修**:`er-blender`。**角色**:`er-character-pipeline`。**世界特效**:`vfx-production`。

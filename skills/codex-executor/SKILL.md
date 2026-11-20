@@ -5,7 +5,7 @@ description: 主会话当大脑、OpenAI Codex CLI(gpt-5.6-sol)当执行手的�
 
 # Codex (gpt-5.6-sol) 执行手工作法
 
-经 2026-07-10 FTUE 盘点+施工实战验证。核心分工:**主会话=大脑**(读设计 SSOT 做裁决、写工单、抽查报告、Unity Play 验收、commit/deploy);**sol=手**(读大文档、扫代码、按工单写码、出图)。什么活派给 sol 由勾哥当次说;美术工具分工见本机记忆 `art-model-tool-routing`。想让一个 Claude 子 agent 代为调度和核对 diff,派项目里的 `codex-executor` agent。
+经 2026-07-10 FTUE 盘点+施工实战验证。核心分工:**主会话=大脑**(读设计 SSOT 做裁决、写工单、抽查报告、Unity Play 验收、commit/deploy);**sol=手**(读大文档、扫代码、按工单写码、出图)。什么活派给 sol 由勾哥当次说;美术工具分工见 vault `01 - 星际拓荒重构/013 美术/AI记忆/现行口径_参考与工具分工.md`(11-20 分工表并进了这份,旧的 `art-model-tool-routing` 只剩入口说明;概念图和其余 2D 件现在走 terra,不默认派 sol)。想让一个 Claude 子 agent 代为调度和核对 diff,派项目里的 `codex-executor` agent。
 
 ## 1. 调用配方(踩坑后的正确姿势)
 

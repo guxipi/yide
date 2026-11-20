@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.79.2 — 2026-11-20 美术 skill 跟着勾哥对「没有定论」的逐条拍板改
+- vfx-production、er-blender 06:局内 VFX 默认半透明 / 叠加发光,只有碎片、宝石这类实物做实心(原「硬边主形」「不透明、无 overdraw」作废)。
+- polish、codex-executor:美术工具分工改指 vault `现行口径_参考与工具分工.md`(`art-model-tool-routing` 只剩入口);概念图和其余 2D 件走 codex terra,UI 功能图标和头像走 codex。
+- er-blender 08:现行上色画法以 vault `现行口径_paintover与上色.md` 为准;06 哨亭四张旧图已挪进 `贴图风格基准/_archive_20261120/`。
+
 ### v0.79.1 — 2026-11-20 ui-screen-redo 按星图试跑补工具和坑
 - 新增 references/tooling.md:ScreenCapture 拍原分辨率、别直拍进网盘、job wait 比较符、星图 3D 点选走 HandleTap、关全部 Canvas 拍干净场景底 + 导出实机标记数据、codex 3×3 方向板出图标、可点击稿体积、hash 驱动 + Chrome 无头逐状态截图、合成时先查设计文档红线。
 - 新增 scripts/cut_grid.py(白底网格切透明图标)、scripts/contact_sheet.py(状态总览)。
