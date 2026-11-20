@@ -231,36 +231,6 @@ try {
     }
   }
 
-  // 1d) 开工复用闸:每轮用户消息后第一次"开工动作"前,必须查过现成 skill / 做法 / 可复用件并登记(见 reuse-gate.js)。
-  if (!host.isCodex() && process.env.YIDE_REUSE_GATE !== '0') {
-    let enabled = true;
-    try {
-      if (fs.existsSync(GATES)) {
-        const c = JSON.parse(fs.readFileSync(GATES, 'utf8'));
-        if (c && c.reuseGate && c.reuseGate.enabled === false) enabled = false;
-      }
-    } catch {}
-    if (enabled) {
-      const why = require(path.join(__dirname, 'reuse-gate.js')).check(input, { pluginRoot: host.pluginRoot(), projectDir: host.projectDir(input) });
-      if (why) emit('deny', why);
-    }
-  }
-
-  // 1e) 参考闸:每轮第一次出图 / 建模动作前,必须登记本次对标的 mo.co 图(或免参考理由),登记的图本会话要真打开过(见 ref-gate.js)。
-  if (!host.isCodex() && process.env.YIDE_REF_GATE !== '0') {
-    let enabled = true;
-    try {
-      if (fs.existsSync(GATES)) {
-        const c = JSON.parse(fs.readFileSync(GATES, 'utf8'));
-        if (c && c.refGate && c.refGate.enabled === false) enabled = false;
-      }
-    } catch {}
-    if (enabled) {
-      const why = require(path.join(__dirname, 'ref-gate.js')).check(input, { pluginRoot: host.pluginRoot() });
-      if (why) emit('deny', why);
-    }
-  }
-
   // 2) 自动放行(只读/导航;拿不准就 defer)
   let allowConf = DEFAULT_ALLOW;
   try {

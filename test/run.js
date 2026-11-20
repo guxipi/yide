@@ -803,7 +803,7 @@ t('13.1 skill 闸:没加载拦、加载放行、非 Blender 不误伤、读不�
   fs.writeFileSync(no, JSON.stringify({ message: { content: [{ type: 'tool_use', name: 'Read', input: { file_path: 'x/reference-replicate/SKILL.md' } }] } }) + '\n');
   fs.writeFileSync(yes, JSON.stringify({ message: { content: [{ type: 'tool_use', id: 'a', name: 'Skill', input: { skill: 'yide:reference-replicate' } }] } }) + '\n');
   const bl = '"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b a.blend --factory-startup -P gen/x.py -- --k v';
-  const d = (tool, ti, tx) => preToolDecision({ tool_name: tool, tool_input: ti, transcript_path: tx }, { YIDE_REUSE_GATE: '0', YIDE_REF_GATE: '0' });
+  const d = (tool, ti, tx) => preToolDecision({ tool_name: tool, tool_input: ti, transcript_path: tx }, {});
   assert(d('Bash', { command: bl }, no) === 'deny', '没加载(只 Read 过 SKILL.md)应拦');
   assert(d('PowerShell', { command: "& 'C:/b/blender.exe' -b a.blend -P s.py" }, no) === 'deny', 'PowerShell 也应拦');
   assert(d('mcp__blender__execute_blender_code', { code: 'import bpy' }, no) === 'deny', 'Blender MCP 也应拦');
@@ -812,88 +812,6 @@ t('13.1 skill 闸:没加载拦、加载放行、非 Blender 不误伤、读不�
   assert(d('Bash', { command: bl }, path.join(TMP, 'missing.jsonl')) !== 'deny', '读不到 transcript 不拦');
   assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: bl }, transcript_path: no }, { YIDE_HOST: 'codex' }) !== 'deny', 'Codex 跳过');
 });
-
-// === 13b. 开工复用闸:每轮第一次开工动作前要查过现成件并登记(2026-10-31)===
-t('13.2 开工复用闸:没登记拦、查过并登记放行、换轮重查、后台通知不算换轮、登记的 skill 要真加载', () => {
-  const U = text => JSON.stringify({ type: 'user', message: { role: 'user', content: text } });
-  const UR = () => JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: 'x', content: 'ok' }] } });
-  const A = (name, input) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id: 'i', name, input }] } });
-  const rec = s => A('Bash', { command: `node "x/reuse-check.js" record --task "做扳手" --skills "${s}" --reuse "gen/kitlib.py 的 Part 直接用"` });
-  const tx = (name, rows) => { const p = path.join(TMP, name); fs.writeFileSync(p, rows.join('\n') + '\n'); return p; };
-  const newPy = path.join(TMP, 'brand_new_tool.py');
-  const existing = path.join(TMP, 'tx_no.jsonl');
-  const W = (p, t) => preToolDecision({ tool_name: 'Write', tool_input: { file_path: p, content: 'x' }, transcript_path: t });
-  const none = tx('r0.jsonl', [U('做扳手锤子')]);
-  assert(W(newPy, none) === 'deny', '没登记新建代码文件应拦');
-  assert(W(existing, none) !== 'deny', '改已有文件不拦');
-  assert(preToolDecision({ tool_name: 'Edit', tool_input: { file_path: newPy }, transcript_path: none }) !== 'deny', 'Edit 不拦');
-  const ok = tx('r1.jsonl', [U('做扳手锤子'), A('Grep', { pattern: 'wrench' }), UR(), rec('none:没有对口的'), UR()]);
-  assert(W(newPy, ok) !== 'deny', '查过并登记应放行');
-  const noSearch = tx('r2.jsonl', [U('做扳手锤子'), rec('none:没有'), UR()]);
-  assert(W(newPy, noSearch) === 'deny', '登记前没查找应拦');
-  const prevTurn = tx('r3.jsonl', [U('做工具箱'), A('Grep', { pattern: 'x' }), UR(), rec('none:没有'), UR(), U('过了,做扳手锤子')]);
-  assert(W(newPy, prevTurn) === 'deny', '换了一轮用户消息应重查');
-  const notif = tx('r4.jsonl', [U('做扳手'), A('Glob', { pattern: '*' }), UR(), rec('none:没有'), UR(), U('<task-notification>\n<task-id>b1</task-id> done')]);
-  assert(W(newPy, notif) !== 'deny', '后台任务通知不算新一轮');
-  const mention = tx('r7.jsonl', [U('做扳手'), A('Grep', { pattern: 'x' }), UR(), A('Bash', { command: 'git commit -m "跑 reuse-check.js record 登记"' }), UR()]);
-  assert(W(newPy, mention) === 'deny', '命令文字里只是提到登记命令不算登记');
-  const needSkill = tx('r5.jsonl', [U('做扳手'), A('Grep', { pattern: 'x' }), UR(), rec('yide:reference-replicate'), UR()]);
-  assert(W(newPy, needSkill) === 'deny', '登记要用的 skill 没加载应拦');
-  const loaded = tx('r6.jsonl', [U('做扳手'), A('Skill', { skill: 'yide:reference-replicate' }), UR(), rec('yide:reference-replicate'), UR()]);
-  assert(W(newPy, loaded) !== 'deny', '登记的 skill 已加载应放行');
-  assert(preToolDecision({ tool_name: 'Agent', tool_input: { subagent_type: 'Explore', prompt: 'x' }, transcript_path: none }) !== 'deny', 'Explore 只读 agent 不拦');
-  assert(preToolDecision({ tool_name: 'Agent', tool_input: { subagent_type: 'executor', prompt: 'x' }, transcript_path: none }) === 'deny', '派执行 agent 没登记应拦');
-  assert(preToolDecision({ tool_name: 'Write', tool_input: { file_path: newPy }, transcript_path: none }, { YIDE_REUSE_GATE: '0' }) !== 'deny', '环境变量可关');
-  const cli = args => { try { execFileSync('node', [path.join(SCRIPTS, 'reuse-check.js')].concat(args), { encoding: 'utf8' }); return 0; } catch (e) { return e.status; } };
-  assert(cli(['record', '--task', '做扳手', '--skills', 'none', '--reuse', '无']) === 1, '空话登记应不合格');
-  assert(cli(['record', '--task', '做扳手', '--skills', 'none:都不对口', '--reuse', 'gen/kitlib.py 的 Part 直接用']) === 0, '具体登记应通过');
-});
-
-// === 13c. 参考闸:每轮第一次出图 / 建模前登记对标图,登记的图要真打开过(2026-10-31)===
-t('13.3 参考闸:没登记拦、登记未打开拦、打开后放行、免参考放行、换轮重登、图标与只读不误伤', () => {
-  const U = text => JSON.stringify({ type: 'user', message: { role: 'user', content: text } });
-  const UR = () => JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: 'x', content: 'ok' }] } });
-  const A = (name, input) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id: 'i', name, input }] } });
-  const SK = A('Skill', { skill: 'yide:reference-replicate' });
-  const tx = (name, rows) => { const p = path.join(TMP, name); fs.writeFileSync(p, rows.join('\n') + '\n'); return p; };
-  const lock = `node "C:/x/scripts/ref-check.js" lock --object "水源湖泊/岸线/草岛裙边+粉岩线" --refs "moco_06-16_水面与岛.png 裁 336,500,1920,620; w_7m13.27s.png 裁 330,620,1980,1080"`;
-  const RD = f => A('Read', { file_path: 'I:/My Drive/x/mo.co截图/video_frames/' + f });
-  const bl = '"C:/b/blender.exe" -b a.blend -P gen/x.py';
-  const d = (tool, ti, t) => preToolDecision({ tool_name: tool, tool_input: ti, transcript_path: t }, { YIDE_REUSE_GATE: '0' });
-  const none = tx('g0.jsonl', [U('精修岸线'), SK, UR()]);
-  assert(d('Bash', { command: bl }, none) === 'deny', '没登记应拦');
-  assert(d('mcp__blender__execute_blender_code', { code: 'import bpy' }, none) === 'deny', 'Blender MCP 没登记应拦');
-  const unread = tx('g1.jsonl', [U('精修岸线'), SK, UR(), A('Bash', { command: lock }), UR()]);
-  assert(d('Bash', { command: bl }, unread) === 'deny', '登记了但没打开原图应拦');
-  const half = tx('g2.jsonl', [U('精修岸线'), SK, RD('moco_06-16_水面与岛.png'), UR(), A('Bash', { command: lock }), UR()]);
-  assert(d('Bash', { command: bl }, half) === 'deny', '只打开了一张应拦');
-  const copy = tx('g2b.jsonl', [U('精修岸线'), SK, A('Read', { file_path: 'ref/r28_water_island.png' }), RD('w_7m13.27s.png'), UR(), A('Bash', { command: lock }), UR()]);
-  assert(d('Bash', { command: bl }, copy) === 'deny', '读转存拷贝不算实看原图');
-  const ok = tx('g3.jsonl', [U('精修岸线'), SK, RD('moco_06-16_水面与岛.png'), RD('w_7m13.27s.png'), UR(), A('Bash', { command: lock }), UR()]);
-  assert(d('Bash', { command: bl }, ok) !== 'deny', '登记并打开过应放行');
-  const ex = tx('g4.jsonl', [U('导出 FBX'), SK, UR(), A('Bash', { command: 'node ref-check.js exempt --why "不改外观:只导出 FBX 进 Unity"' }), UR()]);
-  assert(d('Bash', { command: bl }, ex) !== 'deny', '免参考登记应放行');
-  const badEx = tx('g5.jsonl', [U('导出'), SK, UR(), A('Bash', { command: 'node ref-check.js exempt --why "懒得看"' }), UR()]);
-  assert(d('Bash', { command: bl }, badEx) === 'deny', '免参考类别不合格应拦');
-  const nxt = tx('g6.jsonl', [U('精修岸线'), SK, RD('moco_06-16_水面与岛.png'), RD('w_7m13.27s.png'), UR(), A('Bash', { command: lock }), UR(), U('再改一下桥')]);
-  assert(d('Bash', { command: bl }, nxt) === 'deny', '换了一轮用户消息应重新登记');
-  const nxtOk = tx('g7.jsonl', [U('精修岸线'), SK, RD('moco_06-16_水面与岛.png'), RD('w_7m13.27s.png'), UR(), A('Bash', { command: lock }), UR(), U('再改一下'), A('Bash', { command: lock }), UR()]);
-  assert(d('Bash', { command: bl }, nxtOk) !== 'deny', '新一轮重登同一组图,不必重新打开');
-  const noneLock = tx('g8.jsonl', [U('做系泊桩'), SK, UR(), A('Bash', { command: 'node ref-check.js lock --object "J01-M08 系泊桩" --none "人造物外形不挂 mo.co(#14);外形按概念图,质感按质感上限行"' }), UR()]);
-  assert(d('Bash', { command: bl }, noneLock) !== 'deny', '--none 登记应放行');
-  assert(d('Bash', { command: 'py er_icon_cli.py --batch b1' }, none) !== 'deny', '出 icon 不拦');
-  assert(d('Bash', { command: 'codex exec "修 build 脚本的编译错"' }, none) !== 'deny', '派 codex 写代码不拦');
-  assert(d('Bash', { command: 'codex exec "用 image_gen 出概念图"' }, none) === 'deny', '派 codex 出图没登记应拦');
-  assert(d('Bash', { command: bl }, path.join(TMP, 'missing.jsonl')) !== 'deny', '读不到 transcript 不拦');
-  assert(preToolDecision({ tool_name: 'Bash', tool_input: { command: bl }, transcript_path: none }, { YIDE_REUSE_GATE: '0', YIDE_REF_GATE: '0' }) !== 'deny', '环境变量可关');
-  const cli = args => { try { execFileSync('node', [path.join(SCRIPTS, 'ref-check.js')].concat(args), { encoding: 'utf8', stdio: 'pipe' }); return 0; } catch (e) { return e.status; } };
-  assert(cli(['lock', '--object', '岸线', '--refs', '随便看看']) === 1, '--refs 没文件名应不合格');
-  assert(cli(['lock', '--object', '岸线', '--refs', 'a.png; b.png; c.png; d.png']) === 1, '超过 3 张应不合格');
-  assert(cli(['exempt', '--why', 'UI:HUD 排版不涉及局内质感']) === 0, '合格免参考应通过');
-});
-
-// 清理
-try { fs.rmSync(TMP, { recursive: true, force: true }); } catch {}
 
 // === 14. 专家卡同步:按内容比,不看 mtime(2026-11-05)===
 t('14.1 专家卡同步:副本内容不同且更新也被大脑覆盖、同内容不重拷、只差换行不算不同、主目录已隔离', () => {
