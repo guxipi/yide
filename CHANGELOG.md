@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.79.1 — 2026-11-20 ui-screen-redo 按星图试跑补工具和坑
+- 新增 references/tooling.md:ScreenCapture 拍原分辨率、别直拍进网盘、job wait 比较符、星图 3D 点选走 HandleTap、关全部 Canvas 拍干净场景底 + 导出实机标记数据、codex 3×3 方向板出图标、可点击稿体积、hash 驱动 + Chrome 无头逐状态截图、合成时先查设计文档红线。
+- 新增 scripts/cut_grid.py(白底网格切透明图标)、scripts/contact_sheet.py(状态总览)。
+- 第二轮只改文案 / 小件可不跑第三轮,评审页写明。
+
 ### v0.79.0 — 2026-11-20 新 skill ui-screen-redo:改 UI 屏前的三路独立评审(勾哥:「让整个 work 可以脱离各种 back & forth 一次成形」)
 - 流程:页面卡(转化目标、入口、分量、真数据、最新实机图、现有元素全清单)→ 五个 persona 盲看盲玩(搜打撤老玩家 0 氪、新手、小 R、中 R、大 R)、UI/UX lead 重排信息结构、主美按绝区零 + ER 画风审计 visual,三路互不看结论 → 主控合成可点击 HTML(动效、visual 全成品)→ 同一批 persona 第二轮盲测过线 → 六页签评审页交勾哥。
 - references:页面卡、persona 卡与派单、UI/UX lead 派单、主美派单、评审页骨架。
