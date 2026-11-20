@@ -5,6 +5,10 @@ description: Wiring, placing, aligning or building Unity uGUI UI in Extraction �
 
 # UI Placement (Extraction)
 
+> **第 0 步(勾哥 2026-11-14,11-19 补):新界面 / 页面改版,Unity 里的 UI 一行都不写之前先做三步——research(竞品同类界面 + ER 现有同类屏)→ 出可点击、带按压和出入场动效的 HTML → 勾哥批复。** 派单写「成品级、走 ui-placement」也不豁免;数据层和服务端可以先做。HTML 和它的源稿、构建脚本放 vault 对应 feature 目录,不放 C 盘。只接线、修 bug、照已批的稿落地,不用重走这三步。
+
+> **先判这屏用哪套视觉:** 走 `Cargo<Screen>Setup.cs` builder 的屏是 CARGO 屏,按 vault `013 美术/UI_CARGO/`(现行稿 `mock/kit_v12.html`,token `CARGO_tokens.md`;两者冲突或和勾哥 11-16 之后的拍板冲突时,以更新的拍板为准,拍板在每个会话自动加载的 vault MEMORY 清单美术分区)。还没迁的旧屏才用下文 SuperCasual kit 的量法。下文凡是写「kit 是绝对标准」的地方,都只对旧屏和直接拿 SuperCasual 现成件的情况成立。
+
 > **CARGO 屏一律走 builder(2026-10-31 勾哥)**:几何、样式、接线都写进该屏的 `Assets/Scripts/Editor/Setup/Cargo<Screen>Setup.cs`(`LoadPrefabContents` 改 prefab → `SaveAsPrefabAsset`;幂等,builder 自建节点前缀 `Cargo`,原节点只改父子和样式、不改名),重跑 `Tools/Setup/CARGO - …` 菜单出结果;不在 Prefab Mode 手摆,也不手改 prefab。尺寸按 1080 设计像素写、`P()` 换 1440 画布;token 和字阶按 vault `013 美术/UI_CARGO/CARGO_tokens.md`。共享件(`CargoUISetup.cs`、货币芯片、底栏)只有 HOME 会话能改(工程 CLAUDE.md 锁协议第 4 条)。可读性不达标直接修,不当选项抛给勾哥。
 
 Extraction is **portrait-only** mobile (portrait 9:16; for the exact canvas ref see Source of truth below — kit screens are ratified to 1080×2340). The visual language, tokens, prefab mapping and per-screen specs already exist as docs — this skill is the **execution workflow + discipline**, not a re-spec.
@@ -18,7 +22,7 @@ UI 要达到的视觉水准和验收(一屏一件事、入口分级、红点克�
 - `Claude Feature Docs/UI Visual Design/UI_Visual_Design_Guidelines.md` — 8px grid + tokens, colors, type scale, safe-area, portrait zones, animation timings (§7), feedback/juice (§8), layer manager, performance.
 - `Claude Feature Docs/UI Visual Design/Component_Selection_Matrix.md` — which SuperCasual prefab for which job.
 - `Claude Feature Docs/UI Visual Design/Screen_Layout_Specs.md` — per-screen layouts.
-- Kit: `Assets/AssetPacks/UI/Layer Lab/GUI Pro-SuperCasual/`. Font(2026-10-12 定稿:除主页 START 外全部 Saira、字色按底色定,见工程 CLAUDE.md UI 字体铁规第 2、5 条;以下二分制只适用于未迁移的旧屏)(2026-07-07 修订为二分制): Title/大数字 = CookieRun Black Outline 54 SDF;其余一切 = `Cairo_Line_Black SDF`(kit ResourcesData/Fonts),均挂 CJK fallback。Canvas layers: `Core.UI.UICanvasLayerManager` (Background 0 → SystemPopup 600).
+- Kit: `Assets/AssetPacks/UI/Layer Lab/GUI Pro-SuperCasual/`. Font:所有 UI 文字用 Saira,主页 START 也是,字色按底色定(工程 CLAUDE.md UI 字体铁规第 2、5 条),挂 CJK fallback。新写和改动的 UI 一律照这条;只有原样维护一块还没迁的旧屏时,才会碰到它沿用的 CookieRun 标题 + `Cairo_Line_Black SDF` 正文。Canvas layers: `Core.UI.UICanvasLayerManager` (Background 0 → SystemPopup 600).
 - **Universal 件唯一注册表** = repo `Claude Feature Docs/UI Visual Design/Universal_Widgets_Registry.md`(2026-07-07 起唯一权威,已自 Claude 记忆迁入 repo)。做任何 UI **先查它复用**;新建 universal 件必回填该表。别再指向 Claude memory 的 `universal-ui-widgets`(已废弃)。
 
 ## 真源模型 + 交互底线(2026-07-07 拍板)

@@ -97,7 +97,7 @@ root
 
 1. **静态(edit mode,最可靠)**:脚本(`unity command script run`,Coplay `execute_script` 兜底)把各 type prefab `PrefabUtility.InstantiatePrefab` 排一行到一个 parent → `capture_scene_object(parent)` 一张图看**颜色对不对、模型读不读得出、壳子在不在**。粒子在 edit 里不自动播没关系,这步只判静态。用完删 parent、别存场景。
 2. **运动 + 反馈(play mode)**:走 `playmode-verify-iterate` 的纪律(`runInBackground=true` 第一行、分步驱动、state dump 是权威)。
-   - 进局内主玩法用记忆里的 playbook(`GameModeContext.CurrentMode` 先设再 `LoadGameSceneAsync(arena)`)。
+   - 进局内主玩法走真入口(从主页一路点进远征)。这里原来写的 `GameModeContext.CurrentMode` + `LoadGameSceneAsync(arena)` 捷径已经用不了:arena 模式已退役。
    - 直接 `PoolService.Get(prefab)+Initialize(pos)` 在玩家周围生成各 type,看悬浮/飞-停/壳子光晕。
    - 验拾取反馈:生成在玩家身上触发 collect,**state dump 数 popup 数 / body-glow 实例 / 玩家 StatusEffectHandler.ActiveEffects**(overlay canvas 的 popup 截图是盲的,只能 dump);`ScreenCapture.CaptureScreenshot` + PowerShell 裁中心区 Read 判 3D 视觉。
 3. **对比上线级再迭代**(最终验收按参考资料 10.10:时间表 + 三张关键帧 + 和 mo.co 同类事件并排):每轮问"差在哪"——糊(光团太大/emission 太猛)、读不出泡泡(壳用了粒子不是 mesh)、色不对(tint 想变色相了→选变体)、没生命(缺呼吸/pop/burst)。一次只改能定位的一项,重跑 builder→重测。

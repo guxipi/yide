@@ -1,4 +1,4 @@
-# 工单 <批次>·<片号> <片名>(翼德 polish 施工工单模板——派 executor·opus 时整段作为 prompt,路径/口径按本次替换)
+# 工单 <批次>·<片号> <片名>(翼德 polish 施工工单模板——派 executor 时整段作为 prompt,模型由派单方定,路径/口径按本次替换)
 
 施工任务「<屏名> <批次> · <片名>」。项目 `<项目根>`(Unity <版本>,URP,竖屏手游)。中文汇报。当前 HEAD = <hash>,你在其上继续。
 
@@ -23,8 +23,8 @@
 - **不要动**:<别的棒刚改完/正要改的文件与系统>。
 - **不许改**共享资产与烘焙工具:<列出>;`git diff <共享目录>` 必须为空;<回执/校验菜单> PASS。旧路径/2D 回退不许坏。
 - shader 放 `<目录>`,材质走 Resources 防 strip;float 分支不用 shader_feature;关域重载:static 加 SubsystemRegistration 复位;运行时 Texture/Mesh/Material/RT 在 OnDestroy 销毁;日志按周围风格 `Debug.Log*("[<Tag>] …")`;只用确认存在的 API;新代码贴合周围风格,不加没被要求的抽象。
-- UI 铁规:UI 真源=prefab(用 MCP 改后显式保存);字体二分;字面白+描边(UIInk),禁彩色字面;token 走 UITheme/TextStyle;新引 kit sprite 后重跑 KitSprite Rebuild Manifest;新 universal 件回填注册表;静态文案英文。
-- 编辑器(Coplay MCP,root `<项目根>`)归你独占,当前不在 Play、无编译错误。**每次改文件前先 `get_unity_editor_state` 确认 playMode=false**(前几棒违反过);改完 `check_compile_errors` 再进 Play。被编辑态组件自动标 dirty 的场景**不要 save**;不碰 ProjectSettings。收尾 stop Play 并还原 Game 视图(`scripts\BrRestore.cs`)。
+- UI 铁规:以 `<项目根>\CLAUDE.md` 的「UI 字体铁规」「UI 结构与视觉铁规」为准,这里不抄。先判这屏是哪类:CARGO 屏改 `Cargo<Screen>Setup.cs` builder 再重跑,不手改 prefab;其它已 prefab 化的屏改 prefab 后显式保存。token 走 UITheme/TextStyle;新引 kit sprite 后重跑 KitSprite Rebuild Manifest;新 universal 件回填注册表;静态文案英文。
+- 编辑器(首选 Unity CLI,Coplay MCP 只在 CLI 没对应命令时兜底;root `<项目根>`)按工程 CLAUDE.md 锁协议拿锁后才动。**每次改文件前先 `unity command editor status` 确认不在 Play**(前几棒违反过);改完 `unity command console status` 看编译,零错再进 Play。命令写法见 `yide:playmode-verify-iterate`。被编辑态组件自动标 dirty 的场景**不要 save**;不碰 ProjectSettings。收尾 stop Play 并还原 Game 视图(`scripts\BrRestore.cs`)。
 - 不许运行 scope.js;不许 git commit/push;不动无关文件。
 - 一回合连续干到底;没有 watcher/计时器/触发器会叫你;停回合=停工作;除非真 blocked 于需要人拍板的不可逆决定,否则不许中途停。
 

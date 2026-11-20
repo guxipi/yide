@@ -8,6 +8,8 @@
 
 ## 怎么做
 
+> **ER 项目先看这三条(2026-11-20 标注):** ① ER 的现行 kit 是 CARGO(vault `013 美术/UI_CARGO/`,现行稿 `mock/kit_v12.html`),下文「数值的绝对标准 = 项目 UI kit 的实物」在 ER 里指它,不指 SuperCasual 的 Preview / demo scene。② ER 的稿要可点击并带按压、出入场、切换动效(勾哥 11-19),图内嵌进 HTML,资源和货币图标用 Unity 里的真图(11-16)。③ ER 的 HTML、源稿、构建脚本写进 vault 对应 feature 目录(勾哥 11-14 / 11-18),不写 `<项目>/QA/`,也不放 scratchpad。
+
 ### 0. 先拿到项目的"真值",再动手
 - 读 `~/.yide/projects/<当前项目>.md` 的「🎨 UI/UX 设计预设」(屏幕方向 / **基准分辨率·安全区** / UI 框架 / 美术基调 / 控件约定 / **确认线稿文件夹** / 已确认线稿)+ `unity-context` 技术事实。
 - **数值的绝对标准 = 项目 UI kit 的实物**,不是文档。凡需要定具体数值的地方(组件尺寸 · 间距 · 字号 · 配色 · 圆角 · 描边 · item slot 大小 · 按钮高度…),**仔细对照 kit 的 preview 图 + demo scene,以它们为准**——UI 设计规范文档是从 kit 二手提炼的,**冲突一律以 kit 实物为准**。先去 kit 的 `Preview/` 整屏成品图找最接近的同类屏照抄布局比例,再进 demo scene 量真实 RectTransform 的 px/锚点/间距,组件 sprite 看 `ResourcesData/Sprites/Components/`。(具体 kit 与路径见项目档案预设 / ER 专属 prompt。)

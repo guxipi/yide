@@ -1,6 +1,6 @@
 ---
 name: er-blender
-description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件化建模与按设计坐标拼装、小 POI 15 分钟一轮(拆解单 → 体块 → 叠概念图)、干净上色 paint-over、Tripo 件清理与风格化、评审对照图与验收门、导出 Unity、VFX mesh 等离线件、bpy 坑表与 Blender MCP。Trigger on "blender 建模" / "POI 建模" / "建筑建模" / "体块" / "blockout" / "叠概念图" / "建模不准" / "paint over" / "干净上色" / "tripo 模型精修" / "模型太 basic" / "看得出刻面" / "减面" / "导出 FBX 进 Unity" / "道具风格化" / "拆成墙再组合" / "blender 出图" / "blender mcp" / "bpy 报错" / "POI 检查表" / "POI 注意点" / "POI 交付前"。角色走 er-character-pipeline;Unity 里修材质 / pivot 走 gaoguang-3d;树草崖地块走 Unity 生成器,不进 Blender。
+description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件化建模与按设计坐标拼装、小 POI 15 分钟一轮(拆解单 → 体块 → 叠概念图)、干净上色 paint-over、Tripo 件清理与风格化、评审对照图与验收门、导出 Unity、VFX mesh 等离线件、bpy 坑表与 Blender MCP。Trigger on "blender 建模" / "POI 建模" / "建筑建模" / "体块" / "blockout" / "叠概念图" / "建模不准" / "paint over" / "干净上色" / "tripo 模型精修" / "模型太 basic" / "看得出刻面" / "减面" / "导出 FBX 进 Unity" / "道具风格化" / "拆成墙再组合" / "blender 出图" / "blender mcp" / "bpy 报错" / "POI 检查表" / "POI 交付前"。角色走 er-character-pipeline;Unity 里修材质 / pivot 走 gaoguang-3d;树草崖地块走 Unity 生成器,不进 Blender。
 ---
 
 # ER Blender 总入口
@@ -12,7 +12,7 @@ description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件�
 | 要做的事 | 去哪 |
 |---|---|
 | POI 建筑(有顶屋、母舱、遗址残壳)和联邦硬表面小件:先做部件再按设计坐标拼,不做地板 | 本 skill `references/07-建筑部件拼装.md` + `scripts/kit/`(10-30 勾哥定 Claude 直接做) |
-| **楼体 paint-over = 顶点色(11-11 勾哥拍板，按 mo.co 建筑笔触):`scripts/paintover/po_vertex.py`(一面一色 + 整面连续渐变、倒角柔亮带、可选块间差，不许接缝);AI 生图只给玻璃 / 屏幕 / 招牌 / 涂鸦** | 本 skill `references/08-干净上色paintover.md` 顶部 11-11 条 + vault `丛林Lab/specs/spec_建筑笔触_moco提取.md` |
+| **楼体 paint-over = 顶点色(11-11 勾哥拍板，按 mo.co 建筑笔触):`scripts/paintover/po_vertex.py`(一面一色 + 整面连续渐变、倒角柔亮带、可选块间差，不许接缝);AI 生图只给玻璃 / 屏幕 / 招牌 / 涂鸦** | 本 skill `references/08-干净上色paintover.md` 顶部「现行口径」+ vault `丛林Lab/specs/spec_建筑笔触_moco提取.md` |
 | 干净上色 paint-over:底稿 → terra 干净上色 → 配准 → 锁色 → 投影回 UV → 图集。**画法基准 = mo.co 清透感,写成文字、生图默认只喂底稿一张,不喂 mo.co 图(11-09 晚勾哥),可选加本件拆件图格子 `prompt.card` 只学质感;不烘 AO / 内角压暗 / 投影,渐变和柔亮带按本件参考图质感画(11-09 晚 LOG),只加明暗不改色相,画完跑 hardhue 硬锁;只画本模型自己的发光体;颜色从没有 hue 的概念图本色取(11-09 勾哥拍板),进引擎闭环标定,不混灰;小件 / 圆件 / 斜放件不投影贴图,走顶点色 + LabLit** | 本 skill `references/08-干净上色paintover.md` + `scripts/paintover/`;换场景只写一个配置 JSON |
 | 角色(四视图 → Tripo → 绑骨 → 表情 → 入库) | er-character-pipeline(它的 Blender 坑同样以本 skill 的 02 为准) |
 | 模型进了 Unity 发灰、塑料感、pivot 歪、只是法线软塌 | gaoguang-3d;先试 Unity importer 法线,多数"肉感"不用进 Blender |

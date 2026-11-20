@@ -5,6 +5,13 @@ description: ER(Extraction)商店礼包营销视觉(MKT visual)和商业化 UI �
 
 # ER 商店礼包 MKT visual + UI
 
+> **2026-11-20 标注:下面第 1 节是 10-27 的口径,这几条已被勾哥后来的拍板改掉,动手前以新的为准。** 原文在每个会话自动加载的 vault MEMORY 清单美术分区,读全文。
+> - 薄荷绿 #22C8A8 退休,CARGO 高亮色用黄 #F4DE00(11-18)。本文和 `CARGO_tokens.md` 里的「饱和薄荷」「CLAIM 薄荷」都按这条换。
+> - 切边(贴纸白边、品阶包边)全游戏统一 12 设计像素(11-19),不再是「Outline 4px@1080」。
+> - 礼包 / 促销弹窗做异形(11-18)。文字任何情况下不描边(11-18)。
+> - 评审 HTML 的图内嵌进文件,资源和货币图标用 Unity 里的真图(11-16)。HTML、源稿、prompt 脚本、log 都放 vault 对应 feature 目录,不放 scratchpad(11-14 / 11-18)。
+> - 出人物 KV 不用先拉 mo.co 图:商店营销在参考登记规则里属于免参考类(`ref-check.js exempt`,规则见 vault `013 美术/mo.co截图/README_参考怎么选.md`)。第 4 节「出人物图前先实看 mo.co」那条作废。
+
 这个 skill 解决一件事:勾哥不想每次重新 prompt、重新给一轮意见。2026-10-27 W4 商业卡迭代时勾哥指出的问题整理成下面第 1 节的通用口径,做任何商业屏之前先把这一节当验收单过一遍,不要等他再说一次。
 
 skill 只放通用规则和可复用部件,不规定某一屏长什么样(10-27 勾哥:"skill 不需要规定具体某一屏幕是什么")。每屏的版式按这次的需求、参考图和 tokens 现做,在评审稿里给勾哥看;屏级拍板记在项目记忆和评审稿里,不回写本 skill。
@@ -16,7 +23,7 @@ skill 只放通用规则和可复用部件,不规定某一屏长什么样(10-27 
 - `013 美术/UI_CARGO/handoff_2026-10-27/design/refs_gouge_2026-10-27/` 1~24:勾哥给的参考和标注截图。
 - `013 美术/UI_CARGO/handoff_2026-10-27/research/game_feel_2026-10-27.html`:Pinterest 板学习 + CARGO 为什么不像游戏的报告。
 - `013 美术/UI_CARGO/handoff_2026-10-27/research/cargo_rich_proposal_v3_claude_2026-10-27.html`:tokens 第十七节的样张,看规则落到屏上的效果,不当版式模板。
-- 本机 Claude 记忆:`feedback-codex-object-art-icon-style`、`er-kv-style-drift-to-realism`、`codex-sol-er-art-skill-hijack`、`er-character-sheet-ssot`、`feedback-design-review-as-html`。和本文冲突以记忆里更新的日期为准,并回写本文。
+- 记忆:勾哥对商业屏和 KV 的拍板在 vault MEMORY 清单的美术、商店分区。和本文冲突以记忆里更新的日期为准,并回写本文。(原来列在这里的 `feedback-codex-object-art-icon-style` 等五条旧记忆名只在 C 盘旧目录和 10-21 快照里,vault 总索引查不到,不再当真源。)
 
 ## 1. 设计口径(勾哥 10-27 历次改稿,合并后的现行版)
 

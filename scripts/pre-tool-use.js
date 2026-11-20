@@ -125,7 +125,7 @@ function isSafeBash(cmd, conf) {
       const sub = toks[j];
       if (!sub || !gitSafe.has(sub)) return false;
       // 可写子命令(config/branch/tag/remote/reflog)只在"纯查询"时放行:出现位置参数(分支名/配置值/tag 名/remote 名)
-      // 或显式写标志 → 回落审批(git branch <名> 会建分支,撞红线⑧)。
+      // 或显式写标志 → 回落审批(git branch <名> 会建分支,撞红线 1:建或切分支先问)。
       if (GIT_WRITE_SUBS.has(sub)) {
         for (let k = j + 1; k < toks.length; k++) {
           const t = toks[k];

@@ -3,7 +3,7 @@
 //   pull   —— session-start 用:联网 ff-only 拉最新(失败不阻塞,只报一行)。
 //   sync   —— record/consolidate/note/onboard 等写大脑的动作收尾用:add -A + commit + push(push 失败不致命)。
 //   status —— doctor 用:dirty / ahead / behind / remote 可达。
-// git 自动 commit/push 属"工具自身数据持久化",受 hard-rules 红线⑧定向豁免(见大脑 core/hard-rules.md 用户层)。仅 Node 内置。
+// git 自动 commit/push 属"工具自身数据持久化",属 hard-rules 红线 1 里「翼德两仓 commit + push 不必问」的例外(见大脑 core/hard-rules.md;早期版本叫红线⑧定向豁免)。仅 Node 内置。
 'use strict';
 const fs = require('fs');
 const path = require('path');

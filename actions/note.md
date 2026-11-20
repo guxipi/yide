@@ -28,7 +28,7 @@
 3. 每条:判断主题、关联项目、抽 tags、定时间(文件时间或内容里的日期)。
 4. 归档到 `~/.yide/notes/<YYYY>/`,写好 frontmatter;更新 `notes/index.md`(按主题/项目分组)。
 5. 处理完把原始件移到 `notes/inbox/_done/`(软删,保留),报告"整理了 N 条,涉及主题/项目 …"。
-6. **收尾同步**:`node "${CLAUDE_SKILL_DIR}/scripts/brain-git.js" sync "整理笔记:N 条"`(git 仓则 commit+push,受红线⑧定向豁免;非 git no-op)。录入(A)落盘后同样收尾同步一次。
+6. **收尾同步**:`node "${CLAUDE_SKILL_DIR}/scripts/brain-git.js" sync "整理笔记:N 条"`(git 仓则 commit+push,属红线 1 里翼德两仓的例外;非 git no-op)。录入(A)落盘后同样收尾同步一次。
 
 ## C. 查询("问翼德:关于 X 我记过什么")
 - 在 `~/.yide/notes/` 里按关键词/主题/项目/时间检索(grep/读 index),把相关笔记汇总回答,附文件路径方便他翻原文。

@@ -10,7 +10,7 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 ## 先做这三件事
 1. 读 `references/00-首次接手与输入.md`,把 checklist 过一遍(真源、环境、权限、落点、Unity 有没有人在 Play)。
 2. 复制 `templates/char_config.example.json`(Wren 的真实参数)到 `{workspace}/configs/<slug>.json`。所有脚本只读这个文件;每个阶段产出的真实文件名填回 `files` 段。
-3. 读 `references/pitfalls.md` 的 40 条坑,知道哪些地方会出事。
+3. 读 `references/pitfalls.md` 的坑表(编到 #137;先看表头的标注,有几条已被后来的做法取代),知道哪些地方会出事。
 
 ## 总纪律
 - **先回看 Wren 再动手(10-24 勾哥定,强制)**:Wren 是目前做得最好的角色。每个阶段、每个子步骤动手之前,必须先翻 Wren 当时这一步是怎么做的——`references/0X` 对应章节、`templates/char_config.example.json`(Wren 真值)、`scripts/` 里对应脚本的 docstring、`references/REVIEW.md` 和 pitfalls 里标 Wren 的条目,以及 Wren 的真实产物——然后严格照 Wren 的做法、Wren 的脚本、Wren 的门来做。不许先按自己的想法发明一条新路再回头对;只有 Wren 的做法在当前角色上**实测**走不通(跑过、有证据),才允许偏离,偏离时在交接文件里写"Wren 做法 / 为什么不通 / 改成什么",并补进 pitfalls。Rook2 两天里 avatar、脸图集、贴图清理各发明过一轮新路,都走了弯路,这条就是为此立的。

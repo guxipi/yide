@@ -2,6 +2,16 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.78.1 — 2026-11-20 理顺会让 AI 拿不准的地方(勾哥:「理顺所有有可能会 confuse AI 的地方,特别是美术方面」)
+- er-blender 08 上色章节重排:最前面放「现行口径」(件类 × 上色路线表;上色单派 terra;只喂底稿;发光件只画它自己),画法规矩只留 09 §四一份,10-31 到 11-11 的逐次拍板挪到文末「改口史」。评审门里「发光件有没有周围光晕」改成反过来查有没有往别处染光(11-10 铁规 0)。
+- `er-shop-mkt/scripts/run_codex.sh` 支持 `CODEX_MODEL`(默认仍是 sol);08 的上色命令带 `CODEX_MODEL=gpt-6.1-terra`。之前文档写派 terra,照命令跑出去的是 sol。
+- UI:ui-placement、ui-visual-rework、mockup 顶部加「先 research → 可点击 HTML → 勾哥批 → 才进 Unity」(11-14)和「这屏用 CARGO kit 还是旧 SuperCasual」的判定;SuperCasual「绝对标准」和 `Button_Back` 放最左标成只对旧屏成立;字体说明改成全部 Saira。
+- er-shop-mkt 顶部列出 10-27 之后被改掉的口径(薄荷退休改黄、切边 12 设计像素、异形弹窗、文字不描边、图内嵌、资料放 vault、KV 免拉 mo.co)。
+- polish 第 7 节:红线编号、参考规则、POI 植物和 POI 建筑的走法对齐现行;交付目录从 D 盘改 vault;工单模板去掉写死的 opus、旧字体口径和 Coplay 命令。
+- er-character-pipeline:坑表表头标出已被取代或互相矛盾的条目和重复编号;归档一节的记忆位置从 C 盘改 vault,不再要求记 Tripo 点数。
+- vfx-production 去掉已退役的 arena 进局捷径;er-ground 索引给 A1 人行道砖标上 11-06「J01 沿路粉砖全删」;几处「红线⑥ / ⑧」改成现在的编号。
+- 没动、等勾哥拍板的:参考闸和复用闸在本机是关的而文档写会拦;Tripo 小件上色走投影还是顶点色;概念图走 gemini 还是 codex;角色动作 FBX 的 avatar 设法。
+
 ### v0.78.0 — 2026-11-19 会话名改由模型起「系统:具体事」
 - 勾哥 11-19:「现在翼德给每个 session 起名的方式不太好读」,同时管很多会话时找不到。原因:10-30 起标题只剩首句前 12 字硬截(「现在翼德给每个sessi」「正常我们竞品的更新频次和」),是半句话不是主题。
 - 首句 UserPromptSubmit 重新提醒模型起名(10-30 关掉的那条恢复,写法换了):名字写成「系统:具体事」、不超过 16 字,跑 `session-title.js set --session <sid> "名字"`;桌面 app 里再用 `set_session_title`(self)把完整标题设上,当场生效,不用等下一句(本会话实测可行,不弹确认)。别的会话派出来的子会话跳过。

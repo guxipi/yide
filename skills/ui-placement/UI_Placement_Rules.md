@@ -1,6 +1,7 @@
 # Extraction — UI Placement Rules (位置法律)
 
 > **Status:** v1.0 — every number below is **measured from the SuperCasual kit's own demo prefabs**, not invented. The kit is the **absolute standard**.
+> **适用范围(2026-11-20 标注):只适用于还没迁到 CARGO kit 的旧屏,和直接拿 SuperCasual 现成件的地方。CARGO 屏以 vault `013 美术/UI_CARGO/` 为准。后退 / 关闭键全游戏统一放右上角 ✕(勾哥 2026-11-19),下文 `Button_Back` 放最左的量法不用在新做和改版的屏上。**
 > **Companion to:** `UI_Visual_Design_Guidelines.md` (tokens) · `Screen_Layout_Specs.md` (per-screen mockups) · `Component_Selection_Matrix.md` (which prefab).
 > **Why this doc:** the other docs give tokens + ASCII sketches ("放这附近"). This gives the missing **hard placement law** — where it anchors, how tall, how big, what casing — copied from how Layer Lab actually composed the kit.
 

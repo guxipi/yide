@@ -1,4 +1,4 @@
-# 调研工单模板(翼德 polish——派 general-purpose·opus,每个 topic 一路并行;整段作 prompt,占位按本次替换)
+# 调研工单模板(翼德 polish——派 general-purpose,模型由派单方定,每个 topic 一路并行;整段作 prompt,占位按本次替换)
 
 竞品视觉/UI 调研任务(只调研+下图+写一个 JSON;**不许改项目代码/资产、不许运行 scope.js、不许 git commit、不许动 Unity 编辑器**)。中文输出,游戏名/术语保留英文,语言**极简**。
 
