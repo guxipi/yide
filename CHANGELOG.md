@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.80.0 — 2026-11-21 lead-orchestration 改成总控 / PM 主干(勾哥:「PM 的目的是能够高效的 supervise 子 sessions 完成一系列长任务」)
+- SKILL.md 重写成 11 节 PM 主干:开工定盘、施工板自动维护(新模板 templates/board.md)、同资源串行一个收干净再开下一个(短活先跑)、派单一回合一段、Monitor + 15 分钟巡查、Unity 弹窗总控自己点掉、验收闸、有参考图 / HTML 的活实机并排两轮收完且完成汇报附最终并排图、子会话失败两次就归档换新、省 token、收尾归档。
+- 10-16 荒漠样板的美术验收细则(2b–5 节和 10-17 锁文件排队)原文挪进 references/art-acceptance.md,主干只留指针。
+- deliverable_checklist 分成「每条线都要」和「美术线另加」两段。
+
 ### v0.79.2 — 2026-11-20 美术 skill 跟着勾哥对「没有定论」的逐条拍板改
 - vfx-production、er-blender 06:局内 VFX 默认半透明 / 叠加发光,只有碎片、宝石这类实物做实心(原「硬边主形」「不透明、无 overdraw」作废)。
 - polish、codex-executor:美术工具分工改指 vault `现行口径_参考与工具分工.md`(`art-model-tool-routing` 只剩入口);概念图和其余 2D 件走 codex terra,UI 功能图标和头像走 codex。
