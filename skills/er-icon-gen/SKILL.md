@@ -1,11 +1,13 @@
 ---
 name: er-icon-gen
-description: ER(Extraction)出 icon 的唯一管线——攒批调本机 gemini 生图工具箱的无头 CLI(er_icon_cli.py),一张网格出 9~12 件、程序抠框切图、自动 QA、对照板在 Claude 窗口给勾哥点选,再入 Unity。Trigger on "出 icon" / "做图标" / "生成图标" / "画个图标" / "缺图标" / "这个物品没图" / "icon 攒一批" / "出图" / 物品、资源、货币、道具、弹药、奖励的 2D icon 需求。不管 3D 模型(gaoguang-3d)、KV/宣传图、UI 黑白 glyph。
+description: ER(Extraction)出 icon 的规矩和 gemini 备用管线。2026-11-21 起勾哥定「用 codex 生成，减少使用 gemini」:icon 默认走 codex,本 skill 的 gemini 工具箱 CLI(er_icon_cli.py)只在 codex 做不了时用;第 1、4、5 节(攒批、给勾哥点选、入 Unity)两条路都适用。gemini 管线:攒批调本机 gemini 生图工具箱的无头 CLI,一张网格出 9~12 件、程序抠框切图、自动 QA、对照板在 Claude 窗口给勾哥点选,再入 Unity。Trigger on "出 icon" / "做图标" / "生成图标" / "画个图标" / "缺图标" / "这个物品没图" / "icon 攒一批" / "出图" / 物品、资源、货币、道具、弹药、奖励的 2D icon 需求。不管 3D 模型(gaoguang-3d)、KV/宣传图、UI 黑白 glyph。
 ---
 
-# ER icon 生成(gemini 工具箱 CLI)
+# ER icon 生成(默认 codex;gemini 工具箱 CLI 备用)
 
-勾哥 2026-10-26 拍板:以后所有 icon 都走他自己调的 gemini 工具箱,不走 codex image_gen(他原话:"它的画风一致性调教比 codex 好")。画风以仓库物品图标为准,母版是 vault `01 - 星际拓荒重构/011_基地星/art/基地星icon_v4_style_reference.png`,默认参考就用它(勾哥 10-26 定 v4 样张)。可读性标准也是勾哥原话:"过于复杂了,放在手机屏幕上会花"——单一粗轮廓主体、少零件、不要细纹/网格/电路线。
+**2026-11-21 改口径(覆盖下面 10-26 那句):** 勾哥看商店 track 图标 v1(gemini 出的)后原话「用 codex 生成，减少使用 gemini」。从此物品 / 资源 / 货币 / 装扮 icon 默认走 codex 出图(管线照 `er-shop-mkt` 的 codex 出图做法;功能图标和头像 11-19 / 11-20 起本来就走 codex)。本 skill 的 gemini 工具箱只在 codex 明显做不了、或要接已在 gemini 管线里批过的成套母版续批时才用，用之前在汇报 / 派单里写明理由。下面的攒批规矩(第 1 节描述写法、只收勾哥原话要的)、给勾哥点选(第 4 节)、入 Unity(第 5 节)两条路都照用;已有同套成品可直接派生的(比如衣柜的 track 概念图)先派生，不花钱。vault 记忆:`013 美术/AI记忆/feedback-use-codex-less-gemini-20261121.md`。
+
+勾哥 2026-10-26 拍板(已被上一段改掉默认通道，只留画风标准):以后所有 icon 都走他自己调的 gemini 工具箱,不走 codex image_gen(他原话:"它的画风一致性调教比 codex 好")。画风以仓库物品图标为准,母版是 vault `01 - 星际拓荒重构/011_基地星/art/基地星icon_v4_style_reference.png`,默认参考就用它(勾哥 10-26 定 v4 样张)。可读性标准也是勾哥原话:"过于复杂了,放在手机屏幕上会花"——单一粗轮廓主体、少零件、不要细纹/网格/电路线。
 
 工具箱是私有仓 `guxipi/er-imagegen`(10-29 起入 git,kryst、duck center、patri 三台机都装了)。目录 = 环境变量 `ER_IMAGEGEN_DIR`(Claude 进程比 `setx` 先启动时 bash 里读不到这个变量,下面的取值写法会从注册表补读;patri 机在 `C:/AI/Claude/ER`),没设就是 `F:/AI/Claude/ER`;下文命令里的 `$T` 都指它,Bash 状态不跨调用,每条命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。CLI 是 `$T/er_icon_cli.py`,同目录 `HANDOFF_生图工具箱.md` §0.0 记着每条设计的实测依据。开工先 `git -C "$T" pull --ff-only`;目录不存在就按第 0 节装,不要改用别的生图通道。所有命令用 `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" ...`(Bash,不走 PowerShell 管道喂中文)。
 
