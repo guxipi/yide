@@ -16,7 +16,7 @@ sid = m.group(1)
 hits = glob.glob(os.path.expanduser(f'~/.codex/sessions/**/rollout-*{sid}.jsonl'), recursive=True)
 if not hits:
     sys.exit(f'FAIL rollout for {sid} not found')
-calls, skill = [], 0
+calls, skill, via_var = [], 0, 0
 for line in open(hits[0], encoding='utf-8'):
     d = json.loads(line).get('payload', {})
     # the skill name always appears in codex's skill catalog; only count it when a tool call actually opens it
@@ -26,6 +26,11 @@ for line in open(hits[0], encoding='utf-8'):
     if inp and 'image_gen__imagegen' in inp:
         arr = re.search(r'referenced_image_paths\s*:\s*\[(.*?)\]', inp, re.S)
         calls.append(len(re.findall(r'\.png', arr.group(1))) if arr else 0)
+        if not arr and re.search(r'referenced_image_paths\s*:\s*[A-Za-z_]', inp):
+            via_var += 1
 ok = bool(calls) and all(c == want for c in calls) and skill == 0
 print(('PASS' if ok else 'FAIL'), f'image_gen calls={len(calls)} refs={calls} want={want} er-art-skill-hits={skill}', hits[0])
+if via_var:
+    print(f'NOTE {via_var} image_gen call(s) passed referenced_image_paths through a variable / load(): this script cannot count them (shown as 0). '
+          'The refs may well have been passed; open the rollout to check, or tell codex to write the paths as a literal array and rerun.')
 sys.exit(0 if ok else 1)

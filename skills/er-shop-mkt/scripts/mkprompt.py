@@ -28,7 +28,7 @@ SIZE = {'portrait': 'portrait 1024x1536', 'landscape': 'landscape 1672x941', 'gr
 
 def head(refs, out, size):
     return ("Do not read or load any skill. Call image_gen with referenced_image_paths set to EXACTLY "
-            + json.dumps(refs, ensure_ascii=False) + " and pass the instructions below to image_gen verbatim.\n\n"
+            + json.dumps(refs, ensure_ascii=False) + " and pass the instructions below to image_gen verbatim. Write the paths as a literal array directly inside the image_gen call (do not store them in a variable or use load()).\n\n"
             f"Use the built-in image_gen tool (not a CLI fallback). Generate ONE NEW image, {size}, quality high. "
             f"Save it to ./img/{out}.png, then report the real pixel size. Do not touch any other file.\n\n")
 
@@ -99,7 +99,7 @@ def build(job):
         src = os.path.abspath(job['src']).replace(chr(92), '/')
         body = CUT.format(**job) if k == 'cut' else PLATE.format(**job)
         return ("Do not read or load any skill. Call image_gen with referenced_image_paths set to EXACTLY " + json.dumps([src], ensure_ascii=False)
-                + " and pass the instructions below to image_gen verbatim.\n\n" + EDIT_HEAD.format(size=job.get('px', '1672x941'), out=n) + body)
+                + " and pass the instructions below to image_gen verbatim. Write the paths as a literal array directly inside the image_gen call (do not store them in a variable or use load()).\n\n" + EDIT_HEAD.format(size=job.get('px', '1672x941'), out=n) + body)
     refs = STYLE_KV + BIBLE[job['hero']]
     f = dict(job, name=job['hero'])
     f.setdefault('keep', 'face, hair, outfit, colours and accessories exactly as in the bible')
