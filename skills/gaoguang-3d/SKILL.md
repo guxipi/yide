@@ -7,7 +7,7 @@ description: 高光3D — intake/fix pipeline for AI-generated 3D models (Tripo,
 
 **目标水准和验收以 ER 美术规范为准**:vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 游戏内画面的质量和质感;旧的 Archero / Brawl Stars 低模 / KayKit 平色加黑描边口径全部作废)。和本 skill 最相关的结果要求是:3D 世界里看不到黑描边(角色、怪也一样),阴影和暗面不灰黑,看不出硬刻面,饱和度按"地面低、主体高"的预算走。角色长相和头身以 vault `013 美术/角色手册/` 为准。下面写的是一种验证过的做法,不是唯一做法;换别的路线也行,结果过总纲门槛即可。
 
-AI 生成的模型(Tripo 等)直接进项目必灰。原因是固定的三连:**embedded material 是 URP/Lit(PBR)** + **_BaseColor 常为 (0.8,0.8,0.8) 把贴图乘暗 20%**(也有白的,但 PBR 本身就压灰) + **_Smoothness 0.5 塑料高光**。工程里 3D 模型统一用 `Assets/Shaders/Lab/LabLit.shader`(`Lab/LabLit`:NdotL 两阶明暗 + 暗部 tint + rim,没有描边);原 ToonLit 已于 2026-10-30 换成 LabLit。这里的修法 = 换材质 + 对轴心 + 配动画 + 真光照验证,全程 Unity 内,不回 DCC。
+AI 生成的模型(Tripo 等)直接进项目必灰。原因是固定的三连:**embedded material 是 URP/Lit(PBR)** + **_BaseColor 常为 (0.8,0.8,0.8) 把贴图乘暗 20%**(也有白的,但 PBR 本身就压灰) + **_Smoothness 0.5 塑料高光**。工程里 3D 模型统一用 `Assets/Shaders/Lab/LabLit.shader`(`Lab/LabLit`:NdotL 两阶明暗 + 暗部 tint + rim,没有描边);原 ToonLit 已于 2026-10-30 换成 LabLit。这里的修法 = 换材质 + 对轴心 + 配动画 + 真光照验证,默认在 Unity 内做完;几何本身有问题就回 Blender(er-blender)。LabLit 是现行统一 shader,不是上限:要试别的 shader、法线图或新路线,和 LabLit 版同机位实拍并排给勾哥看。
 
 ## 0. 诊断(动手前必做,别猜)
 dump 真值(一次性探针 .cs 放 **Assets 外**,如项目根 `Temp/`,用 `unity command script eval_file` / `script run` 跑,用完删;Coplay `execute_script` 只兜底,兜底时的临时驱动放 `Assets/Editor/CoplayTemp/`、不进 git;要留作工具的代码放正式目录 `Assets/Scripts/Editor/Setup/`):

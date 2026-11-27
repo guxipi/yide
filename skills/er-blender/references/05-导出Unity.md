@@ -26,4 +26,4 @@
 
 ## 交给 Unity
 
-落 `Assets/Art/3DModelsfromGu/<Name>/`,贴图只给 BaseColor(LabLit 只吃 BaseMap,法线/ORM 不进)。材质、真光照验证走 gaoguang-3d;武器 shader 是 LabLit(记忆 er-weapon-fourview-pipeline)。描边一律关。
+落 `Assets/Art/3DModelsfromGu/<Name>/`,贴图现在只给 BaseColor(现行 LabLit 只吃 BaseMap,法线 / ORM 不进);要试法线图、ORM、新 shader 这类路线,和 LabLit 版同机位实拍对比后给勾哥看。材质、真光照验证走 gaoguang-3d;武器 shader 是 LabLit(记忆 er-weapon-fourview-pipeline)。描边一律关。

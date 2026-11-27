@@ -1,6 +1,6 @@
 ---
 name: er-blender
-description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件化建模与按设计坐标拼装、小 POI 15 分钟一轮(拆解单 → 体块 → 叠概念图)、干净上色 paint-over、Tripo 件清理与风格化、评审对照图与验收门、导出 Unity、VFX mesh 等离线件、bpy 坑表与 Blender MCP。Trigger on "blender 建模" / "POI 建模" / "建筑建模" / "体块" / "blockout" / "叠概念图" / "建模不准" / "paint over" / "干净上色" / "tripo 模型精修" / "模型太 basic" / "看得出刻面" / "减面" / "导出 FBX 进 Unity" / "道具风格化" / "拆成墙再组合" / "blender 出图" / "blender mcp" / "bpy 报错" / "POI 检查表" / "POI 交付前"。角色走 er-character-pipeline;Unity 里修材质 / pivot 走 gaoguang-3d;树草崖地块走 Unity 生成器,不进 Blender。
+description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件化建模与按设计坐标拼装、小 POI 15 分钟一轮(拆解单 → 体块 → 叠概念图)、干净上色 paint-over、Tripo 件清理与风格化、评审对照图与验收门、导出 Unity、VFX mesh 等离线件、bpy 坑表与 Blender MCP。Trigger on "blender 建模" / "POI 建模" / "建筑建模" / "体块" / "blockout" / "叠概念图" / "建模不准" / "paint over" / "干净上色" / "tripo 模型精修" / "模型太 basic" / "看得出刻面" / "减面" / "导出 FBX 进 Unity" / "道具风格化" / "拆成墙再组合" / "blender 出图" / "blender mcp" / "bpy 报错" / "POI 检查表" / "POI 交付前"。角色走 er-character-pipeline;Unity 里修材质 / pivot 走 gaoguang-3d;树草崖地块默认走 Unity 生成器。
 ---
 
 # ER Blender 总入口
@@ -20,8 +20,8 @@ description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件�
 | 出评审对照图、量数字、判过没过 | `references/04-验收门.md` |
 | 导出 FBX、挂点 Empty、回读核对、交给 Unity | `references/05-导出Unity.md` |
 | VFX mesh(斩击弧/环/冲击波/拖尾)、flipbook、石头单元库 | `references/06-离线件.md`(做法已调研、未在 ER 实测,先做 pilot) |
-| POI 里的植物:花坛 / 花箱的叶团、花、垂藤,树池树,压顶树团 | 和件一起交。**灌木在 Blender 逐片叶建(先交单片叶并排);树冠走 Tripo 网页版,进 Blender 减面烘色后和硬表面件合成**(11-09 勾哥拍板);`scripts/kit/plants.py` 只当占位 |
-| 地形上的植物、崖(树、草、崖、台地、沙被、散布) | **Unity 编辑器 + codex 合作**,不进 Blender、不走 Tripo(11-09 勾哥拍板) |
+| POI 里的植物:花坛 / 花箱的叶团、花、垂藤,树池树,压顶树团 | 和件一起交。默认做法(11-09):灌木在 Blender 逐片叶建(先交单片叶并排),树冠走 Tripo,进 Blender 减面烘色后和硬表面件合成;`scripts/kit/plants.py` 是起点。别的路线(程序化、Unity 里做、新工具)可以试,按实拍和参考并排判 |
+| 地形上的植物、崖(树、草、崖、台地、沙被、散布) | 默认 Unity 编辑器 + codex 合作(11-09);进 Blender、走 Tripo 或别的新路线也可以试,按 W1 实拍判 |
 
 ## 通道:live 用 MCP 迭代,出货用 blender -b
 
@@ -29,11 +29,11 @@ description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件�
 
 写 bpy 之前先读 `references/02-bpy51坑.md`:枚举运行时读(5.1 的 EEVEE 是 `BLENDER_EEVEE`)、节点按 type 找、5.x 删掉的 API、后台没有视口上下文要 temp_override、operator 返回 FINISHED 不等于生效。这些坑在 2026-07~10 的 38 个 Blender 会话里反复踩过。
 
-Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo-cli、不直接调 API;操作和验身见 er-character-pipeline `references/03-Tripo网页操作.md`,点数不记。
+Tripo 默认用浏览器里的 Tripo Studio 网页版(10-26 勾哥定);tripo-cli、API、Blender 桥插件或别的生成工具想试可以试,先在一件上对比效果;操作和验身见 er-character-pipeline `references/03-Tripo网页操作.md`,点数不记。
 
 ## 脚本库
 
-`scripts/blender/` 下的脚本都是"一个 `main(argv)`、参数在 `--` 之后、打一行 JSON、失败退出码非 0",后台和 MCP(`importlib.reload` 后调)两用。先用库里的,别在会话里再写一份:2026-07~10 的会话写了 389 个脚本名,375 个不在 skill 里,出图脚本另写了 49 个、体检脚本 87 个,大半只用过一次。
+`scripts/blender/` 下的脚本都是"一个 `main(argv)`、参数在 `--` 之后、打一行 JSON、失败退出码非 0",后台和 MCP(`importlib.reload` 后调)两用。先看库里有没有现成的;要试新做法就写新脚本,跑通、有复用价值的收进库,别留在 scratchpad 里一次性用完(2026-07~10 的会话写了 389 个脚本名,375 个没进 skill,大半只用过一次)。
 
 | 脚本 | 干什么 |
 |---|---|
@@ -60,7 +60,7 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 - **POI 上色后直接进实地测(11-09 勾哥)**:paint-over 做完,模型直接放进 J01 地图里这个 POI 的实际位置,在那里的真光照、V5 镜头下截图验收;不再先放进 HBLab / JungleLab 这类样板间。发光件在 paint-over 里只画它自己,不往别的面画光(11-10 铁规 0,见 09)。
 - **有盖子 / 有门的件一律做成可打开的容器(11-09 勾哥「所有的有盖子，有门的都要做成 container，可以打开」)**:箱、柜、罐、冰柜、储物格、带门小屋等,建模时盖 / 门单独成物件、轴心放在铰链处,并出关着 / 开着两态(开态露出内部,内部也要上色);进 Unity 挂 `LootableContainer` + `LootContainerLidVisual`(`_closedVisual` / `_openVisual` 两态切换,Extraction `Assets/Scripts/Gameplay/Containers/`)。拆解单里每个有盖 / 有门的件标「容器」,漏标就打回。
 - Blender 路径因机器而异(`F:/Apps/blender.exe` 或 `C:/Program Files/Blender Foundation/Blender 5.2/blender.exe`),先 `ls` 确认;`overlay.py` 两处都会找,也认 `BLENDER` 环境变量。
-- 评审先用现成的 `stage.py`(46° 游戏镜头、white 只看明暗、128px 游戏尺寸图),别另写一套;两轮不中换方法,不在一条路上盲调。
+- 评审默认用 `stage.py`(46° 游戏镜头、white 只看明暗、128px 游戏尺寸图),需要别的评审方式就加进库;两轮不中换方法,不在一条路上盲调。
 - 一件东西的固有色按设计来(多色分件、标识照留),体积靠形和引擎光影,paint-over 只加 00 第二节那种稀疏硬边块面;不烘 AO、投影、环境色;面数只为预算服务,看得出的刻面要藏住,但不靠把平面抹圆来藏。
 - 改了别人开着的 .blend 前先确认;不关别人的 Blender GUI;重要 .blend 不只放 scratchpad。
 - 做完交给 Unity 后,在真光照下再截一次和 Blender 评审图并排;模型在引擎里和在 Blender 里不是一回事。
