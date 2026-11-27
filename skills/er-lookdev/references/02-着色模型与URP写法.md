@@ -59,6 +59,23 @@
 
 `UsePass` 借 URP Lit 的 pass 可能破坏 SRP Batcher 兼容(借来的 pass 用的是 Lit 自己的材质常量块,和本 shader 的不一致),资料建议每个 pass 自己写,公共声明放 `HLSLINCLUDE`。实测:CityLit 借三个 Lit pass 时兼容码是 15(`UnityPerMaterial CBuffer inconsistent size inside a SubShader`),改成自写 pass、常量块放 `HLSLINCLUDE` 后是 0。核法:`ShaderUtil.GetSRPBatcherCompatibilityCode(shader, 0)`(内部方法,反射调),0 是兼容;刚导入还没渲染过时返回 1(Not initialized),先渲一帧再读;原因文字用 `GetSRPBatcherCompatibilityIssueReason(shader, 0, code)`。〔读 Cyanilux;测〕
 
+自己写 ShadowCaster 的要点(NedMakesGames 的写法,对过工程里 URP 17.3 的 `Shaders/ShadowCasterPass.hlsl`):pass 里 `ColorMask 0`,片元直接返回 0;顶点里把世界坐标过一遍阴影偏移再转裁剪空间,并把深度钳在近裁剪面以内,否则加完偏移越界,影子会消失或闪。〔读〕
+
+```
+float3 _LightDirection;   // 方向光用;URP 给当前正在画这张阴影图的灯设的
+float3 _LightPosition;    // 点光、聚光用
+#pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+#if _CASTING_PUNCTUAL_LIGHT_SHADOW
+    float3 lightDirWS = normalize(_LightPosition - positionWS);
+#else
+    float3 lightDirWS = _LightDirection;
+#endif
+float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirWS));
+positionCS = ApplyShadowClamping(positionCS);
+```
+
+Ned 的系列只写到方向光那一支(只用 `_LightDirection`);点光分支是 URP 17.3 源码里的,自写 shader 要投点光的影子必须带上,否则偏移方向不对。带 alpha 裁剪的材质,ShadowCaster 也要采样贴图并做同一个裁剪,影子形状才对;双面材质的背面要把法线翻过来再算偏移。〔前半读 Ned;点光分支读源码〕
+
 写自己的 ShadowCaster / DepthOnly 时包含 `Shaders/ShadowCasterPass.hlsl`、`DepthOnlyPass.hlsl`,前面要先包含 `CommonMaterial.hlsl` 和 `SurfaceInput.hlsl`;不要包含 `LitInput.hlsl`(它会重定义常量块)。有顶点位移时两个 pass 的顶点函数也要带位移。〔读〕
 
 ### SRP Batcher 规矩
@@ -160,7 +177,11 @@ SSAO 的 After Opaque 模式不需要 shader 支持,它是事后整屏乘一层(
 - Survival Kids 量过:URP 自带 SSAO 在他们要的大半径下约 4 ms,所以换成了改过的 MSVAO;后处理只留色调映射、bloom、调色。
 - VALORANT:光照图只存漫反射;场景只用静态光照;角色不投影。
 - 没有 `fixed` 类型,用 `half`。
+- `InputData`、`SurfaceData` 用 `(SurfaceData)0` 清零后,没填的字段都是 0,包括 `occlusion`;调 URP 现成的光照函数时要自己把它填成 1 或采样值。用 `UniversalFragmentBlinnPhong` 要 `#define _SPECULAR_COLOR` 才有高光。〔读 Ned;occlusion 那句是按清零推的,没对函数内部〕
+- alpha 裁剪的阈值属性必须叫 `_Cutoff`(烘焙等功能按这个名字找);有 `clip` 的 shader 可能明显变慢,用材质关键字把它在不需要的材质上编译掉。透明材质会投出实心的影子,要么关掉它的 ShadowCaster。〔读 Ned〕
+- 同一网格内的三角形不按深度排序,透明网格自己重叠的部分会互相盖,只能拆网格。〔读 Ned〕
+- 调试:把要看的量映射到 0 到 1 直接当颜色输出;Rendering Debugger 的很多视图读的是 `InputData` / `SurfaceData`,把两个结构体填全并给主 pass 加 `DEBUG_DISPLAY` 关键字才看得到。〔读 Ned〕
 
 ## 没读到、待补
 
-NedMakesGames「Writing Unity URP Shaders with Code」系列(403);带色阴影和色相偏移没找到专门的一手资料,上面的插值写法是推断加 TF2、Survival Kids 的做法归纳;VALORANT 文章里的公式是图片,没提取到数字。
+NedMakesGames 的系列读了已发布的四篇(计划九篇,讲附加光、烘焙光、深度 pass 的后几篇没有发布),他的写法只测到 Unity 2022.3,上面引用的几条里只有 ShadowCaster 对过 17.3 源码。带色阴影和色相偏移没找到专门的一手资料,第一节的插值写法是推断加 TF2、Survival Kids 的做法归纳;VALORANT 文章里的公式是图片,没提取到数字。
