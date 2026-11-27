@@ -20,7 +20,7 @@ description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件�
 | 出评审对照图、量数字、判过没过 | `references/04-验收门.md` |
 | 导出 FBX、挂点 Empty、回读核对、交给 Unity | `references/05-导出Unity.md` |
 | VFX mesh(斩击弧/环/冲击波/拖尾)、flipbook、石头单元库 | `references/06-离线件.md`(做法已调研、未在 ER 实测,先做 pilot) |
-| POI 里的植物:花坛 / 花箱的叶团、花、垂藤,树池树,压顶树团 | 和件一起交。默认做法:灌木在 Blender 逐片叶建(先交单片叶并排),树冠走 Tripo,进 Blender 减面烘色后和硬表面件合成;`scripts/kit/plants.py` 是起点。别的路线(程序化、Unity 里做、新工具)可以试,按实拍和参考并排判 |
+| POI 里的植物:花坛 / 花箱的叶团、花、垂藤,树池树,压顶树团 | 和件一起交。默认做法:灌木在 Blender 逐片叶建,按 `references/10-植物建模.md`(多团相挤、小叶贴面、法线取自圆壳;`scripts/kit/shrub_lab.py` 是实测过的生成器和对照实验);树冠走 Tripo,进 Blender 减面烘色后和硬表面件合成。别的路线(程序化、Unity 里做、新工具)可以试,按实拍和参考并排判 |
 | 地形上的植物、崖(树、草、崖、台地、沙被、散布) | 默认 Unity 编辑器 + codex 合作;进 Blender、走 Tripo 或别的新路线也可以试,按引擎实拍判 |
 
 ## 通道:live 用 MCP 迭代,出货用 blender -b
@@ -44,6 +44,7 @@ Tripo 默认用浏览器里的 Tripo Studio 网页版;tripo-cli、API、Blender 
 | `scripts/kit/blockout.py` | 拆解单 parts JSON → 体块 .blend(盒子 / 竖圆柱,每件一个物件),约 3 秒 |
 | `scripts/kit/overlay.py` | 体块叠概念图:对应点配准(相似 / 仿射 / 单应)、IoU、检查点偏差、反推概念图相机算"概念图画了多高";出三联板 + 闪烁 gif。系统 Python 跑,自己调 Blender(找不到时设 `BLENDER=`) |
 | `scripts/kit/plants.py` | 植物单元:尖头叶片、五瓣花、叶团(底团盖土 + 放射莲座)、垂藤 |
+| `scripts/kit/shrub_lab.py` | 花坛灌木对照实验和生成函数 `leaf_clump()`:同一花坛七种做法同机位出图(叠圆盘 / 面法线 / 圆壳法线 / 规整 / 不规则 / 大团相挤),换植物种类或调参数前先跑它,见 10 |
 | `scripts/kit/*` | 部件化建模生成器(kitlib 拼装器 + 有顶屋 / 母舱 / 遗址 / 小件 / 家具),见 07 |
 | `scripts/paintover/po_vertex.py` | 顶点色 paint-over:固有色 + 稀疏棱边短条(按整条棱选、朝上的优先)+ 可选局部面状提亮 / 块间差,按面硬边,只改明度不改色相,不烘方向光;跑两次结果一样,见 08 |
 | `scripts/paintover/po_*.py` | 贴图 paint-over:canvas → prompts(底稿 + 可选本件拆件格 + 可选 mo.co 笔触参考)→ register → hardhue(纠意外色漂)→ project → review(+ po_board 对照板),配置样例在 `paintover/examples/`,见 08 |
