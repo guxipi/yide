@@ -3,16 +3,17 @@
 
 py -3 po_hardhue.py <work_dir> <sheet> [<sheet> ...] [--t 24] [--lock-l]
 
-勾哥 11-09 (WS1): 「为什么墙上有粉色的 HUE?我要说多少遍 paintover hue 不是你要考虑的事情」 - terra painted a pink wash /
-cream drift across the walls; paint-over may only add VALUE, never hue. Matching the average hex is not enough: sample
-both ends of the same face, a visible hue difference means the lock did not hold.
+A helper that undoes ACCIDENTAL hue drift (勾哥 11-09 WS1: terra painted a pink wash across the walls). Paint-over only
+changes value in the same hue (er-blender references/00). The lock works pixel by pixel against the canvas, so designed
+multi-colour parts, logos and decals keep their own colours. It is NOT proof that the finish is right: the brushwork is
+judged on the side-by-side board against the vehicle reference. Matching the average hex is not enough: sample both ends
+of the same part, a visible hue difference means the lock did not hold.
 
---lock-l (opt-in): also restore the canvas L, i.e. the result is the flat canvas colour everywhere except the own lights
-(full Lab dE > T). Default stays a/b only, so the material gradient / edge band terra paints survives (勾哥 11-09
-「要体现参考图里得质感啊」).
+--lock-l (opt-in): also restore the canvas L = wipes the brush blocks back to flat base colour everywhere except the own
+lights (full Lab dE > T). Use it only on a sheet whose strokes came out wrong, never as the default.
 
 Default: every pixel inside the canvas mask takes the canvas a/b (= approved no-hue base colour + own-light spill baked into the
-underlay) and keeps the painted L. Pixels whose painted a/b is far from the canvas (dE_ab > T, i.e. the model's own
+underlay) and keeps the painted L (the brush blocks). Pixels whose painted a/b is far from the canvas (dE_ab > T, i.e. the model's own
 lights: red beacon, light strips, seams, screens) keep their painted colour. Backs up reg/<sheet>.png to
 reg/<sheet>_prehue.png once and always starts from that copy, so it can be rerun. Replaces po_colorlock as the default
 lock (its per-class hard split cut wedge edges into soft halos); after this the in-engine gain must be recalibrated.

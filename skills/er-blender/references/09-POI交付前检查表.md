@@ -69,7 +69,7 @@
 - [ ] **要有弧度和圆角**(11-11 勾哥「我们的东西太方了」):柜体 / 门 / 台面 / 电器的棱和角都圆(倒角 3–4 cm 两到三段、平面圆角 4–6 cm),仍不比 mo.co 更鼓;套 mo.co 手法时守住「认得出」那条结构(冰箱加出檐顶板读成了床头柜,平顶的东西不出檐)。
 - [ ] **有门 / 有盖的件和桌子都能打开**(11-09;11-10 勾哥「桌子也要做成 container」:抽屉 / 桌面翻板可开):门扇 / 盖子 / 抽屉单独成件、轴心在铰链、墙上开真门洞、箱子做空心;出关 / 开两态,开态内部也上色;进 Unity 挂 `LootableContainer` + `LootContainerLidVisual`。拆解单里标「容器」。
 - [ ] 筒形建筑(灯塔)内部空心可放东西;开盖箱的盖要有真实结构(托盘盖 + 铰链)(11-09 LH)。
-- [ ] 绳、木头靠纹理读:绳画股纹,木头画木纹 / 年轮;不做细直管 + 顶点色格子、不做平涂圆柱(11-09 LH)。
+- [ ] 绳、木头靠纹理读:绳画几道宽扁的股纹块,木头用几道顺纹的宽扁短条、端面两三圈宽年轮表达(不画细密木纹);不做细直管 + 顶点色格子、不做平涂圆柱(11-09 LH)。
 - [ ] 楼梯 / 栏杆 / 细杆斜放件:整件灰钢顶点色,不进 paint-over 投影;开口踢面透出地板也算错(11-09)。
 - [ ] 家具和地面拉开明度和色相(11-07)。
 - [ ] 花坛石圈整块连续(下段墙 + 外挑压顶),不切砖、不做砖缝(11-09 PARK)。
@@ -84,20 +84,20 @@
 
 ## 四、上色(paint-over)
 
-- [ ] **画法 = mo.co 清透感**(11-09):一块一色 + 一道大柔渐变 + 柔亮边(11-09 晚 LOG:按本件参考图的质感画,不规定顶亮底深;不画 AO / 内角 / 挑檐下压暗 / 投影;每种材质的质感写进 extra),同色相深浅不掺灰,面上不画非几何的缝 / 网格 / 石缝,无笔触、无做旧。06 哨亭作废;PARK 的 painterly 提示词不抄。
-- [ ] **生图默认只喂底稿一张(N=1)**(11-09 晚):清透感画法写成文字;不喂 mo.co 图(`style_refs` 报错退出)。要体现参考图质感时可加 `prompt.card` = 本件自己的拆件图格子(N=2),只学质感不学形和色,画完必跑 hardhue。
+- [ ] **画法 = `00-造型与笔触标准.md` 第二、三节**(11-27 勾哥,mo.co 车辆参考,基准图 vault `013 美术/mo.co截图/车辆语言基准_20261127/`):干净固有色上加少量宽扁、不透明、边缘清楚、顺结构的手绘块面(斜矩形、楔形、短条、局部面状提亮),大量安静区域,哑光;同一大面允许局部硬边笔触;只动同色相明度。不画 AO / 内角 / 挑檐下压暗 / 投影 / 方向光 / 环境色;不画刷毛、厚涂、乱线、密集划痕、做旧,不给每条边描亮线;面上不画非几何的缝 / 网格 / 石缝。
+- [ ] **生图喂什么**:image 1 = 底稿(颜色只认它);可加 `prompt.card` = 本件拆件格(只学笔触位置和疏密)、`prompt.style_refs` = mo.co 笔触参考(只学笔触形状、大小、疏密和形体语言,不学色、色调、光照、环境色)。N = 1 + card + style_refs,画完必跑 hardhue 和 `img_colorcheck.py`。
 - [ ] **参考图(无 hue 概念图)什么色,成品就什么色**(不调色相、不整体加深加饱和);提示词写死「image 1 的颜色就是批过的颜色,不加紫 / 粉 / 暖 / 蓝偏色」;浅低饱和色(混凝土)写 COLOUR LOCK + 色值。
-- [ ] **画完硬锁色相**(11-09 第五次纠正):`scripts/paintover/po_hardhue.py <work> <sheets>`,轮廓内每像素 a/b 换回底稿、只留 L;和底稿差 > 24 的(本模型的灯)保留。softlock 只当辅助。硬锁后实机增益重标。
+- [ ] **画完跑 hardhue 纠意外色漂**:`scripts/paintover/po_hardhue.py <work> <sheets>`,轮廓内逐像素 a/b 换回底稿(多色分件照留)、保留画上去的明度(笔触);和底稿差 > 24 的(本模型的灯)保留;`--lock-l` 会抹掉笔触,只在笔触画坏时用。锁过色相不等于画风达标。硬锁后实机增益重标。
 - [ ] **重画 / 重配准后先删 `reg/<sheet>_prehue.png`**(11-10 WS0 踩坑):po_hardhue 会沿用第一次留下的 prehue,不删就是拿旧画锁色相。
 - [ ] **验收不只看平均 hex**:同一面左右两端各取一次色,色相差肉眼可见 = 没锁住。找到一处漂移,整个 POI 每类材质都扫一遍一起改。
-- [ ] **不画环境光**(11-09 / 11-10 铁规 0):extra 开头写 NO ENVIRONMENT LIGHT,点名本 POI 仅有的发光体;**不往任何别的面画光晕**,其它件逐个点名「只保留固有色 + 柔渐变」。
+- [ ] **不画环境光**(11-09 / 11-10 铁规 0):extra 开头写 NO ENVIRONMENT LIGHT,点名本 POI 仅有的发光体;**不往任何别的面画光晕**,其它件逐个点名「只保留固有色和笔触块面」。
 - [ ] **发光件在 paint-over 里只画它自己**(11-09 改于 11-10 铁规 0):门边灯条、路灯头、广告牌、屏、亮窗——亮芯近白 → 自身饱和色边,画在发光件自己的面上;**不往墙面 / 地面 / 邻件画光晕和光池**,周围的光交给 Unity 的灯和 emission。独立发光件写「它是单独物件,墙上不画它」(否则双灯带)。小发光件单开高密度 set(420 px/m)。`po_emitter_pool.py` 这类往地面补光池的做法停用。
 - [ ] 灯色(蓝 / 琥珀)不涂成固有色;盖子里面和盖子同一种灰(11-09)。
-- [ ] **所有玻璃画出能看穿的质感**(11-10 勾哥「玻璃的 paintover 要体现出玻璃可以 see through 的那种质感…是所有的玻璃」):窗、玻璃门、风斗、车窗、闸机扇门、隔窗、屏罩都算。玻璃里画暗一档的后方剪影(窗后墙线 / 家具 / 座椅轮廓、窗框内侧厚度)+ 一道大柔渐变 + 一两道斜向柔亮带(只画在玻璃自己上);不许平涂一块不透明青色。extra 里给玻璃单独写一段;验收把全部玻璃件裁成一张板逐块看。
-- [ ] 木头干净平涂,只留板缝(11-09 驳船「笔触太多」);但按材料出质感:布像布、木头像木头(11-07)。
+- [ ] **所有玻璃画出能看穿的质感**(11-10 勾哥「玻璃的 paintover 要体现出玻璃可以 see through 的那种质感…是所有的玻璃」):窗、玻璃门、风斗、车窗、闸机扇门、隔窗、屏罩都算。玻璃里画暗一档的后方剪影(窗后墙线 / 家具 / 座椅轮廓、窗框内侧厚度)+ 一两块斜向的硬边浅色块面(只画在玻璃自己上);不许平涂一块不透明青色。extra 里给玻璃单独写一段;验收把全部玻璃件裁成一张板逐块看。
+- [ ] 木头:每块板一个平色 + 少量顺板方向的宽扁块面笔触,板缝用几何,不画细密木纹和木节;按材料出质感:布像布、木头像木头(11-07)。
 - [ ] terra 乱画的三种 sheet 在 extra 写死(稀疏 sheet 另画拆件图 / 俯视大平面画上整个塔正面 / 柜背板补画隔板和货)。
 - [ ] 细件投影后跑 `J01v7_WS2_20261109/gen/po_degreen.py`,评审图不许有绿。
-- [ ] **顶棱不画亮带**:屋顶顶棱在提示词 `edge_rule` 写死「不画亮带 / 暗线 / 边框」(棱上柔亮带的质感规则不用在屋顶顶棱上)。
+- [ ] **不给每条棱描亮线**:棱边提亮只挑少数顺结构的几段画成短条块面,屋顶顶棱默认不画(提示词 `edge_rule` 写死「不画亮带 / 暗线 / 边框」)。
 - [ ] **投影后跑归属检查,防串色**(11-09 HB「这些地方应该都是实体墙,不要出现这些乱七八糟的纹路」):游戏里会隐藏的屋顶 / 迎镜侧墙,连带藤蔓、吊车环、天窗灯,挡在实体墙前会把颜色印到墙上。跑 `ArtWork/J01v7_HB_v2_20261107/gen/hb_po_owner.py` → `hb_po_bleed.py --fix`(实体面被别的颜色族占 > 8 % 退顶点色,外来颜料按同组回填)。11-10 起不再往别的面画光晕;旧件里已画的光晕按铁规 0 清掉(会隐藏的灯尤其先清)。
 - [ ] **上色后小件再和参考格 1:1 并排**(11-10 勾哥「单个物件不仅要建模后和参考图 1:1 对照,paintover 之后更要和参考图一起 1:1 对照」):带贴图的单件同角度、中灰底,和拆件格并排,逐条写不同点——每块材质取色、色块边界错位 / 拉伸 / 串色、腰线 / 窗 / 屏 / 标识位置、玻璃透感、质感、多出来的笔触或光晕。没有这张板不装机(TS 班车车头挡风和侧窗色块对不上就是漏了这步)。
 - [ ] 提示词发出前对一遍现行铁规(旧要求和新铁规冲突以新为准或先问)。
@@ -116,7 +116,7 @@
 - [ ] **大面积换主色先给 2–3 个引擎色样问**(棚 A 参考是粉紫,勾哥要航空灰)。
 - [ ] 45 m V5 实拍看屋顶 + 两面外墙再交。
 - [ ] **整体效果只在 W1 实际点位看**(11-10 勾哥看 RES Blender 全景「为什么会有莫名其妙的投影?我说了多少次了,直接在 w1 的实际点位上摆」):Blender 拼装全景只内部核结构、关投影,不发勾哥、不当进度图;小件过 gate 后先把本色模型装到 W1 设计坐标拍 V5 实拍。发勾哥的 Blender 阶段图只有单件并排板。
-- [ ] **审件先写两段自然语言**(11-10 勾哥看 TS 班车「你自己用自然语言描述一下你和参考图的区别」):参考格逐项描述(形状、分格、数量、颜色、比例)和成品逐项描述对着读,说得出区别 = 不过;审方(总控)也自己写,不只核执行方列的不同点。玻璃以参考里那块玻璃为准(大渐变 + 斜亮带 + 极淡干净轮廓),不贴室内场景、不画竖条。
+- [ ] **审件先写两段自然语言**(11-10 勾哥看 TS 班车「你自己用自然语言描述一下你和参考图的区别」):参考格逐项描述(形状、分格、数量、颜色、比例)和成品逐项描述对着读,说得出区别 = 不过;审方(总控)也自己写,不只核执行方列的不同点。玻璃以参考里那块玻璃为准(一两块斜向硬边浅色块面 + 极淡干净轮廓),不贴室内场景、不画竖条。
 
 ## 六、交付前全量审查
 
@@ -156,5 +156,5 @@
 ## 来源索引(vault 相对 `01 - 星际拓荒重构/`)
 
 - 工作法:`07 - AI上下文/AI记忆/工作法/feedback-hb-pilot-back-and-forth-retro-20261109.md`
-- 美术通用:`013 美术/AI记忆/` 下 `feedback-paintover-clean-not-painterly-glow-20261109`、`feedback-paintover-moco-clarity-benchmark-20261109`、`feedback-poi-blockout-15min-round-20261109`、`feedback-poi-tool-goal-single-item-fidelity-20261109`、`feedback-poi-concept-is-concept-no-design-sync-20261109`、`feedback-poi-concept-parts-base-colour-no-hue-20261109`、`feedback-poi-plants-modeled-in-blender-20261109`、`feedback-poi-test-in-place-not-lab-20261109`、`feedback-lid-door-items-are-openable-containers-20261109`、`feedback-no-blown-roof-clip-gate-20261109`、`feedback-planter-one-piece-no-bricks-20261109`、`feedback-poi-images-need-topdown-20261105`、`feedback-paintover-terra-material-texture-light-20261107`、`feedback-small-props-full-detail-and-paintover`、`feedback-paintover-flat-no-baked-shade-20261109`
+- 美术通用:`013 美术/AI记忆/` 下 `feedback-paintover-clean-not-painterly-glow-20261109`、`feedback-paintover-moco-clarity-benchmark-20261109`(其中整面柔渐变 + 柔亮边的画法 11-27 被 00 取代)、`feedback-poi-blockout-15min-round-20261109`、`feedback-poi-tool-goal-single-item-fidelity-20261109`、`feedback-poi-concept-is-concept-no-design-sync-20261109`、`feedback-poi-concept-parts-base-colour-no-hue-20261109`、`feedback-poi-plants-modeled-in-blender-20261109`、`feedback-poi-test-in-place-not-lab-20261109`、`feedback-lid-door-items-are-openable-containers-20261109`、`feedback-no-blown-roof-clip-gate-20261109`、`feedback-planter-one-piece-no-bricks-20261109`、`feedback-poi-images-need-topdown-20261105`、`feedback-paintover-terra-material-texture-light-20261107`、`feedback-small-props-full-detail-and-paintover`、`feedback-paintover-flat-no-baked-shade-20261109`
 - 丛林:`013 美术/丛林Lab/AI记忆/` 下 `feedback-roof-exterior-for-game-camera-20261109`、`feedback-direction-image-not-parts-catalog-20261109`、`feedback-poi-image-blind-recognition-gate-20261109`、`feedback-all-poi-redo-except-hb-small-poi-parts-20261109`、`feedback-poi-walls-cast-concrete-piers-purpose-20261107`、`feedback-poi-interior-density-moco-texture-20261107`、`feedback-big-poi-upper-floors-walkable-20261107`、`feedback-big-poi-multifloor-winding-interior-hidden-room-20261106`、`feedback-poi-style-by-building-function-f-plus-d-20261106`、`feedback-poi-design-from-ingame-space-20261106`、`feedback-no-old-poi-or-ingame-images-to-codex-20261106`、`feedback-no-small-plants-along-buildings-20261106`、`feedback-stairs-grey-steel-vcol-20261109`、`feedback-hb-shedA-aviation-grey-glow-paintover-20261109`、`feedback-openable-doors-lids-light-paintover-20261109`、`feedback-poi-parts-hollow-lid-rope-wood-20261109`、`feedback-plants-leaf-by-leaf-single-leaf-first-20261109`、`feedback-poi-boulders-need-facets-20261109`、`feedback-m2-rocks-liquid-stripes-redo-20261109`、`feedback-poi-layout-not-ai-crystal-not-blown-20261109`、`feedback-delete-old-poi-before-new-keep-loot-20261109`、`poi-colour-calibrate-against-neighbour-same-play-20261109`、`feedback-roof-no-sandwich-crisp-edge-20261109`、`feedback-roof-kit-no-flat-patches-20261109`、`feedback-paintover-bleed-hidden-occluders-20261109`、`feedback-material-equals-reference-no-light-comp-20261109`、`feedback-reference-colour-is-ingame-colour-light-calibration-20261109`

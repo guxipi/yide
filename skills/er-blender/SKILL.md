@@ -5,21 +5,21 @@ description: ER 非角色 Blender 活总入口:POI 建筑 / 联邦小件部件�
 
 # ER Blender 总入口
 
-这份 skill 管 ER 里所有不是角色的 Blender 活。结果按 ER 美术规范验收(vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`,对标 mo.co,建筑道具看第 7 节):平滑饱满的大形体、大块干净色面、两阶明暗、没有写实高光,3D 世界里不描黑边。**禁区**:看得出刻面或低多边形、flat shaded、写实材质纹理、细碎凹凸,任何一项都打回。
+这份 skill 管 ER 里所有不是角色的 Blender 活。**建筑和物品的建模、paint-over 一律按 `references/00-造型与笔触标准.md`**(11-27 勾哥按 mo.co 车辆参考统一):敦实紧凑的卡通硬表面,少量清楚的主形体 + 粗壮功能附件,大平面中心、转折明确、宽而克制的倒角,三级细节稀疏;paint-over 在干净固有色上加稀疏、宽扁、顺结构的硬边手绘块面,只动同色相明度,环境色和光照全交给 Unity。打回项:鼓胀软塌、看得出刻面、密集螺钉板缝、刷毛厚涂做旧、全边亮线、底色里烘了 AO / 投影 / 环境色、3D 世界里描黑边。
 
 ## 先判断走哪条路
 
 | 要做的事 | 去哪 |
 |---|---|
 | POI 建筑(有顶屋、母舱、遗址残壳)和联邦硬表面小件:先做部件再按设计坐标拼,不做地板 | 本 skill `references/07-建筑部件拼装.md` + `scripts/kit/`(10-30 勾哥定 Claude 直接做) |
-| **楼体 paint-over = 顶点色(11-11 勾哥拍板，按 mo.co 建筑笔触):`scripts/paintover/po_vertex.py`(一面一色 + 整面连续渐变、倒角柔亮带、可选块间差，不许接缝);AI 生图只给玻璃 / 屏幕 / 招牌 / 涂鸦** | 本 skill `references/08-干净上色paintover.md` 顶部「现行口径」+ vault `丛林Lab/specs/spec_建筑笔触_moco提取.md` |
-| 干净上色 paint-over:底稿 → terra 干净上色 → 配准 → 锁色 → 投影回 UV → 图集。**画法基准 = mo.co 清透感,写成文字、生图默认只喂底稿一张,不喂 mo.co 图(11-09 晚勾哥),可选加本件拆件图格子 `prompt.card` 只学质感;不烘 AO / 内角压暗 / 投影,渐变和柔亮带按本件参考图质感画(11-09 晚 LOG),只加明暗不改色相,画完跑 hardhue 硬锁;只画本模型自己的发光体;颜色从没有 hue 的概念图本色取(11-09 勾哥拍板),进引擎闭环标定,不混灰;小件 / 圆件 / 斜放件不投影贴图,走顶点色 + LabLit** | 本 skill `references/08-干净上色paintover.md` + `scripts/paintover/`;换场景只写一个配置 JSON |
+| paint-over(楼体、小件、家具、道具):画法按 00 第二、三节;**手段按效果选**(00 第四节):顶点色 `scripts/paintover/po_vertex.py` 出固有色 + 棱边短条 / 局部面状提亮(按面硬边、稀疏),大面内的斜块楔形、玻璃、屏幕、招牌、标识走贴图,两者可混用 | 本 skill `references/08-干净上色paintover.md` |
+| 贴图 paint-over 管线:底稿 → terra 上色 → 配准 → hardhue(纠意外色漂)→ 投影回 UV → 图集。生图喂底稿,可加本件拆件格(`prompt.card`)和 mo.co 笔触参考(`prompt.style_refs`,只学形体和笔触,颜色和光照不学);颜色从无 hue 的概念图本色取;只画本模型自己的发光体 | 本 skill `references/08-干净上色paintover.md` + `scripts/paintover/`;换场景只写一个配置 JSON |
 | 角色(四视图 → Tripo → 绑骨 → 表情 → 入库) | er-character-pipeline(它的 Blender 坑同样以本 skill 的 02 为准) |
 | 模型进了 Unity 发灰、塑料感、pivot 歪、只是法线软塌 | gaoguang-3d;先试 Unity importer 法线,多数"肉感"不用进 Blender |
 | Tripo 道具/武器/家具/POI 件:减面、刻面、色块、尺寸、挂点 | 本 skill `references/03-道具风格化.md` |
 | 出评审对照图、量数字、判过没过 | `references/04-验收门.md` |
 | 导出 FBX、挂点 Empty、回读核对、交给 Unity | `references/05-导出Unity.md` |
-| VFX mesh(斩击弧/环/冲击波/拖尾)、flipbook、圆润石头单元库 | `references/06-离线件.md`(做法已调研、未在 ER 实测,先做 pilot) |
+| VFX mesh(斩击弧/环/冲击波/拖尾)、flipbook、石头单元库 | `references/06-离线件.md`(做法已调研、未在 ER 实测,先做 pilot) |
 | POI 里的植物:花坛 / 花箱的叶团、花、垂藤,树池树,压顶树团 | 和件一起交。**灌木在 Blender 逐片叶建(先交单片叶并排);树冠走 Tripo 网页版,进 Blender 减面烘色后和硬表面件合成**(11-09 勾哥拍板);`scripts/kit/plants.py` 只当占位 |
 | 地形上的植物、崖(树、草、崖、台地、沙被、散布) | **Unity 编辑器 + codex 合作**,不进 Blender、不走 Tripo(11-09 勾哥拍板) |
 
@@ -37,21 +37,21 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 
 | 脚本 | 干什么 |
 |---|---|
-| `_er_bl.py` | 公共库:`ops_ctx`(统一 temp_override)、`import_any`(焊点、应用变换、原点底部中心,焊点时保住原法线)、`inspect`(三角/开放边/非流形/材质/UV/尺寸)、`make_lablit_preview`(纯 Emission 两阶明暗,近似 Unity LabLit) |
+| `_er_bl.py` | 公共库:`ops_ctx`(统一 temp_override)、`import_any`(焊点、应用变换、原点底部中心,焊点时保住原法线)、`inspect`(三角/开放边/非流形/材质/UV/尺寸)、`make_lablit_preview`(纯 Emission 两阶明暗,只是评审用的近似 Unity LabLit 展示光,不进交付底色) |
 | `stage.py` | 评审台:V5 46° 游戏镜头、正交俯视、正/侧/3/4、128px 游戏尺寸图,lablit / white(只看明暗)两种模式,另存掩码 |
 | `overlay_render.py` | 只渲一个集合(Workbench,约 1 秒,透明底)并导出相机投影矩阵;视角 top / g46 / cam / concept,给 `kit/overlay.py` 用 |
 | `scripts/kit/blockout.py` | 拆解单 parts JSON → 体块 .blend(盒子 / 竖圆柱,每件一个物件),约 3 秒 |
 | `scripts/kit/overlay.py` | 体块叠概念图:对应点配准(相似 / 仿射 / 单应)、IoU、检查点偏差、反推概念图相机算"概念图画了多高";出三联板 + 闪烁 gif。系统 Python 跑,自己调 Blender(找不到时设 `BLENDER=`) |
 | `scripts/kit/plants.py` | 植物单元:尖头叶片、五瓣花、叶团(底团盖土 + 放射莲座)、垂藤;PARK 花坛 v0 |
 | `scripts/kit/*` | 部件化建模生成器(kitlib 拼装器 + 有顶屋 / 母舱 / 遗址 / 小件 / 家具),见 07 |
-| `scripts/paintover/po_vertex.py` | 楼体顶点色 paint-over(B1 渐变 / B2 倒角亮带 / B4 块间差),只改明度不改色相，跑两次结果一样，见 08 顶部 11-11 条 |
-| `scripts/paintover/po_*.py` | 干净上色 paint-over:canvas → prompts(底稿 + 可选本件拆件格当质感参考)→ register → hardhue(硬锁色相)→ project → review(+ po_board 对照板),配置样例在 `paintover/examples/`(哨亭 + M1 矿点),见 08 |
+| `scripts/paintover/po_vertex.py` | 顶点色 paint-over:固有色 + 稀疏棱边短条(按整条棱选、朝上的优先)+ 可选局部面状提亮 / 块间差,按面硬边,只改明度不改色相,不烘方向光;跑两次结果一样,见 08 |
+| `scripts/paintover/po_*.py` | 贴图 paint-over:canvas → prompts(底稿 + 可选本件拆件格 + 可选 mo.co 笔触参考)→ register → hardhue(纠意外色漂)→ project → review(+ po_board 对照板),配置样例在 `paintover/examples/`(哨亭 + M1 矿点),见 08 |
 | `scripts/gates/poi_nav_gate.py` + `navdump_reach.py` | POI 共用寻路闸:装机前用导出 .blend 按 W1 NavMesh 参数离线判(门两侧通不通、门宽 / 高 / 墙楣、门口净区、精英位离边、各层走不到的地面),W1 烘完读 navdump 判入口连通;阈值只在 `gates/thresholds.json`,每个 POI 一份配置,见 `gates/README.md` |
 
 ## 工作纪律
 
 - **第 0 步:用 Skill 工具加载 `yide:reference-replicate`**,按它锁参考、整张找实例、逐层填观察表、用 `refkit.py` 量比例,再动 Blender。没加载就跑 Blender,PreToolUse 的 skill 闸会拦下(10-31 起;此前 14 个跑过 Blender 的会话 0 个加载过它,J01 三脚架、工具匣因此各打回多轮)。只读一遍这句不算,闸只认真实的 Skill 调用。
-- **第 0.5 步:锁参考。** 从全项目参考登记表(Sheet「jungle lab」组件清单 I 列)取本物件那一行的图,打开原图实看;只导出 / 改 pivot / 减面不改形这类不改外观的活不用拉。这一步没有 hook 兜底(参考闸 2026-11-20 已拆),自己做到。规则全文 vault `013 美术/mo.co截图/README_参考怎么选.md`;人造物外形只挂我们认可的概念图,mo.co 只当质感上限。
+- **第 0.5 步:锁参考。** 从全项目参考登记表(Sheet「jungle lab」组件清单 I 列)取本物件那一行的图,打开原图实看;只导出 / 改 pivot / 减面不改形这类不改外观的活不用拉。这一步没有 hook 兜底(参考闸 2026-11-20 已拆),自己做到。规则全文 vault `013 美术/mo.co截图/README_参考怎么选.md`;人造物外形只挂我们认可的概念图;mo.co 只学造型语言和笔触(建筑和物品的总基准是 `车辆语言基准_20261127/`,见 00),不学它的环境色和光照。
 - **POI 每一轮交付前过 `references/09-POI交付前检查表.md`**(11-09 勾哥要求把历次纠正写进 skill):开工读对应环节,交付前逐条打勾,交付说明写「09 已过」和没过的条目。头号四类:paint-over 只加明暗不改色相、按 V5 46° 俯视做屋顶和外墙、先拆解再建单件做像、看得见的瑕疵不自己放过。
 - **铁规 0:生图时每样东西都是它自己的本色,强制执行(11-10 勾哥「主体什么颜色就是什么颜色,绝对不要做出例如灯光使得 F 类楼体是淡紫灰这种事情」「仅仅是 F 类楼体吗?」)**:楼、屋顶、地面、草、树、岩、水、道具、家具全部本色,灯光 / 时段 / 氛围 / 阴影不改任何东西的颜色,发光件不往别处染色;风格参考只学形和质感;少用粉 / 紫(男性向)。发单前 `scripts/imagegen/prompt_lint.py`、回图 `scripts/imagegen/img_colorcheck.py`,退出码非 0 不发 / 不交。见 09 铁规 0。
 - **POI 概念图、拆件图一律物品本色,不画光影、不加 hue(11-09 勾哥「HUE 是 unity 内游戏光影的事情」)**:概念图只画固有色加同色相轻微明暗,拆件图全本色平铺;出图提示词写死,带色调的图打回不取色。见 07「概念图 / 拆件图一律物品本色」。
@@ -61,7 +61,7 @@ Tripo 只用浏览器里的 Tripo Studio 网页版(10-26 勾哥定),不用 tripo
 - **有盖子 / 有门的件一律做成可打开的容器(11-09 勾哥「所有的有盖子，有门的都要做成 container，可以打开」)**:箱、柜、罐、冰柜、储物格、带门小屋等,建模时盖 / 门单独成物件、轴心放在铰链处,并出关着 / 开着两态(开态露出内部,内部也要上色);进 Unity 挂 `LootableContainer` + `LootContainerLidVisual`(`_closedVisual` / `_openVisual` 两态切换,Extraction `Assets/Scripts/Gameplay/Containers/`)。拆解单里每个有盖 / 有门的件标「容器」,漏标就打回。
 - Blender 路径因机器而异(`F:/Apps/blender.exe` 或 `C:/Program Files/Blender Foundation/Blender 5.2/blender.exe`),先 `ls` 确认;`overlay.py` 两处都会找,也认 `BLENDER` 环境变量。
 - 评审先用现成的 `stage.py`(46° 游戏镜头、white 只看明暗、128px 游戏尺寸图),别另写一套;两轮不中换方法,不在一条路上盲调。
-- 一件东西的固有色两三个,体积靠形、引擎光影和参考图质感的柔渐变 / 边缘提亮,不烘 AO 和阴影(11-09),不靠纹理;面数只为预算服务,减完要把面藏住。
+- 一件东西的固有色按设计来(多色分件、标识照留),体积靠形和引擎光影,paint-over 只加 00 第二节那种稀疏硬边块面;不烘 AO、投影、环境色;面数只为预算服务,看得出的刻面要藏住,但不靠把平面抹圆来藏。
 - 改了别人开着的 .blend 前先确认;不关别人的 Blender GUI;重要 .blend 不只放 scratchpad。
 - 做完交给 Unity 后,在真光照下再截一次和 Blender 评审图并排;模型在引擎里和在 Blender 里不是一回事。
 
