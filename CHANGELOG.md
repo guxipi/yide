@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.80.6 — 2026-11-27 skill 两轮整理(勾哥:「skill 里面记了很多没有必要的东西」)
+- 分层规律:游戏是什么写 vault 设计文档,怎么干一类活写 skill,记忆只记推不出又会做错的事;设计结论、进度、单件选择不进 skill。
+- 第一轮(d0ef9fb):共用话题定一个归属、别处改指针;删改口史和一次性复盘;按新记忆改冲突(弹窗用自身关闭键、capture 带宽高、deploy-dev.ps1、scope 不登记、不设等总控的闸、Blender 路径先 ls);check_rollout 认 jpg。
+- 第二轮(fc37925):设计结论(枪型、皮肤槽、角色头身、礼包内容、J01 楼体分类等)换成指向 vault 的指针;删日期、会话战绩、机器 / 分支 / worktree 现状、单件选择、J01 坐标;删每类件面数硬上限;CARGO 屏真源是 builder。
+
 ### v0.80.5 — 2026-11-27 LabLit 改成「现行默认不是上限」,剩余 skill 去路线禁令(勾哥)
 - 大脑模板 executor、actions/polish:「3D 模型一律 / 只用 Lab/LabLit」改成现行默认,别的 shader 可以试、同机位并排比;3D 不描边的结果要求不变。大脑仓 charter-extra-er、projects/extraction、experts/executor 同步改(yide-brain)。
 - er-character-pipeline:短裙 SpringBone、Tripo DCC Bridge、CLI / 重定向 API「别再试 / 不用」改成默认做法 + 失败记录,可以换思路再试;pitfalls 里「只用 LabLit」改成现行。
