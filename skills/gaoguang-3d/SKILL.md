@@ -15,7 +15,7 @@ dump 真值(一次性探针 .cs 放 **Assets 外**,如项目根 `Temp/`,用 `uni
 - **同时 dump rig 与动画**:hierarchy(有无 Armature)、SkinnedMeshRenderer.bones.Length、`LoadAllAssetsAtPath` 里的 AnimationClip 列表。Tripo 模型分两种:带 NLA 动画(科学家:Idle/Walk/Work)和**有骨架但零 clip**(球形机器人:41 bones,无动画)——后者要走第 3 节。
 - 同时 dump 当前主角(Hero.prefab 上现在挂的英雄材质)做对照。engineer.mat 是旧 KayKit 角色的材质,不当标杆。
 - grep FBX 的 guid 找到所有引用它的 prefab/scene(决定 pivot 修在哪)。
-- 素材在云盘时注意:用户给的 `G:\My Drive\...` 路径本机 G: 直接可读(本机挂两个云盘账号,G: 和 H: 都在),别想当然换盘符。
+- 素材在云盘时注意:用户给的云盘路径(`G:\My Drive\...` 这类)先原样试读,别想当然换盘符(有的机器挂了不止一个云盘账号)。
 
 ## 1. 修观感:LabLit 材质 + ModelImporter Remap(不要在 prefab 里 override 材质)
 1. 在模型同目录建 `<Model>.mat`:shader `Lab/LabLit`,`_BaseMap` = 模型 basecolor 贴图(LabLit 只吃这一张,法线 / ORM 不进;Blender 顶点色上色的件另开 `_VertexColorMul` 1,见 er-blender 08)。
@@ -33,7 +33,7 @@ dump 真值(一次性探针 .cs 放 **Assets 外**,如项目根 `Temp/`,用 `uni
    | `_ReceiveContact` | 0 | Lab 接触压暗,0/1 |
 
    - 发光:`_UseEmissionMap` 1(Toggle,对应 keyword `_EMISSION`,脚本里要 `EnableKeyword("_EMISSION")`)+ `_EmissionMap` + `_EmissionColor`(HDR,始终叠加,黑 = 无)。
-   - 环境 / 建筑 / 道具:同一 shader;rim 关(`_RimColor` alpha 0)。其余参数是否和角色 / 怪同一组:待核,先对照同类已入库件的 .mat。
+   - 环境 / 建筑 / 道具:同一 shader;rim 关(`_RimColor` alpha 0)。其余参数先对照同类已入库件的 .mat,不默认照搬角色 / 怪那组。
    - LabLit 没有描边属性,不用写也写不了;别从旧材质拷 outline / shadow-color 一类的键。
    - 拿不准先做 Unlit 对照:换 URP/Unlit 纯贴图看一眼,判断问题出在几何还是着色。
 3. **Remap 在 importer 上做**,所有使用处自动生效、prefab 零改动:
@@ -66,7 +66,7 @@ AI 模型 pivot 常不在模型中心,旋转时会"甩"。修法:
 ## 5. 验证:必须在"真"光照下看(最大的坑)
 - **编辑器当前开的场景可能一盏灯都没有**(UIDesign_Gameplay 就是:无 Light,ambient=Skybox)——在那里截图永远灰,会误判没修好。先 `FindFirstObjectByType<Light>()` 探一下。
 - 真实战局光 = `Assets/Prefabs/Environment/LightSet.prefab`(方向光 暖白(1,0.96,0.84)×1.6 + spots)。验证流程:临时 `InstantiatePrefab` 一个 LightSet + 一个模型实例(改名加 `__` 前缀)→ `capture_scene_object` 截图 → 看受光面**和背光面两个角度**(背光面只能看出 shadow band,判断不了饱和度)→ `DestroyImmediate` 全部临时物,**场景不保存**。
-- **场景会被用户中途切走**:用户在编辑器里干活,active scene 随时变(实测一次会话里 UIDesign_Gameplay → GameScene → Boot)。每次 `GameObject.Find` 临时物前先确认 active scene;预览物随"切场景不保存"自动消失——用 `git status <scene>` 确认场景没被连带保存,而不是假设。
+- **场景会被用户中途切走**:用户在编辑器里干活,active scene 随时变。每次 `GameObject.Find` 临时物前先确认 active scene;预览物随"切场景不保存"自动消失——用 `git status <scene>` 确认场景没被连带保存,而不是假设。
 - **capture 对小物件会钻进几何体**:`capture_scene_object` 自动取景在杂物多的场景里会把相机怼进模型/地面内部(出来一张噪点贴脸图)。解法:把模型单独 spawn 到远处空地(如 (60,0,60))单拍;方向光是无限远的,照样有效。
 - **用户 WIP 编译错会卡死脚本执行**(CLI `script eval` 和 Coplay `execute_script` 都一样):报错若来自用户正在写的代码,别去修(那是他的活)。验证降级为**直接读资产 YAML**:.anim 的曲线值/`m_LoopTime`、.controller 的 `m_Motion` guid、fbx.meta 的 `externalObjects`——资产层证据同样硬。编译正常时也可用 `AnimationMode.SampleAnimationClip`(实例化→采样→销毁,一次脚本内完成)做数值验证。
 - 修好的样子:贴图原有的厚涂色阶保住、LabLit 两阶阴影干净、**看不到黑描边**、暗面不灰黑、不发灰不塑料,和当前 Hero 站一起是一个画风。上面这套隔离摆拍只是自查;最终验收按总纲"怎么判断做到了",在真游戏相机、真灯光的竖屏截图上看,编辑器里孤立模型的截图不算数。

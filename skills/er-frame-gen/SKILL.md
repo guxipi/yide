@@ -5,14 +5,14 @@ description: ER(Extraction)出头像框(avatar frame)的管线——调本机 ge
 
 # ER 头像框生成(gemini 工具箱 CLI)
 
-勾哥 2026-10-26 拍的口径,出任何头像框都守:
+勾哥定的画法,出任何头像框都守:
 
 - **正圆开口**(CARGO 头像 = Porthole 正圆)。环带要宽到盖住方头像四角(角点离圆心 0.707 个边长),这样资料卡/排行/聊天那些方头像处也能直接套,不改遮罩代码。
 - **金、红、橙是高阶色,只给 BP 付费线的框。** 其余框按品阶色定主色:Common 灰蓝 #C9D6E6、Uncommon 绿 #4CC26B、Rare 蓝 #3B8BEA、Epic 紫 #9A3CF5(CARGO tokens)。描述里对非 BP 框写明 `no gold, no yellow, no orange, no red`。
-- **不描黑边**,轮廓用本色压暗(ER 美术规范 + CARGO 物件画法)。旧 `Frame_S1_01~03`、旧 `frame_s2_*` 就是因为黑描边被重做。
+- **不描黑边**,轮廓用本色压暗(ER 美术规范 + CARGO 物件画法)。
 - 手机可读:每个框最多两三个装饰,不要细纹、小雕刻、文字。
 
-工具是私有仓 `guxipi/er-imagegen` 里的 `er_frame_cli.py`(复用同目录 er_icon_cli / er_enemy_engine 的 key、限流和模型调用),目录 = `${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}`,下文记作 `$T`,每条 Bash 命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。开工先 `git -C "$T" pull --ff-only`;目录不在就按 er-icon-gen 第 0 节装。头像框默认走这个工具箱(10-26 勾哥定);想试别的通道(如 codex),和已批的框放同一张对照板给勾哥判。默认头像样张从 Unity 工程里取(`ER_UNITY_PROJECT` 或扫盘找 `<盘>:\GitManagedUnityProjects\Extraction`)。命令一律 `PYTHONUTF8=1 py -3 "$T/er_frame_cli.py" ...`,走 Bash。
+工具是私有仓 `guxipi/er-imagegen` 里的 `er_frame_cli.py`(复用同目录 er_icon_cli / er_enemy_engine 的 key、限流和模型调用),目录 = `${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}`,下文记作 `$T`,每条 Bash 命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。开工先 `git -C "$T" pull --ff-only`;目录不在就按 er-icon-gen 第 0 节装。头像框默认走这个工具箱;想试别的通道(如 codex),和已批的框放同一张对照板给勾哥判。默认头像样张从 Unity 工程里取(`ER_UNITY_PROJECT` 或扫盘找 `<盘>:\GitManagedUnityProjects\Extraction`)。命令一律 `PYTHONUTF8=1 py -3 "$T/er_frame_cli.py" ...`,走 Bash。
 
 ## 1. 先定需求再出图
 
@@ -29,7 +29,7 @@ PYTHONUTF8=1 py -3 "$CLI" gen "$T/spec_<set>.json" --yes   # 打印批次目录
 
 gen 完先把 grid.png 缩到 1200 看一眼:个数、顺序、开口是不是空白、有没有字、非 BP 框有没有混进金色。
 
-画风参考:第一批(10-26)无参考、纯文字约束出的,勾哥已点过的框可以写进 spec 的 `style_ref` 当后续批次的参考(只用他批过的,未批的新图不许接力当参考)。
+画风参考:默认无参考、靠 CLI 自带的文字约束出;勾哥已点过的框可以写进 spec 的 `style_ref` 当后续批次的参考(只用他批过的,未批的新图不许接力当参考)。
 
 ## 3. cut(0 次调用)
 
@@ -52,18 +52,13 @@ PYTHONUTF8=1 py -3 "$CLI" cut "<批次目录>" [--face <头像.png>]
 - 图:`Assets/Art/UI/Cosmetics/Frame/<frame_id 点换下划线>.png`。重做的框原位覆盖 PNG,保留 meta(GUID 不变,定义和 BP theme 的引用不用动)。新图的 meta 照 `frame_s2_goldrush.png.meta` 抄、换 GUID、spriteBorder 清零(Sprite single,fileID 21300000)。
 - 定义:`Assets/ScriptableObjects/Avatar/Frames/<名>.asset`(AvatarFrameDefinition),`_refFrameToFace` 填 qa.json 的 ref,`_accentColor` 填主色(会染资料卡头部渐变条),加进 `Assets/Resources/Core/AvatarFrameRegistry.asset` 的 `_frames`。
 - id 常量:`Core.Services.Cosmetics.CosmeticIds` 和 `Core.Content.CosmeticIds` 两份都补;要在聊天里显示就在 ShortCodes 末尾追加短码(只追加,不改旧码)。
-- 不碰 BP 配置表和 BattlePass 服务端/客户端代码;BP 奖励预览图在 `BPTheme_<season>.asset` 的 RewardIcons,要改先问 BP 那条线。
+- 不碰 BP 配置表和 BattlePass 服务端/客户端代码;BP 奖励预览图在 `BPTheme_<season>.asset` 的 RewardIcons,要改先问勾哥。
 - 入库顺序:拷图 → 写 meta → 写/改定义 → 追加 Registry。
 
 ## 6. 实机看一眼
 
 写 .cs 前查 playMode、拿 `Tools/cargo_lock.sh` 的 compile 锁;进 Play 拿 play 锁。资料卡(`UIHomeScreenPanel.OpenSelfProfile()`)上的 `UIAvatarFrame` 可以 eval 调 `SetFrameById("<id>")` 临时换框看效果(只改显示不改存档);衣柜头像框页 `ShowPanel<UICosmeticWardrobePanel>().SelectTab(1)`。`capture_game_view --save_path` 会存进 `Assets/Temp/`,看完挪走并删 .meta。测完 stop、放锁。
 
-## 外框上限(10-26 晚)
+## 外框上限
 
-`UIAvatarFrame.MaxFootprint`(框 : 头像面,默认 1.45):框的 ref 超过上限时,头像面连框等比缩小,占位不超「面 × 上限」,新框 ref 再大也不会压到旁边的字和格子。窄位单设:主页 CrewTag 1.35、资料卡 1.33、衣柜格子 1.2。所以出图时 ref 偏大不挡入库,代价是头像面变小(ref 2.36 的 deep_diver 在资料卡只剩 0.56),对照板的橙旗要写清这一点。
-
-## 已知现状(10-26)
-
-- 衣柜头像框页只列 BP 来源的框,商店/周榜/深潜/图鉴框不在列表。
-- BP 奖励预览 RewardIcons 仍指旧 Frame_S1_01~03。
+`UIAvatarFrame.MaxFootprint`(框 : 头像面,默认 1.45):框的 ref 超过上限时,头像面连框等比缩小,占位不超「面 × 上限」,新框 ref 再大也不会压到旁边的字和格子。窄位各自单设(读代码里的现值)。所以出图时 ref 偏大不挡入库,代价是头像面变小(ref 2.3 左右的框在资料卡头像面只剩一半多),对照板的橙旗要写清这一点。

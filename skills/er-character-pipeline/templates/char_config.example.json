@@ -1,5 +1,5 @@
 {
- "_comment": "Wren 的真实参数(2026-10-07 跑通的那一套)。新角色复制一份改成 <slug>.json,放在 {workspace}/configs/ 下。坐标全部是 Blender 归一化空间:Z 朝上、身高 1.0、脚底 z=0、x 居中、角色面朝 -Y、角色自己的左边在 +X。值为 null 的项由脚本自动推算。",
+ "_comment": "Wren 的真实参数(当填法示例;design / identity_items / fourview / face.expressions 里的设定文字以 Wren 角色手册为准,新角色按自己的手册重写)。新角色复制一份改成 <slug>.json,放在 {workspace}/configs/ 下。坐标全部是 Blender 归一化空间:Z 朝上、身高 1.0、脚底 z=0、x 居中、角色面朝 -Y、角色自己的左边在 +X。值为 null 的项由脚本自动推算。",
  "name": "Wren",
  "slug": "wren",
  "workspace": "C:/Users/kryst/character-art-lab",

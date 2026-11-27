@@ -9,7 +9,7 @@
 
 - **Source of truth = the kit prefab.** When you place an element, match the kit prefab's own `sizeDelta` / anchor / casing. Do **not** re-scale by eye.
 - **Reference frame:** the kit's `DemoScene_SuperCasual` canvas is **CanvasScaler 1080×2340, Match 0.487**. All px below are in that frame. A **ratio** (% of the 1080×2340 screen) is given alongside so the rule transfers to any portrait canvas.
-- **Applying to Extraction — RATIFIED (2026-06-14):** kit-based screens use the **kit's own CanvasScaler reference 1080×2340, Match 0.487**, so every measured px below applies **1:1**. (Older specs mention 1440×2560 — for kit screens that is superseded; see [§15](#15-decision-log).) The ratios are still listed for any non-kit canvas.
+- **Applying to Extraction:** kit-based screens use the **kit's own CanvasScaler reference 1080×2340, Match 0.487**, so every measured px below applies **1:1**. (Older specs mention 1440×2560 — for kit screens that is superseded; a non-kit/legacy canvas that must stay 1440×2560 uses the listed ratios.)
 - **Notation:** `sd` = sizeDelta(w,h); anchor written as a preset name; `aPos` = anchoredPosition; all from the live prefabs.
 
 ---
@@ -200,12 +200,6 @@ Match the kit's anchor preset per element; it's already authored for single-axis
 5. Section headers **left** + Tapered; titles/results **centered** + Ribbon; dividers **centered + flanking lines**.
 6. Grids/lists reuse the §10 cells; banners full-content-width & featured-first (§7.4); one corner tag per card.
 7. Verify worldPos on-screen + an F8 shot before "done" (see `ui-placement` skill).
-
----
-
-## 15. Decision log
-
-- **2026-06-14 — Canvas reference RATIFIED:** kit-based screens use the kit's **1080×2340 (Match 0.487)** CanvasScaler reference. All measured px in this doc apply **1:1**. The older 1440×2560 (16:9) spec is superseded for kit screens. (If a non-kit/legacy canvas must stay 1440×2560, use the listed ratios.)
 
 ---
 

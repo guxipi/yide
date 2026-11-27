@@ -5,7 +5,7 @@ description: 主会话当大脑、OpenAI Codex CLI(gpt-5.6-sol)当执行手的�
 
 # Codex (gpt-5.6-sol) 执行手工作法
 
-经 2026-07-10 FTUE 盘点+施工实战验证。核心分工:**主会话=大脑**(读设计 SSOT 做裁决、写工单、抽查报告、Unity Play 验收、commit/deploy);**sol=手**(读大文档、扫代码、按工单写码、出图)。什么活派给 sol 由勾哥当次说;美术工具分工见 vault `01 - 星际拓荒重构/013 美术/AI记忆/现行口径_参考与工具分工.md`(概念图、paint-over 上色和其余 2D 件走 terra,不默认派 sol)。想让一个 Claude 子 agent 代为调度和核对 diff,派项目里的 `codex-executor` agent。
+核心分工:**主会话=大脑**(读设计 SSOT 做裁决、写工单、抽查报告、Unity Play 验收、commit/deploy);**sol=手**(读大文档、扫代码、按工单写码、出图)。什么活派给 sol 由勾哥当次说;美术工具分工见 vault `01 - 星际拓荒重构/013 美术/AI记忆/现行口径_参考与工具分工.md`(概念图、paint-over 上色和其余 2D 件走 terra,不默认派 sol)。想让一个 Claude 子 agent 代为调度和核对 diff,派项目里的 `codex-executor` agent。
 
 ## 1. 调用配方(踩坑后的正确姿势)
 
@@ -25,7 +25,7 @@ codex exec --sandbox workspace-write --skip-git-repo-check --cd "<workdir>" \
 - 后台跑(Bash run_in_background),等完成通知,不写 sleep 轮询;一单常 10-40 分钟。
 - **codex CLI 0.160 起已删掉 `--full-auto`**,施工用 `--sandbox workspace-write`(只读侦察仍 `--sandbox read-only`);带参考图用 `-i a.png -i b.png`(出图/对照任务必带)。`-i` 是可变参数,会把后面的位置参数也当图吞掉:带 `-i` 时 prompt 走 stdin(`- < order.md`,这时不用再加 `< /dev/null`)。一次最多 5 张输入图,超了没有产出。
 - PowerShell 不支持 `<` 重定向,上面的命令一律在 Bash 里跑(或 `cmd /c`)。打回续做用 `codex exec resume <session id> - < feedback.md`(id 在 stdout 日志头)。
-- 模型名看 `~/.codex/config.toml` 和派单脚本里的 `-m`,不凭记忆手打(记忆里先后出现过 5.6 / 6.1 / 6.2 的 sol、terra);报"requires a newer version"就 `npm install -g @openai/codex@latest`。登录复用桌面 App 的配置,Extraction 已是 trusted 项目。
+- 模型名看 `~/.codex/config.toml` 和派单脚本里的 `-m`,不凭记忆手打(sol、terra 的版本号常换);报"requires a newer version"就 `npm install -g @openai/codex@latest`。登录复用桌面 App 的配置,Extraction 已是 trusted 项目。
 
 ## 2. 铁律:严格串行,绝不并行
 
@@ -57,8 +57,8 @@ workdir = <路径>。共享工作树有别人 WIP——只改本工单列出的�
 
 ## 4. 大脑侧纪律(这些活不能转包)
 
-1. **设计裁决亲自做**:派施工单前亲读设计 SSOT 关键段。实例:sol 盘点把「TutorialHpMul 无运行时消费者」报成差距,施工图其实明写"设计就是烘进资产,别找运行时钩子"——不亲读就会派错工单。
-2. **载重结论逐条抽查**:sol 报告的 P0 每条用 Read/Grep 定点核实再动工(实测 4/4 属实,但行号/路径偶有小偏差)。
+1. **设计裁决亲自做**:派施工单前亲读设计 SSOT 关键段。sol 盘点常把「设计上故意这样做」(比如数值烘进资产、不走运行时钩子)报成差距,不亲读就会派错工单。
+2. **载重结论逐条抽查**:sol 报告的 P0 每条用 Read/Grep 定点核实再动工(结论多半属实,行号 / 路径偶有小偏差)。
 3. **归因快照**:共享工作树,派单前 `git status --porcelain > snapshot`,收工后 diff 归因——sol 的改动 vs 别人工地的改动要能分开。
 4. **Unity 侧全归大脑**:编译检查、builder 运行、Play 验证由主会话走 Unity CLI(见 `playmode-verify-iterate`);sol 接不到 Editor,headless 下 Coplay 工具也全被自动拒。
 5. **commit/deploy 全归大脑**:显式路径 commit;CloudCode 部署由大脑照 `cloud-code-deploy` 第四步做(默认 `CloudCode/deploy-dev.ps1`,只到 development)。

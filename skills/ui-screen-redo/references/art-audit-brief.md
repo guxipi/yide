@@ -10,12 +10,7 @@
 输入(用 Read 打开看):
 - 最新实机截图:<路径列表>
 - 现行 UI 规矩:vault 01 - 星际拓荒重构/013 美术/AI记忆/现行口径_UI视觉kit.md(读全文,尤其「总方向」「颜色」「面、暗纹和 KV」「图标、名牌、头像、券、位图」)
-- 画风基准(打开原图看,不凭描述):
-  - 功能图标:Unity 工程 Extraction/Assets/Art/UI/Cargo/Gen/ 下 tab_shop / tab_equip / tab_base / tab_clan / tab_home 五张 png
-  - 头像:Extraction/Assets/Art/UI/Avatars/ 下 avatar_0 / 1 / 10 / 11 / 12 / 13 六张 _icon.png
-  - 券、代币、凭证:vault 020_商店/Revamp_2026-11-20/券类图标/ 里勾哥点过头的那一版
-  - 非 icon 的名牌、称号牌、底板:vault 013 美术/UI_CARGO/成品感评审_20261118/绝区零UI拆解_ER套用_20261118.html 第 10 节 v3 名牌配方
-  - 件的形和面:vault 013 美术/UI_CARGO/mock/kit_v12.html 对应的样张
+- 画风基准:功能图标、头像、券和凭证、非 icon 的名牌和底板各对标哪组图,以上面那份现行口径「图标、名牌、头像、券、位图」一节写的为准,打开原图看,不凭描述;件的形和面看 vault 013 美术/UI_CARGO/mock/kit_v12.html 对应的样张
 
 要做的:
 1. visual 清单:截图上每一个图像元素一行(图标、头像、名牌、KV、场景底图、底纹、贴纸、进度件、按钮面)——它是什么 / 对标哪个基准 / 判定:留、改(说改哪里)、重出(说为什么、按哪个基准出)/ 截图里的位置。

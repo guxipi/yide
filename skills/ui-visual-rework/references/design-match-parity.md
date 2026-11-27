@@ -1,4 +1,4 @@
-> 2026-10-30 由项目 skill `ui-design-match` 并入 `ui-visual-rework`。有预摆的无代码设计参考(`UIDesign_Gameplay.unity` 里的 `PopupDim_*` / `Popup_*`)或 mockup 截图、要求 runtime 和它一致时,走这份流程。机制和截图通道见 `ui-placement`,Play 驱动见 `playmode-verify-iterate`。
+> 有预摆的无代码设计参考(`UIDesign_Gameplay.unity` 里的 `PopupDim_*` / `Popup_*`)或 mockup 截图、要求 runtime 和它一致时,走这份流程。机制和截图通道见 `ui-placement`,Play 驱动见 `playmode-verify-iterate`。
 
 # UI Design-Reference Parity(照设计参考对齐 runtime UI)
 
@@ -8,7 +8,7 @@
 
 ---
 
-## 第〇步 · Mockup spec sidecar + 实施解读门(2026-07-07 拍板,以 mockup 为参考时的前置)
+## 第〇步 · Mockup spec sidecar + 实施解读门(以 mockup 为参考时的前置)
 
 > 总纲:`Claude Feature Docs/UI Architecture Refactor/HANDOVER_UI真源prefab化_总纲.md` §3;契约:`Claude Feature Docs/UI Visual Design/Visual_Refine_Contract.md` §9。
 

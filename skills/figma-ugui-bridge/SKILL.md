@@ -22,7 +22,7 @@ git clone https://github.com/guxipi/figma-ugui-bridge   # to a LOCAL disk
 cd figma-ugui-bridge/figma-plugin
 npm install
 npm run build        # -> dist/code.js + dist/ui.html (JSZip inlined, offline)
-npm test             # vitest: markers / coords / anchors (23 tests)
+npm test             # vitest: markers / coords / anchors
 ```
 > ⚠️ **Do NOT put the clone on Google Drive / OneDrive** — `npm install` fails on the virtual
 > filesystem (`EBADF`). The `H:\My Drive\中转\figma-ugui-bridge` copy is a transfer/staging copy
@@ -76,9 +76,9 @@ The shared algorithm (coordinate y-flip + anchor inference) is implemented **twi
 - `lineHeightPx` not applied; `letterSpacing` ≈ TMP `characterSpacing` (unit mismatch).
 - Multi-Res Preview uses **undocumented internal GameView APIs** (reflection) — best-effort, may need tweaks per Unity version, renders best in Play mode.
 
-## Verification status (as of the bridge's 2026-06-11 handoff — verify before claiming)
-- **Plugin**: `npm run build` + `tsc` zero errors; **vitest 23/23 green**. ❗ **Not loaded in Figma desktop** in the build environment (no Figma there) — the live `exportAsync`/postMessage/zip round-trip needs **one manual run on a machine with Figma**. Don't claim the export path is verified until you've run it.
-- **Importer**: verified in **Extraction (Unity 6000.3.5f2)** — install → zero compile errors → sample `layout.json` imported; top/bottom/center/stretch anchors + auto-match scaling + `Button.targetGraphic` + SafeArea + LayoutGroup + CanvasGroup all checked. (Package was then removed from ER and the test prefab deleted — ER restored.)
+## What has and hasn't been proven (verify before claiming)
+- **Plugin**: only build + `tsc` + vitest have run; the live Figma-desktop `exportAsync`/postMessage/zip round-trip has never been exercised. Run it once on a machine with Figma before claiming the export path works.
+- **Importer**: proven on Unity 6 (install → zero compile errors → sample `layout.json` imported; anchors, auto-match scaling, `Button.targetGraphic`, SafeArea, LayoutGroup, CanvasGroup checked).
 
 ## What this skill does NOT do
 - It does not modify the prefab after import beyond the importer's own behavior, and it does not generate your panel's **reference-binding C#** — that's a separate **binding-codegen** step (`gen-uibind`, **not yet built**; wire refs by hand for now).

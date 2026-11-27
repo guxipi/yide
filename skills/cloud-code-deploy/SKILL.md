@@ -7,7 +7,7 @@ description: Change/build/deploy Extraction's UGS Cloud Code server module — d
 
 把服务端代码改对、编对、部署上,且知道"怎么和服务器代码协作"。"端点有响应"**只证明端点跑了、没证明 CloudSave 真持久化**(详见下「血泪前提」),先读那一节,它是 cloud 到底有没有真工作的根。
 
-> 架构怎么设计(server-first / optimistic / operation queue / version tracking)读同目录 `../server-service-pattern.md`。本 skill 只管:**改了之后怎么编、怎么部、怎么确认部上了(且没在假成功)。**
+> 架构怎么设计(server-first / optimistic / operation queue / version tracking)读同目录 `../server-service-pattern.md`。本 skill 只管:**改了之后怎么编、怎么部、怎么确认部上了(且没在假成功)。** 服务端这块勾哥定的规矩(部署红线和部署树、玩家数据安全、禁写策略、服务端权威和防作弊、发版热更)全文在 vault `01 - 星际拓荒重构/025_服务器运维手册/AI记忆/现行口径_服务端与发版.md`,改服务端前读全文;下面只写操作步骤,规矩只留一句加指针。
 
 ---
 
@@ -23,7 +23,8 @@ CloudCode/
 │   └── ExtractionCloudCode/
 │       ├── ModuleConfig.cs           # ICloudCodeSetup:注册 IGameApiClient(没它 = 整个 module 假死,见血泪前提)
 │       ├── Endpoints/*.cs            # [CloudCodeFunction] 端点(BaseEndpoints, RaidEndpoints, ClanEndpoints, ...)
-│       └── Models/*.cs              # 请求/响应 DTO + 数据模型
+│       ├── Models/*.cs              # 请求/响应 DTO + 数据模型
+│       └── <Domain>/                 # 按系统分的目录(Alliance / Base / Raid / Shop …),新端点先看同系统目录里有没有现成的
 └── tests/ExtractionCloudCode.Tests.sln  # 测试 solution(隔离,不部署)
 ```
 客户端侧:`Assets/Scripts/Core/Services/UGS/CloudCodeManager.cs` 是唯一的客户端→服务端桥(wrapper 方法 + response 内部类 + 离线 fallback)。
@@ -32,7 +33,7 @@ CloudCode/
 
 ---
 
-## ⚠️ 血泪前提:cloud 端点默认在「假工作」(2026-06 clan 多人踩穿)
+## ⚠️ 血泪前提:cloud 端点默认在「假工作」
 
 这个 module 的端点能**编译过、部署过、create 返回数据、单测绿**,而 CloudSave 实际一个字没写进去——每个端点的 `LoadXxxAsync` 都有 try-catch 吞掉 NRE 返回空默认值,表面全成功,真相是一直走客户端 local fallback。加/改端点前必须确认两件事,否则白干:
 
@@ -67,7 +68,7 @@ public async Task<CompleteRaidResult> CompleteRaid(IExecutionContext context, st
 }
 ```
 - CloudSave 读写经 `_gameApiClient.CloudSaveData.GetItemsAsync / SetItemAsync`,key 用常量(`player_base` 等)。写 value 用 `JsonHelper.Serialize(obj)`(**string,不是 `SerializeToElement` 的 JsonElement——写进去读不回**,见血泪前提坑B);读用 `Results[0].Value?.ToString()` + `JsonHelper.Deserialize<T>`。
-- **写入 token 一律 `context.ServiceToken`**:11-18 起 dev / staging / production 都开了 UGS 禁写策略,玩家身份(`context.AccessToken`)写 Cloud Save / Economy 一律被拒,`ServerWriteIdentityTests` 扫源码把关;服务身份下 UGS 不查写的是谁的档,目标玩家 id 只取 `context.PlayerId` 或服务端自己存的状态;客户端不许有直连写入。详见 vault 记忆 `cloud-save-no-access-control-client-can-write-20261118`。
+- **写入 token 一律 `context.ServiceToken`**:dev / staging / production 都开了 UGS 禁写策略,玩家身份(`context.AccessToken`)写 Cloud Save / Economy 一律被拒,`ServerWriteIdentityTests` 扫源码把关;服务身份下 UGS 不查写的是谁的档,目标玩家 id 只取 `context.PlayerId` 或服务端自己存的状态;客户端不许有直连写入。规矩出处见现行口径「玩家数据安全」节。
 - 推送/跨端点调用:`new NotificationEndpoints(_gameApiClient, NullLoggerFactory...)` 直接 new(无 DI 也能手动构)。
 
 ### 2) 模型 `Models/<Domain>Models.cs`
@@ -76,12 +77,13 @@ public async Task<CompleteRaidResult> CompleteRaid(IExecutionContext context, st
 ### 3) 客户端 wrapper `CloudCodeManager.cs`
 ```csharp
 #if UNITY_SERVICES_CLOUDCODE
-    var resp = await UnityCloudCode.Instance.CallModuleEndpointAsync<CompleteRaidResponse>(
+    var resp = await CallLenientAsync<CompleteRaidResponse>(
         MODULE_NAME, FUNC_COMPLETE_RAID, args);
 #endif
-    // 任何分支失败/离线 → 走本地 fallback(模拟结果),保证不卡 UX
 ```
-- response 内部类字段名**必须 camelCase 精确匹配服务端 JSON 序列化出来的字段**(实战 response 类全用 `success/goldStolen/stolenCore...`)。对不上 = 字段静默为默认值。
+- 解析响应一律走 `CloudCodeManager.CallLenientAsync<T>`(宽松反序列化,服务端多加字段不炸客户端),不直接调 `UnityCloudCode.Instance.CallModuleEndpointAsync<T>`;服务端加字段的同一个提交里镜像客户端 DTO。
+- 失败 / 离线怎么处理照同一功能现有 wrapper 的写法和现行口径「服务端权威和防作弊」节(权威操作断网是转圈挡操作,不是本地模拟结果)。
+- response 内部类字段名**必须 camelCase 精确匹配服务端 JSON 序列化出来的字段**。对不上 = 字段静默为默认值。
 - 每个新端点:加 `FUNC_*` 常量 + wrapper 方法 + `[Serializable] private class XxxResponse`。
 
 ---
@@ -96,11 +98,9 @@ public async Task<CompleteRaidResult> CompleteRaid(IExecutionContext context, st
 
 **异步 PvP 结算**:战斗核写成纯函数确定性核(防守方快照深拷贝独立存、剥离 UI、不依赖本地时间、随机走 seed、服务端结算或验录像);校验本局 **BattleToken** 合法且未被用过,用过即拒(防重放);做合理性校验(1 秒内打赢 10 万战力对手这种 → 拒绝/标记/封禁),别照单全收;结算用**服务端存的防守方快照**,不信客户端回传的防守方数据。
 
-**客户端协议 Handler(C2S RPC/API)**:套用通用四条。典型如 `C2S_UpgradeEquipment`——校验 `EquipmentID` 存在且属于该玩家、满足升级前置、清理字符串参数。
-
 核心逻辑写边界测试:钱不够 / 并发扣 / 0 血 / 溢出。
 
-详细镜头见 `experts/architect.md` 的「数据纪律 / 安全」段。
+详细镜头见 `~/.yide/experts/architect.md` 的「数据纪律 / 安全」段;ER 服务端权威的具体口子(背包、结算、掉落校验怎么复算)见现行口径「服务端权威和防作弊」节。
 
 ---
 
@@ -124,9 +124,9 @@ dotnet build ExtractionCloudCode.sln --configuration Release
 
 ## 第四步:部署(默认用工程自带 `CloudCode/deploy-dev.ps1`)
 
-**🚫 红线(勾哥 2026-06-13):手动部署一律只到 `development`,绝不 `-e production`。** 客户端 Boot `_environment: development`,玩家/测试连 dev——手动只需部 dev。**prod 由 build job 迁移,不手动碰**(误部 prod = 白部 + 污染发布环境 + 留 stray);误部到 prod 的残留也别手动 delete prod,留给 build job,要破例先问勾哥。详见记忆 `cloud-deploy-dev-only`。
+**🚫 红线:手动部署一律只到 `development`,绝不 `-e production`**;prod 只走 CI,prod 的残留也不手动删(规矩全文见现行口径「部署」节)。
 
-**部署前(多台机器、多条线共用一个 dev module,谁最后部谁的代码就是 dev 的全部)**:`git fetch`,部署树要同时含 origin/main 和各线已部到 dev 的已提交服务端(逐个 `git merge-base --is-ancestor` / `git cat-file -t <hash>` 核,缺的先合,找不到对象就停下问勾哥);工作区里别人未提交的 CloudCode / UGSConfig 改动不带;部前部后给在用 dev 的线发一句(部署树 id、含什么),部前设 `$env:OWNER`。依据 vault 记忆 `feedback-dev-deploy-from-merged-tree-and-sheet-push-backup-20261125`、`cloudcode-deploy-dev-check-missing-server-commits-20261121`。
+**部署前(dev 上全项目只有一个 module,谁最后部谁的树就是 dev 的全部)**:`git fetch`,部署树要同时含 origin/main 和各线已部到 dev 的已提交服务端(逐个 `git merge-base --is-ancestor` / `git cat-file -t <hash>` 核,缺的先合,找不到对象就停下问勾哥);工作区里别人未提交的 CloudCode / UGSConfig 改动不带;部前部后给在用 dev 的线发一句(部署树 id、含什么),部前设 `$env:OWNER`。
 
 **默认路 —— 工程脚本**(在工程根跑):
 ```powershell
@@ -152,7 +152,8 @@ ugs deploy . -e development --json    # Result 里 path 是 .sln 才对
 ## 第五步:部署后验证(部署成功 ≠ 端点真工作)
 
 **最大陷阱:cloud 端点「假成功」**——返回 success、看到数据,但可能是 try-catch 后的空默认或客户端 fallback(见血泪前提)。必须验证**服务端真读写了 CloudSave**:
-- **另起一次请求读回**:create/save 后用**另一个端点调用**去 read,确认读到刚写的字段。create 的返回值是内存序列化,不算。**实战:CREATE 返回 clan 数据 ✅ 但紧接 DONATE 报 "Not in a clan" —— 就是坑B(写进去读不回)被读回验证暴露的。**
+- **另起一次请求读回**:create/save 后用**另一个端点调用**去 read,确认读到刚写的字段。create 的返回值是内存序列化,不算。
+- 不开 Unity 也能验:匿名玩家 REST 直调 module 端点(新端点空参报业务校验错 = 新代码在跑,报 `code 9029` = 没部上或还在传播),写法见 vault 记忆 `025_服务器运维手册/AI记忆/cloudcode-rest-anon-verify.md`。
 - **验证 server-authoritative 副作用真发生**:donate 后看 GOLD 真的被**服务端** Economy 扣了(不是客户端扣)、fund 真加了。
 - 端点写死一个可识别特征字符串,进游戏看到它 = 新代码在跑(不是旧版/fallback)。
 - 部署后约 30 秒内的请求可能还打到旧实例,半分钟后连测几轮再下结论;除了自己改的端点,至少再调一个和本次无关、会写存档的端点确认没回退。
@@ -168,7 +169,6 @@ ugs deploy . -e development --json    # Result 里 path 是 .sln 才对
 
 - 改了端点 → 更新 `CloudCode/README.md` 对应段落(参数/返回/行为)。
 - `.ccm` 是构建产物(脚本每次重打),别纠结它的 git 状态;走备用路前要删(见第四步,会和 ugs 编译冲突)。
-- 红线提醒:**不主动 commit/push**,除非勾哥明说。
 
 ---
 
@@ -178,12 +178,13 @@ ugs deploy . -e development --json    # Result 里 path 是 .sln 才对
 |---|---|
 | **IGameApiClient 注册** | `ModuleConfig:ICloudCodeSetup` → `config.Dependencies.AddSingleton<IGameApiClient>(GameApiClient.Create())`(没它全端点 null) |
 | **CloudSave 写** | `new SetItemBody(key, JsonHelper.Serialize(obj))`(string,**别** `SerializeToElement` JsonElement) |
-| **🚫 数据安全红线** | 改 Cloud Save 端点绝不能丢玩家数据:model 字段与客户端全对齐(round-trip 缺字段=静默清空)、改结构向后兼容、写前自问会不会盖掉没加载的字段。备份/snapshot 回滚见记忆 `server-data-safety`,建前先对齐方案 |
+| **🚫 数据安全红线** | 改 Cloud Save 端点绝不能丢玩家数据(model 字段与客户端全对齐,round-trip 缺字段 = 静默清空);全文见现行口径「玩家数据安全」节 |
 | 编译服务端 | `cd CloudCode/src && dotnet build ExtractionCloudCode.sln -c Release` |
 | 客户端编译 | `unity command console status` + grep 日志 `error CS` |
 | 部署 | 工程根 `powershell -ExecutionPolicy Bypass -File CloudCode\deploy-dev.ps1 -SkipTests`(部署树含 origin/main + 各线已提交服务端);备用 `cd CloudCode/src && ugs deploy . -e development`(先删 src 里的 .ccm) |
 | 强制重部署(备用路) | `ugs cloud-code modules delete ExtractionCloudCode -e development` 再 `ugs deploy .` |
 | **核实部上了** | `ugs cloud-code modules list -e development --json` 看 DateModified(**别信 "Up to date"**) |
-| 验证真工作 | **另起请求读回**写的字段;半分钟后连测,再调一个无关的写存档端点 |
+| 验证真工作 | **另起请求读回**写的字段;半分钟后连测,再调一个无关的写存档端点;不开 Unity 用匿名 REST 直调 |
+| 客户端调端点 | `CloudCodeManager.CallLenientAsync<T>`(别直接 `CallModuleEndpointAsync<T>`) |
 | Play 验证 | 按 `playmode-verify-iterate` 钉 Boot 起 + 自等待脚本一口气跑(domain reload 杀 services) |
 | 架构怎么设计 | 读 `../server-service-pattern.md` |

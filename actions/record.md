@@ -15,7 +15,8 @@
 | 不可逆、代价高的禁令,或用户点名过的错 | `~/.yide/core/hard-rules.md` | 每次会话常驻 |
 | 放权 / 工作约定 / 本机环境事实(ER 专属进 charter-extra-er) | `~/.yide/core/charter-extra.md` | 每次会话常驻 |
 | 只在某个项目成立(路径、约定、铁规) | 该项目的 `CLAUDE.md` | 在该项目的会话里常驻 |
-| ER 的拍板、纠正、踩坑、引擎事实 | vault 对应系统的 `AI记忆/`(写法按 vault 根 `CLAUDE.md`「写回规则」,有现行口径文件的同一回合并进去) | 清单 `MEMORY.md` 每会话加载;做该系统的活时读现行口径 |
+| ER 的设计拍板(规则、数值、内容、经济、做不做某功能) | 该系统的设计文档(GDD / spec / Anchor);来不及改文档就先记进该系统目录的 `拍板记录_<系统>_待回写.md` | 做该系统设计时读文档 |
+| ER 里勾哥对做法和品味的纠正、引擎和工具的隐藏事实 | vault 对应系统的 `AI记忆/`(写法按 vault 根 `CLAUDE.md`「写回规则」,有现行口径文件的同一回合并进去;进度、单件资产的选择不记) | 清单 `MEMORY.md` 每会话加载;做该系统的活时读现行口径 |
 | 某类活的技术知识(摆 UI / 写服务端 / 做 VFX / 模型 intake…) | 对应 skill 的 `SKILL.md`(`skills/<name>/`) | 干这类活时自动加载 |
 | 能用一个精确正则在工具输入里抓到的硬约束 | `~/.yide/.meta/hook-rules.json` | PreToolUse **真 block** |
 | 以上都不是(一次性的、纯历史) | `~/.yide/lessons/L-XXXX.md` | 不自动生效,只作档案 |

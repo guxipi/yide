@@ -7,8 +7,10 @@ This skill documents the standard pattern for creating Unity services that integ
 When building game services that require server validation (e.g., inventory, economy, progression), use this pattern to:
 - Maintain server authority for critical operations (currency, item deletion)
 - Provide optimistic updates for UX-critical operations (equipment changes)
-- Support offline play with queued sync on reconnect
+- Queue optimistic operations and sync them on reconnect
 - Handle conflicts gracefully with rollback capabilities
+
+> **ER 现行规矩以 vault 为准**:`01 - 星际拓荒重构/025_服务器运维手册/AI记忆/现行口径_服务端与发版.md`(「玩家数据安全」「服务端权威和防作弊」两节)。和本文冲突时照它:服务端写入一律 `context.ServiceToken`,客户端不直连写存档 / 货币;背包、任务 / 成就这类以服务端为真源,客户端只发请求和证据;主页 / 基地 / 商店 / 背包断网时全屏转圈挡操作,不做离线排队(下面的 OperationQueue 只适用于已有的乐观路径,新服务别靠它支持离线玩)。部署和验证步骤见 `cloud-code-deploy`。
 
 ## Architecture
 
@@ -187,6 +189,8 @@ public async Task<ResultType> Operation(IExecutionContext context, params)
     return SuccessResult();
 }
 ```
+- Target player id comes only from `context.PlayerId` or server-side state; every write call passes `context.ServiceToken`.
+- Cloud Save values are written as JSON strings (`JsonHelper.Serialize`), and the client calls the endpoint through `CloudCodeManager.CallLenientAsync<T>` (see `cloud-code-deploy`).
 
 ## Error Handling
 

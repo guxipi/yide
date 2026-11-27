@@ -11,7 +11,7 @@ description: Rework an Extraction UI screen to production quality (成品级 = c
 
 > **本 skill 里的 SuperCasual kit 配方只对旧屏成立。** 现行视觉 kit 是 CARGO(vault `013 美术/UI_CARGO/`,现行稿 `mock/kit_v12.html`);下文「勾哥定的硬口径」是 10-13 两个弹窗那一单的口径,和 vault `013 美术/AI记忆/现行口径_UI视觉kit.md` 冲突时以它为准,例如:文字任何情况下都不描边(11-18)、后退和关闭键放右上角(11-19)、切边统一 12 设计像素(11-19)、礼包和促销弹窗做异形(11-18)。
 
-把一个"代码生成的平面色块界面"重做成成品级,流程与判断全部实跑验证过(Battle Pass / Leaderboard / Daily Login / Reward Reveal 四单)。**先读 `ui-placement` skill**(执行纪律、截图通道、RectTransform 坑)——本 skill 不重复它,只讲它之上的"做到好看"。
+把一个"代码生成的平面色块界面"重做成成品级。**先读 `ui-placement` skill**(执行纪律、截图通道、RectTransform 坑)——本 skill 不重复它,只讲它之上的"做到好看"。
 
 ## 有预摆参考或 mockup 要对齐时
 先读 `references/design-match-parity.md`(原 ui-design-match):mockup 必须有 spec sidecar 且实施解读经勾哥批准;参考和现状都数值化 dump 成同一种语言再对比;老 prefab 四大陷阱(遗留 z、遗留 localScale、空引用/stale override、LayoutGroup 塌宽);真点击验收。
@@ -23,23 +23,23 @@ description: Rework an Extraction UI screen to production quality (成品级 = c
 
 下面的 kit 配方、层叠和动效都是工程里验证过的做法,用来服务层级,不是越丰富越好;叠上去让层级更糊、更吵的就删掉。不用 kit 也行,结果过总纲门槛即可。
 
-## 逐屏优化实战套路(2026-10-13 礼包弹窗 UIOfferPopup + 选弹药 UIShopChooseAmmoPopup 两屏跑通)
+## 逐屏优化实战套路
 
-勾哥开始"逐屏优化 screen / pop up"时的缺省做法。两屏的真源可直接当样板抄:`Assets/Scripts/Editor/Setup/OfferUISetup.cs`(BuildVisual)、`Assets/Scripts/Meta/UI/Offers/UIOfferPopup.cs` / `UIOfferContentSlot.cs`、`Assets/Scripts/Meta/UI/ShopDesign/UIShopChooseAmmoPopup.cs`;实机截图在 vault `013 美术/UI弹窗优化_2026-10-13/`。
+勾哥开始"逐屏优化 screen / pop up"时的缺省做法。可当样板抄的真源:`Assets/Scripts/Editor/Setup/OfferUISetup.cs`(BuildVisual)、`Assets/Scripts/Meta/UI/Offers/UIOfferPopup.cs` / `UIOfferContentSlot.cs`、`Assets/Scripts/Meta/UI/ShopDesign/UIShopChooseAmmoPopup.cs`。
 
 **流程**
 1. 现状先实读:prefab dump(节点 / sprite / 色值 / 字体 / 字号)+ 实机截图;字号一律换算成屏上像素(字号 × 父级缩放 × canvas scaleFactor;Popup 层 1440 参考 → 1080 屏 ×0.75,kit 屏 1080 参考 1:1)。
-2. 第一轮可以出 mock 定方向(竞品只借布局和层次);**方向一定就只改真 prefab,每轮给勾哥的是 Play 截图**(`ScreenCapture.CaptureScreenshot`,1080×2340)。mock 和 builder 两套组装代码必出偏差,这次因此多返工三轮。
+2. 第一轮可以出 mock 定方向(竞品只借布局和层次);**方向一定就只改真 prefab,每轮给勾哥的是 Play 截图**(`ScreenCapture.CaptureScreenshot`,1080×2340)。mock 和 builder 两套组装代码必出偏差,方向定了还改 mock 只会多返工。
 3. 有 builder 的 prefab 改 builder 再跑(CARGO 屏一律改 builder 重跑;其它屏菜单覆盖前确认没有没进 builder 的改动);没有 builder 的直接 `PrefabUtility.LoadPrefabContents` 改结构 → `SaveAsPrefabAsset`。脚本改成序列化引用,不按节点名查。
 4. 进 Play 走真入口打开,每个变体都开一遍(单格 / 多格 / 不同礼包),state dump(文本、`characterCount`、active、屏上 rect)+ 截图;关闭键走真 `onClick`。测完停 Play,只提交本单文件。
 5. **遮挡检查是交付硬门(勾哥 10-13 点名)**:每屏两道都过才算完。① 脚本:关键元素(标题 / 副标题 / 内容行 / 按钮 / 倒计时 / 角标 / info)屏上矩形两两求交,TMP 按**可见字形轮廓**(`characterInfo` 的 bottomLeft/topRight)算,别用 `textBounds`(含整行行高,Saira ≈1.57em,会大量误报),重叠 >3% 或出卡/出窗即红;有意的叠放(贴纸角标压按钮沿)显式豁免。脚本在 vault `013 美术/工具/ui_occlusion_check.cs`。② 肉眼:人物的脸、手、主道具不许被任何 UI 压住,压插画的元素优先放插画空景一侧。
 
-**勾哥定的硬口径**
+**旧屏(SuperCasual)的硬口径**
 - 组件默认用 SuperCasual kit 现成 prefab(少用大圆角),不用粉色;自己画 / 代码渲按钮和底板可以试,结果过总纲、和 kit 件实拍并排判(见下文「底图优先用美术资产」)。已验证可直接嵌套的件:`Popup09_Topbar_Divided_Label_*` 壳(顶栏放大到 ~170)、`Button01_l_BtnText_Yellow`(价格直接写在按钮上)、`BorderFrame_Oval58_Dark`(倒计时套件 = 深底 + `Icon_Timer`,倒计时不在正中就用它)、`Label_Parallelogram_Yellow`(ONE-TIME / PICK ONE 角标)、`Title_LIne03_Divider`(YOU GET / PICK ONE 分隔)、`CardFrame04_FocusBorder`(选中框)。
 - 物品格 = 背包同款 `UIUniversalItemWidget`(颜色按真实稀有度,数量右下);不要另造格子。多于一行的内容分行居中、整窗加高,不缩格子(缩了字会低于下限)。
-- 每个功能 / 礼包一套主题色,进配置不进代码(范式:`OfferBannerLibrary` 条目的 Theme 四色);正文由浅到深(竖向 alpha 渐变条 `expedition_竖向渐变遮罩_8x256` 染深色压下半);底纹用勾哥的半调波点 `expedition_波点渐变底纹_1024x1024`,透明度 ~1.5%。
+- 每个功能 / 礼包一套主题色,进配置不进代码(范式:`OfferBannerLibrary` 条目的 Theme 四色)。内容面的暗纹、渐变遮罩怎么用以现行口径_UI视觉kit「面、暗纹和 KV」为准。
 - 字体 Saira,字号下限见 Extraction 工程 CLAUDE.md UI 字体铁规第 4 条(1080 屏 32px / 标签 40 / 按钮 48 / 标题 64);每段字对比度量完再交。
-- 头图要讲这个功能的故事并放英雄;避开 UI 压条的安全区(顶部倒计时 / 渐变、底部渐变);已定稿 KV 构图不合优先往外扩画,不重画;人物按角色手册修(出图口径见 KV 相关记忆)。头图下沿渐变融进正文底色。
+- 头图要讲这个功能的故事并放英雄(礼包类出图按 `er-shop-mkt`);避开 UI 压条的安全区(顶部倒计时 / 渐变、底部渐变);已定稿 KV 构图不合优先往外扩画,不重画;人物按角色手册修。头图下沿渐变融进正文底色。
 - 提示语义:红点 = "有新东西 / 待处理",不能当"这格可选";自选类用文字标签,且和下一屏用同一个词。
 
 **动效(只给主角,不铺满)**:CTA `UIShineSweep` + 呼吸;内容格依次弹出(0.38s OutBack,间隔 0.12s);头图闪星 / 格子背光用 `UIAmbientPulse`(alpha 闪烁要同节点有 `CanvasGroup`)。挂了 `Core.UI.PressScale` 的节点不要再做缩放动效,它每帧回拉 localScale。
@@ -57,7 +57,7 @@ description: Rework an Extraction UI screen to production quality (成品级 = c
 | 离屏渲染拍进场景物体 | 临时相机 `cullingMask = UI 层`,节点 layer 设 5 |
 | 外部新建的 .cs 永远不进编译(`recompile` 报 up_to_date、MonoScript.GetClass()=null) | 编辑器不在前台时新文件没登记进脚本集合;删掉后用 `unity command script create -- --name X --path ... --namespace ...` 让 Unity 建,再覆盖内容、recompile |
 | 倒计时 / 角标压脸 | 放插画空景一侧(右上);跑遮挡检查 + 看脸 |
-| 关掉弹窗又弹出来 | 不是 bug:`HomeAttentionDirector` 排队,手动先开的话关闭后它补弹;新手三礼包会依次弹 |
+| 关掉弹窗又弹出来 | 不是 bug:`HomeAttentionDirector` 排队,手动先开的话关闭后它补弹;排队里有几个就会依次弹 |
 
 ## Refine 工单六步(缺省流程,2026-07-07 契约 §8 原文)
 旧屏 UI refine 的缺省框架(CARGO 屏的件以 vault `UI_CARGO/mock/kit_v12.html` 为准,kit 没有的件先补进 kit,见现行口径_UI视觉kit「现行稿和文件在哪」);硬契约全文见 `Claude Feature Docs/UI Visual Design/Visual_Refine_Contract.md`,范式库见同目录 `Pattern_Catalog/`。下面的第〇~五步是这六步在本 skill 里的展开。
@@ -75,7 +75,7 @@ description: Rework an Extraction UI screen to production quality (成品级 = c
 1. 读目标界面的 **runtime 脚本**(serialized 字段 = 你必须保留的 wiring 接口;public API = 调用方依赖)。
 2. 找它的**建造方式**并判轨(规则见 `ui-placement`「真源模型」):**已 prefab 化的屏**直接改 prefab,对应 builder 已退役(菜单带 `(retired)`),禁止重跑;**还没迁的旧屏**由 `Assets/Scripts/Editor/Setup/*Setup.cs` 生成,改 builder + Rebuild 菜单,顺手 prefab 化。两种都不在场景实例上手摆;勾哥手摆过的几何不动。
 3. 若界面在场景里被人手改过,先 dump 场景实例(hierarchy+sprite+color+rect)拿真相,再决定重建。
-4. **顺手抓功能 bug 是本打法的一部分**:视效单里实际修出过「弹窗永远弹在全屏面板后面(sibling z 序)」「全服一人却排 #200(服务端占位估算)」「JSON 反序列化把可选对象变非 null 空壳导致所有卡显示同一图标」。界面难看常常和数据/流程坏掉混在一起,一起修,修完明说。
+4. **顺手抓功能 bug 是本打法的一部分**:界面难看常常和数据/流程坏掉混在一起(z 序、服务端占位数据、反序列化空壳这类,见文末坑表),一起修,修完明说。
 
 ## 第一步:配方提取法(本打法的核心,严禁跳过)
 
@@ -93,7 +93,7 @@ description: Rework an Extraction UI screen to production quality (成品级 = c
 
 ## 第二步:视觉语言(从 kit 提炼的做法,结果以参考资料第 9 节为准)
 
-- **状态即 tint**:同一张白 sprite,状态只换颜色。日历卡:已领 `#A8BBD1` 灰蓝+绿勾+内容降透明、当前 `#24E715` 绿、未来 `#0787FF` 蓝。Pass 双列:免费蓝/付费金 `#FFD233`。
+- **状态即 tint**:同一张白 sprite,状态只换颜色(已领 / 当前 / 未来、免费 / 付费这类),色值从 kit demo 的 dump 里抄,不自己调。
 - **层叠配方(z 序=创建顺序)**:`Bg(tint, sliced, inset≈2-4)` → 内容层(`Light`高光 / `Gradient` / `Pattern` tiled α≈0.05-0.25 底纹) → `Border`(黑描边, sliced, 全尺寸) → `Glow`(图标后光斑) → 图标 → 文字。逐层都来自 kit 同名 sprite 家族。这是 kit demo 的满配;按参考资料 9.1,结果上不能读出双层边、内倒角高光和粗黑描边,层数够把内容托起来就停,用不上的层不加。
 - **复用既有家族保持全游戏一致**:ticket 弹窗家族(`Popup_Ticket_Bg/Gradient/Border/BottomPattern`+撕票线)、卡片 `CardFrame04_*`、奖励格 `ItemFrame00~03_*`、气泡格 `BubbleFrame05_*`、ribbon `Title_Ribbon01/02_*`。新界面先问"哪个家族最近",别每次发明新皮。
 - **字体与字色(2026-10-12 勾哥定稿,优先于下面的旧口径)**:除主页 START 外所有 UI 文字用 Saira(`Assets/Fonts/Saira/`;标题 SairaCondensed-Black、按钮/导航/数字/标签 SairaCondensed-ExtraBold、正文 Saira-Bold、小字 Saira-SemiBold,字号放大到字高不小于原字体);字色按底色定——纯色底只换字色(浅底同色系深色字、深底白字)→ 按钮白字或同色系深字二选一 → 压插画用轻投影,还读不清就改字下面的底(遮罩、渐变);界面文字任何情况下都不描边(11-18),3D 画面上的飘字可带细描边或投影(11-20);对比度小字 ≥4.5、大字 ≥3,交付前自己量。规则全文见工程 CLAUDE.md UI 字体铁规第 2、5 条和 vault ER美术规范 "文字要读得清" 一条;还没迁 Saira 的旧屏沿用下面的旧口径。

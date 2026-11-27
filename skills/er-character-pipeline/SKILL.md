@@ -5,7 +5,7 @@ description: ER(Extraction Raider)角色从定稿设计图到游戏里能跑能�
 
 # ER 角色模型管线(设计图 → Tripo → 绑骨 → 表情 → Unity → 实机)
 
-Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成功做法和踩过的坑的固化。照着走,每个阶段有入口条件、要跑的命令、能判定成败的门、常见失败和修法。细节在 `references/`,脚本在 `scripts/`,prompt 模板在 `templates/`。
+Wren 第一次把整条路走通,这个 skill 是那套成功做法加之后各角色踩过的坑。照着走,每个阶段有入口条件、要跑的命令、能判定成败的门、常见失败和修法。细节在 `references/`,脚本在 `scripts/`,prompt 模板在 `templates/`。
 
 ## 先做这三件事
 1. 读 `references/00-首次接手与输入.md`,把 checklist 过一遍(真源、环境、权限、落点、Unity 有没有人在 Play)。
@@ -13,8 +13,8 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 3. 读 `references/pitfalls.md` 的坑表(编到 #150,和 SKILL.md 冲突时以 SKILL.md 为准),知道哪些地方会出事。
 
 ## 总纪律
-- **先回看 Wren 再动手(10-24 勾哥定,强制)**:Wren 是目前做得最好的角色。每个阶段、每个子步骤动手之前,必须先翻 Wren 当时这一步是怎么做的——`references/0X` 对应章节、`templates/char_config.example.json`(Wren 真值)、`scripts/` 里对应脚本的 docstring、`references/REVIEW.md` 和 pitfalls 里标 Wren 的条目,以及 Wren 的真实产物——然后严格照 Wren 的做法、Wren 的脚本、Wren 的门来做。不许先按自己的想法发明一条新路再回头对;只有 Wren 的做法在当前角色上**实测**走不通(跑过、有证据),才允许偏离,偏离时在交接文件里写"Wren 做法 / 为什么不通 / 改成什么",并补进 pitfalls。Rook2 两天里 avatar、脸图集、贴图清理各发明过一轮新路,都走了弯路,这条就是为此立的。
-- **头小的角色:整身高面数生成 + 保脸减面,不分头(10-26 Coda 验证)**:`sheet.head_ratio` ≤ 0.17(约 6 头身及以上)的角色,整身 6 万面生成头只分到 3~6 千面,脸前部几百面,这是 Wren 之后人物精度掉下来的根因;以前的解法是分头换头,而 Rook2/Vesper2/Harrow/Coda 的领口碎片、脸岛、耳洞、颈断口、长发融壳、鸟嘴下巴大多出在换头这一步。现在的做法:阶段 3 **整身一次生成 200,000 面**(H3.1、Ultra、贴图关、Triangle,其余照 03 章),上贴图后用 `scripts/blender/protect_decimate.py` 焊 UV 缝 → 圈脸前部+双手锁定 → 身体 meshoptimizer、头 collapse,合计减到 58,000 → 投原模法线。Coda 实测(导出文件回读):194,895 → 58,000,头 11,213 面(6 万直出版 6,205)、脸前部 2,470(直出版 782,Wren 1,710),脸特写对 20 万原模 SSIM 0.9745,没有拼缝。**减面算法(10-26 第三轮定案)**:身体用 meshoptimizer `simplifyWithAttributes`(只保留原顶点、按法线和 UV 误差挑,硬边和衣服结构线不被揉软),头用 Blender collapse(会重新摆顶点,卷发、下颌、耳朵这类圆形不出锯齿),脸前部和手(半径 0.45 头高)锁定不减。对比 Coda 20 万原模:上身白模 SSIM 0.884→0.938、下身 0.912→0.943、脸 0.9745,马甲包边、扣环、袋盖边和原模一样利落,不比 6 万直出软;旧做法(纯 collapse)留下的衬衫斑驳和背面扣环拖影消失。试过不行的:按折痕加保护权重(collapse 把预算从平面抽走,出星状长条三角,全部变差);纯 meshoptimizer(头发轮廓和下颌变锯齿,脸 0.928)。65k 面能再好一点(上身 0.949),不是必需。meshoptimizer 1.3.0 简化器已放在 `scripts/blender/vendor/`,要 node,不用 npm 安装;`--method collapse` 保留旧做法。头部预算占比 `--head-share 0.193` 只在 Coda 上标定过,双马尾、长发角色用前先看头部三角数是否合理。**只验证到模型阶段**:绑骨、换脸、Unity 入库还没在这条路线上跑过,跑到哪步出问题照"先回看 Wren"的规矩补。剩下和 Wren 的差距在贴图(Tripo 把明暗斑烘进了脸部皮肤),靠阶段 4 的 tex_clean 和阶段 7 的脸图集解决,不是几何问题。head_ratio ≥ 0.20 的角色(Wren)照旧 6 万面单体直出。分头换头降为备选,只在整身路线实测走不通时用,用前读 05 的 assemble 段和坑 93/94/110/111/119/127。
+- **先回看 Wren 再动手(10-24 勾哥定,强制)**:Wren 是目前做得最好的角色。每个阶段、每个子步骤动手之前,必须先翻 Wren 当时这一步是怎么做的——`references/0X` 对应章节、`templates/char_config.example.json`(Wren 真值)、`scripts/` 里对应脚本的 docstring、`references/REVIEW.md` 和 pitfalls 里标 Wren 的条目,以及 Wren 的真实产物——然后照 Wren 的做法、Wren 的脚本、Wren 的门来做。不要先按自己的想法发明一条新路再回头对(Rook2 在 avatar、脸图集、贴图清理上各另起过一轮新路,都走了弯路);Wren 的做法在当前角色上**实测**走不通(跑过、有证据)才偏离,偏离时在交接文件里写"Wren 做法 / 为什么不通 / 改成什么",并补进 pitfalls。
+- **头小的角色:整身高面数生成 + 保脸减面,不分头(10-26 Coda 验证)**:`sheet.head_ratio` ≤ 0.17(约 6 头身及以上)的角色,整身 6 万面生成头只分到 3~6 千面,脸前部几百面,这是 Wren 之后人物精度掉下来的根因;以前的解法是分头换头,而 Rook2/Vesper2/Harrow/Coda 的领口碎片、脸岛、耳洞、颈断口、长发融壳、鸟嘴下巴大多出在换头这一步。现在的做法:阶段 3 **整身一次生成 200,000 面**(H3.1、Ultra、贴图关、Triangle,其余照 03 章),上贴图后用 `scripts/blender/protect_decimate.py` 焊 UV 缝 → 圈脸前部+双手锁定 → 身体 meshoptimizer、头 collapse,合计减到 58,000 → 投原模法线(Coda 实测数字见坑 116:头面数约翻倍、脸特写对原模 SSIM 0.9745、无拼缝)。**减面算法**:身体用 meshoptimizer `simplifyWithAttributes`(只保留原顶点、按法线和 UV 误差挑,硬边和衣服结构线不被揉软),头用 Blender collapse(会重新摆顶点,卷发、下颌、耳朵这类圆形不出锯齿),脸前部和手(半径 0.45 头高)锁定不减。试过更差的:按折痕加保护权重(collapse 把预算从平面抽走,出星状长条三角);纯 meshoptimizer(头发轮廓和下颌变锯齿);纯 collapse(衬衫斑驳、背面扣环拖影)。65k 面能再好一点,不是必需。meshoptimizer 1.3.0 简化器已放在 `scripts/blender/vendor/`,要 node,不用 npm 安装;`--method collapse` 保留旧做法。头部预算占比 `--head-share 0.193` 只在 Coda 上标定过,双马尾、长发角色用前先看头部三角数是否合理。**只验证到模型阶段**:绑骨、换脸、Unity 入库还没在这条路线上跑过,跑到哪步出问题照"先回看 Wren"的规矩补。剩下和 Wren 的差距在贴图(Tripo 把明暗斑烘进了脸部皮肤),靠阶段 4 的 tex_clean 和阶段 7 的脸图集解决,不是几何问题。head_ratio ≥ 0.20 的角色(Wren)照旧 6 万面单体直出。分头换头降为备选,只在整身路线实测走不通时用,用前读 05 的 assemble 段和坑 93/94/110/111/119/127。
 - **长发角色万一要分头,身体必须用去长发的四视图生成(10-25 Vesper 定)**:整身生成的长发会和上背/臀部做成一体壳,背面没有独立表面,换头后删发=洞,压平/成膜/切平五轮都救不回;正确做法是 sol edit 把定稿四视图的长发剪成下颌长度短 bob(背面补衬衫/背心)再出结构参考重生成身体(Tripo 约 1 小时),头单独生成后换头只做领口切平+脖子收进+材质合一(坑 119/120)。
 - **四视图头身比用 mock 法,不靠 sol 多轮(10-24 Vesper 定)**:sol 文生图默认立绘 8 头身,edit 改头身比每轮只给目标差的 1/3(0.108→0.124→0.131),写百分比或写目标数字都一样;正确做法=选一张 → PIL 以领口顶为轴把身体缩小到目标头身比做 mock(头不动)→ sol edit 只融合领口处接缝,一轮到位。侧/背视图同样:以领口顶(背面以肩甲/肩线)对齐 front 做 mock 再融缝;**侧背视图禁喂立绘比例的转面图**当图 3(会把头做小 30%)。量头高用 `character-art-lab/tools/vesper_cur_headmeasure.py`,不用肤色宽度门槛。
 - **皮肤按部件换,底模冻结(10-26 Coda 验证)**:Tripo 每次整身重生成脸都会变,而且按总高归一化身体会缩放,所以皮肤不能整身重生成。每个英雄冻结一个底模(定稿脸 + 打底衣 + 寸头,头皮完整),新皮肤的发型/帽子/上衣/下装/鞋各自从新的整身生成里拆出来、相似变换对齐、适配到底模上。新英雄一开始就把寸头底模当定稿做;老英雄用 `head_shave.py` 剃头,脸一个顶点不动。全套做法、Coda 实测数字和没实测的部分见 `references/10-部件换装.md`。
@@ -32,9 +32,9 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 | 阶段 | 做什么 | 关键命令 | 出口门(全过才往下) | 细节 |
 |---|---|---|---|---|
 | 0 输入与核对 | 读真源、建配置、环境/权限/落点、查枪型和控制器现状 | — | 配置已填;环境自检过;落点已问;无人 Play | 00 |
-| 1 建模四视图 | A-pose 平光厚涂四视图,头身比按各角色手册定(Rook 模型 5.5,Vesper、Harrow 6.5 等),识别件照原样 | `build_prompts.py fourview/edit/faceround` → `sol_image.sh` → `sheet_check.py` → `sheet_finalize.py` | `sheet_check --final` ALL PASS;头身比刻度图落在配置的 `head_ratio`;识别件逐视图表全对;脸型门(front+侧脸) | 01 |
+| 1 建模四视图 | A-pose 平光厚涂四视图,头身比按该角色手册定,识别件照原样 | `build_prompts.py fourview/edit/faceround` → `sol_image.sh` → `sheet_check.py` → `sheet_finalize.py` | `sheet_check --final` ALL PASS;头身比刻度图落在配置的 `head_ratio`;识别件逐视图表全对;脸型门(front+侧脸) | 01 |
 | 2 结构参考 | 把定稿四视图重画成柔和体积光的结构图(只给 Tripo 建形状) | `build_prompts.py struct` → sol → `silhouette_iou.py` | 四张 IOU ≥ 0.93;脸部结构看图门;存进 vault | 02 |
-| 3 Tripo 白模 | 浏览器验身;Multi-view,H3.1,Ultra 开,贴图关,6 万面,30 点 | 网页(见 03);`inspect_model.py` | 下载文件验过;进 5.1 | 03 |
+| 3 Tripo 白模 | 浏览器验身;Multi-view,H3.1,Ultra 开,贴图关,6 万面(头小的角色 20 万面,见总纪律),30 点 | 网页(见 03);`inspect_model.py` | 下载文件验过;进 5.1 | 03 |
 | 4 Tripo 贴图 | 贴图页换上平光厚涂四张,Remove Lighting 关,4K,20 点 | 网页;`inspect_model.py` | 进 5.2 | 03 |
 | 5 模型验收 | 灰模看脸和剪影;纯贴图看笔触、镜像、手臂底面 | `clay_face.py`、`render_views.py --mode clay/unlit`、`compare_board.py` | 形状门 + 贴图门(04 列的每条) | 04 |
 | 6 绑骨 | Tripo Humanoid/Mixamo 绑骨(20 点)+ 预设动作(免费);rig GLB 上清脏贴图;修骨、加次级链、形变测试 | `tex_extract.py` → `tex_clean.py` → `rig_build.py` → `rig_audit.py` → `deform_sheet.py` | `RIG_AUDIT PASS`(含接缝门 seam_jump_edges ≤ 0.3%、seam_coloc_split = 0);`gate_body_p99_all_pass`;主会话看 deform_crops 九个姿势 | 03、04、05 |
@@ -84,7 +84,7 @@ Wren(2026-10-07)第一次把整条路走通,这个 skill 是那一天所有成�
 | `unity/ingame_check.sh` | 实机流程跑一遍并截图,trap 保证 stop |
 | `unity/eval/*.cs` | import_setup、enforce_tpose、avatar_check、materials_setup、prefab_build、hero_swap、weapon_mount、fix_animator_node、render_views、anim_state、hero_swap_keepall(换主角用这个)、film_strip(真实动画胶片条) |
 
-`templates/`:`char_config.example.json`(Wren 真值)、`fourview/`(spec 骨架、英文主体、视图块、Wren 角色块示例、修图、圆脸、结构参考)、`face/expression_common.txt`、`sol/`(派给 sol 的绑骨/换脸任务书)、`unity/`(CharacterEnforceTPose.cs、CharacterFaceController.cs,要拷进工程的通用版)。
+`templates/`:`char_config.example.json`(Wren 真值,当填法示例;里面的设定文字以 Wren 角色手册为准)、`fourview/`(spec 骨架、英文主体、视图块、Wren 角色块写法示例、修图、圆脸、结构参考)、`face/expression_common.txt`、`sol/`(派给 sol 的绑骨/换脸任务书)、`unity/`(CharacterEnforceTPose.cs、CharacterFaceController.cs,要拷进工程的通用版)。
 
 ## 什么时候停下来问勾哥
 识别件形状有两种读法;同一件东西出了两种可行画法;头身比、体态(驼背、宽体)在建模图里保留多少;角色落点(换主角/可选角色/NPC);要不要提交 Hero.prefab、manifest、新的 .cs;单次操作点数明显异常(> 150 点);任何要改共享系统(枪、动画控制器、血条)的事。

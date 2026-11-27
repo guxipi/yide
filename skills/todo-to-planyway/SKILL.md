@@ -9,7 +9,7 @@ Planyway 没有公开 API，它只是 Jira 数据的视图。**加 todo = 建 Ji
 
 ## 两种用法
 - **模式 A — 批量导入 todo**：把清单/inbox 一次性建成 issue，状态留默认 To Do，进 Planyway 左侧 Unscheduled 让用户排期。见下方「模式 A」。
-- **模式 B — 单条「已完成」上传**：完成一个推进 ER 的小功能 / 修完 bug 后直接上传(2026-07-10 起默认发、不问)，建**一条** issue、自动挑 Epic、直接 transition 到「已完成」。见下方「模式 B」。
+- **模式 B — 单条「已完成」上传**：完成一个推进 ER 的小功能 / 修完 bug 后直接上传(默认发、不问)，建**一条** issue、自动挑 Epic、直接 transition 到「已完成」。见下方「模式 B」。
 - 前置条件、查元数据（issue type id）、ADF 描述、踩坑记录两种模式**共用**。
 
 ## 必填字段（两模式共用，建完必补齐再收尾）
@@ -20,11 +20,11 @@ Planyway 没有公开 API，它只是 Jira 数据的视图。**加 todo = 建 Ji
   - 拿不准在哪台机 → 读**本机 Claude 记忆**里的 planyway 上传约定（per-machine memory，如 `planyway-upload-fields-this-machine`）；没有则默认勾哥。account/盘符按机器私有，别把某台机的 accountId 当全局默认。
   - 写法：`createJiraIssue` 用 `assignee_account_id`；`editJiraIssue`/`transitionJiraIssue` 用 `fields:{assignee:{accountId:'…'}}`。
 - **Label** = **类型 + 模块各一个**：类型 ∈ bug/feature/polish/tool；模块 ∈ hud/combat/loot/meta/server… 按内容自拟。Jira label 不能带空格。
-- **Parent** = 贴最合适的 Epic（读现有 Epic 自动判断；关卡内/核心战斗循环 → `KAN-69 🎮 core loop`；贴不上才留空）。
+- **Parent** = 贴最合适的 Epic（每次读现有 Epic 自动判断；贴不上才留空）。
 - **Due date**（`fields.duedate` = `YYYY-MM-DD`）：模式 B 已完成的填**上传当天**；模式 A 待排期的可留空（进 Planyway 左侧 Unscheduled 由用户排）。
 
 ## 通道 —— 按优先级，能用上面那条就别用下面（缺了别硬上）
-1. **通道①·官方 Atlassian Rovo MCP（首选）** —— `mcp__claude_ai_Atlassian_Rovo__*` 工具**直读直写 duckgames Jira，不需要浏览器 / Chrome MCP / API token**。先 `getAccessibleAtlassianResources` 拿 duckgames 的 `cloudId`（当前 `5c8b1014-3b9a-4b07-a050-0f9b3980a628`，每次以查到的为准；KAN project id `10000`，team-managed），之后所有 Jira 操作都带这个 cloudId。建卡 / 查 / transition 的工具映射见下方「通道① 操作映射」。**模式 A/B 的逻辑步骤（整理 → 预览 → 建 → 验证）一字不变，只是把 `fetch(...)` 换成对应 MCP 工具。**
+1. **通道①·官方 Atlassian Rovo MCP（首选）** —— `mcp__claude_ai_Atlassian_Rovo__*` 工具**直读直写 duckgames Jira，不需要浏览器 / Chrome MCP / API token**。先 `getAccessibleAtlassianResources` 拿 duckgames 的 `cloudId`（每次以查到的为准；KAN 是 team-managed 项目），之后所有 Jira 操作都带这个 cloudId。建卡 / 查 / transition 的工具映射见下方「通道① 操作映射」。**模式 A/B 的逻辑步骤（整理 → 预览 → 建 → 验证）一字不变，只是把 `fetch(...)` 换成对应 MCP 工具。**
 2. **通道②·Chrome MCP（退路）** —— 仅当有 Chrome MCP 且有标签页**已登录 `duckgames.atlassian.net`** 时用。所有 Jira REST 靠该标签页 session cookie（`credentials:'same-origin'`），不需要 API token。即模式 A/B 正文里的 `fetch(...)` 写法。
 3. **两条都没有** —— 不要假装能建 issue。退路二选一告诉用户：把清单导出成 Jira CSV importer 能吃的 CSV（summary 必填列）手动一次导入；或把模式 A 第 3–4 步的 JS 交给用户自己粘到浏览器 DevTools 控制台跑（控制台支持顶层 await，可去掉 `.then()` 链）。
 
@@ -45,12 +45,12 @@ Planyway 没有公开 API，它只是 Jira 数据的视图。**加 todo = 建 Ji
 
 ## 输入来源（两种）
 - **A. 用户直接贴清单** —— 任意格式文本。
-- **B. 从 yide Telegram inbox 拉** —— Drive 侧 `yide-inbox` 文件夹里的 `telegram-YYYY-MM.md`（路径在指针文件 `~/.yide-inbox-location`，kryst 机是 `H:\My Drive\yide-inbox`；已被 `翼德 笔记 整理` 搬进大脑的在 `<大脑>/notes/inbox/`；这是手机 Telegram bot 落点）。**靠显式标记筛，不靠猜**：勾哥在 Telegram 写笔记时会带「**planyway**」字样（如"重构 Clan，上传 planyway"/"发 planyway"/"#planyway"）。规则：**条目正文含 `planyway`（不分大小写）= 要上传**，其余一律跳过。匹配到的条目把 `planyway` 标记词从标题里剥掉再建 issue。推送成功后，把处理过的条目移到 `notes/inbox/_done/`（保留原时间戳头），避免下次重复导入。
+- **B. 从 yide Telegram inbox 拉** —— Drive 侧 `yide-inbox` 文件夹里的 `telegram-YYYY-MM.md`（路径在指针文件 `~/.yide-inbox-location`；已被 `翼德 笔记 整理` 搬进大脑的在 `<大脑>/notes/inbox/`；这是手机 Telegram bot 落点）。**靠显式标记筛，不靠猜**：勾哥在 Telegram 写笔记时会带「**planyway**」字样（如"重构 Clan，上传 planyway"/"发 planyway"/"#planyway"）。规则：**条目正文含 `planyway`（不分大小写）= 要上传**，其余一律跳过。匹配到的条目把 `planyway` 标记词从标题里剥掉再建 issue。推送成功后，把处理过的条目移到 `notes/inbox/_done/`（保留原时间戳头），避免下次重复导入。
 
 ## 模式 A — 批量导入 todo（严格按序）
 
 ### 1. 整理清单 → 贴出预览 → 直接建
-把原始 dump 整理成「**Epic 分组 + issue 标题 + 描述**」的 markdown 表格贴给勾哥看,然后直接建(2026-07-10 起默认发、不等点头;他事后要改再改)。矛盾项标注在描述里，不擅自取舍。整理结果存档到项目（如 `QA/` 或 feature doc 下），方便对账。
+把原始 dump 整理成「**Epic 分组 + issue 标题 + 描述**」的 markdown 表格贴给勾哥看,然后直接建(默认发、不等点头;他事后要改再改)。矛盾项标注在描述里，不擅自取舍。整理结果存档到项目（如 `QA/` 或 feature doc 下），方便对账。
 
 ### 2. 查项目元数据（拿 issue type id —— 每次都查，别硬编码）
 在 atlassian.net 标签页执行：
@@ -59,7 +59,7 @@ fetch('/rest/api/3/project/KAN', {headers:{'Accept':'application/json'}, credent
   .then(r=>r.json())
   .then(j=>JSON.stringify({style:j.style, issueTypes:j.issueTypes.map(t=>({id:t.id,name:t.name,hierarchyLevel:t.hierarchyLevel}))}))
 ```
-按 `hierarchyLevel` 认类型，**不要按名字**：`hierarchyLevel===0` = Task，`hierarchyLevel===1` = Epic（中文站叫"长篇故事"）。2026-06-11 KAN 的值是 Task=10001 / Epic=10002，但**每个项目可能不同，必须当场查**。
+按 `hierarchyLevel` 认类型，**不要按名字**：`hierarchyLevel===0` = Task，`hierarchyLevel===1` = Epic（中文站叫"长篇故事"）。下面代码里的 `10001` / `10002` 只是示例值，**用前当场查、换成查到的 id**。
 
 ### 3. 批量建 Epic
 ```js
@@ -105,7 +105,7 @@ Promise.all(['KAN-67','KAN-68'].map(k=>
 
 ## 模式 B — 单条「已完成」上传（完成功能/修完 bug 后）
 
-触发：完成一个推进 ER 的小功能 / 修完一个 bug 后，**直接走本流程，不问**(2026-07-10 勾哥:「以后不用问发不发 planyway,默认发 planyway」)；勾哥也可以主动说「传一下 Planyway」。**口径**：要发 = 玩家可见的功能/内容、修了影响玩家的 bug；改工具/配置/文档/纯重构这类不发（跟战绩 bump 同一口径）。Epic 由翼德读现有结构**自动决定**，**不让勾哥操心**；找不到合适的就**留空不挂**（不擅自新建 Epic）。
+触发：完成一个推进 ER 的小功能 / 修完一个 bug 后，**直接走本流程，不问**(勾哥定的默认发)；勾哥也可以主动说「传一下 Planyway」。**口径**：要发 = 玩家可见的功能/内容、修了影响玩家的 bug；改工具/配置/文档/纯重构这类不发（跟战绩 bump 同一口径）。Epic 由翼德读现有结构**自动决定**，**不让勾哥操心**；找不到合适的就**留空不挂**（不擅自新建 Epic）。
 
 ### B-1. 拟标题 + 描述
 标题 = 这次功能/修复的一句话；描述（可空）= 做了啥 + 关键文件/commit。直接建，不等点头（见上方触发口径）。

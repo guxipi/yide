@@ -8,14 +8,14 @@
 
 ## 怎么做
 
-> **ER 项目先看这三条(2026-11-20 标注):** ① ER 的现行 kit 是 CARGO(vault `013 美术/UI_CARGO/`,现行稿 `mock/kit_v12.html`),下文「数值的绝对标准 = 项目 UI kit 的实物」在 ER 里指它,不指 SuperCasual 的 Preview / demo scene。② ER 的稿要可点击并带按压、出入场、切换动效(勾哥 11-19),图内嵌进 HTML,资源和货币图标用 Unity 里的真图(11-16)。③ ER 的 HTML、源稿、构建脚本写进 vault 对应 feature 目录(勾哥 11-14 / 11-18),不写 `<项目>/QA/`,也不放 scratchpad。④ ER 新做或改版界面的整套流程(页面卡、三路独立评审、二轮盲测、评审页)走 yide skill `ui-screen-redo`,本 action 只提供画法(§1A)和自验证(§3)。
+> **ER 项目先看这几条:** ① ER 的界面视觉以 vault `013 美术/AI记忆/现行口径_UI视觉kit.md` 为准(kit 实物在 `013 美术/UI_CARGO/`),下文「数值的绝对标准 = 项目 UI kit 的实物」在 ER 里指它,不指 SuperCasual 的 Preview / demo scene。② ER 的稿要可点击并带按压、出入场、切换动效,图内嵌进 HTML,资源和货币图标用 Unity 里的真图。③ ER 的 HTML、源稿、构建脚本写进 vault 对应 feature 目录,不写 `<项目>/QA/`,也不放 scratchpad。④ ER 新做或改版界面的整套流程(页面卡、三路独立评审、二轮盲测、评审页)走 yide skill `ui-screen-redo`,本 action 只提供画法(§1A)和自验证(§3)。
 
 ### 0. 先拿到项目的"真值",再动手
 - 读 `~/.yide/projects/<当前项目>.md` 的「🎨 UI/UX 设计预设」(屏幕方向 / **基准分辨率·安全区** / UI 框架 / 美术基调 / 控件约定 / **确认线稿文件夹** / 已确认线稿)+ `unity-context` 技术事实。
 - **数值的绝对标准 = 项目 UI kit 的实物**,不是文档。凡需要定具体数值的地方(组件尺寸 · 间距 · 字号 · 配色 · 圆角 · 描边 · item slot 大小 · 按钮高度…),**仔细对照 kit 的 preview 图 + demo scene,以它们为准**——UI 设计规范文档是从 kit 二手提炼的,**冲突一律以 kit 实物为准**。先去 kit 的 `Preview/` 整屏成品图找最接近的同类屏照抄布局比例,再进 demo scene 量真实 RectTransform 的 px/锚点/间距,组件 sprite 看 `ResourcesData/Sprites/Components/`。(具体 kit 与路径见项目档案预设 / ER 专属 prompt。)
-- **kit 实物的标准不止尺寸,还含布局/信息架构(IA)**:先在 kit `Preview/` 找最接近的同类屏,**照它整体结构来**——谁是凸起的主入口、底部 nav 放哪几个核心、哪些功能进 nav vs 进侧 rail、banner/hero/CTA 各落哪。**别用设计规范文档的清单或自己想当然定 IA**(踩过:底部 nav 抄文档的 tab 列 → 错;kit 实际是主入口中心凸起,而 Social/Quest/Clan/Friends 全走侧 rail 不进底 tab)。
+- **kit 实物的标准不止尺寸,还含布局/信息架构(IA)**:先在 kit `Preview/` 找最接近的同类屏,**照它整体结构来**——谁是凸起的主入口、底部 nav 放哪几个核心、哪些功能进 nav vs 进侧 rail、banner/hero/CTA 各落哪。**别用设计规范文档的清单或自己想当然定 IA**(踩过:照文档的 tab 列排底部 nav,和 kit 实物的入口结构对不上)。
 - **内容来自现游戏,布局/设计来自 kit**:从现有游戏/代码提炼"这屏要展示什么"(内容项、要映射的字段),但**布局与控件外观一律照 kit 复刻,别被现有 prefab/界面的现状带跑**。
-- **UI 设计规范文档**(项目内,如 ER 的 `UI_Visual_Design_Guidelines.md`)只作快速索引(调色板 hex · 字级表 · 间距栅格 · 控件标准尺寸 · 安全区 · 动效参数);取值后**回 kit 实物核一遍**。规范与 kit 都缺的项 → 退手游通用最佳实践(触控热区 ≥48dp、最长文案不溢出、一屏一个主 CTA),并提议补一条进项目档案预设。
+- **UI 设计规范文档**(项目内的那份;ER 用上面的现行口径,旧的 `UI_Visual_Design_Guidelines.md` 已进 `10 - Old Dev Doc`,不再当依据)只作快速索引(调色板 hex · 字级表 · 间距栅格 · 控件标准尺寸 · 安全区 · 动效参数);取值后**回 kit 实物核一遍**。规范与 kit 都缺的项 → 退手游通用最佳实践(触控热区 ≥48dp、最长文案不溢出、一屏一个主 CTA),并提议补一条进项目档案预设。
 - 从勾哥描述提炼:这是什么屏(主菜单 / 战斗 HUD / 背包 / 结算 / 单个 widget…)、有哪些主要元素、最重要的操作是什么。
 - **预设里缺的关键项(尤其屏幕方向、基准分辨率、确认稿文件夹)→ 用 AskUserQuestion 问勾哥一次,写回项目档案**(学一次以后就有)。拿不准别瞎编(红线②)。
 
@@ -29,7 +29,7 @@
 - **画安全区 + 落位分区参考线**:顶 status bar、底 gesture bar、tab bar 的安全区线;叠一层屏幕分区(顶栏 / hero / 内容 / 拇指动作区)。**主 CTA 必须落在底部拇指区**,线稿要证明它在那;关闭/返回钮在安全区内。
 - **每个组件按最终尺寸画**:按钮、item slot、icon、banner、卡片、3D/角色预览框——全部真实尺寸与间距,**间距吸附到项目栅格**(8 的倍数)。**触控热区**视觉可小但 hit rect ≥ 项目标准(无则 48dp),需要时把热区框示意出来。
 - **按钮横排,不竖排**:并排按钮等宽等高等间距。除非是真正的纵向列表(背包行、设置项),否则别竖着堆按钮。
-- **主 CTA 尺寸照 kit 实测,别想当然拉全宽**:踩过——把 PLAY 做成近全宽是错的,kit 的 hero CTA 多是**居中、约半屏宽**(如 Button_Tapered)。一切按 kit 实测值,别凭"主按钮就该满宽"的直觉。
+- **主 CTA 尺寸照 kit 实测,别想当然拉全宽**:一切按 kit 实测值,别凭"主按钮就该满宽"的直觉。
 - **用真调色板上色,杜绝纯灰占位块**:组件用 UI 设计规范真 hex,**一屏一个主 CTA**(主色),次级/三级/destructive 按规范分明,视觉重量看一眼就分得出主次。稀有度/货币用对应真色。
 - **文字用真文案 + 真字级**:禁止 `XXX`/lorem;每段文字套字级表的档;**把"最长态"画进去**(最长名字、0、超大数字按缩写规则如 42.5K/1.2M),证明不溢出不截断。**字体跟项目主字体**;若项目字体不含中文字形(如 CookieRun),所有 label 用英文,别在框内出现会变豆腐的中文。
 - **icon / banner / 3D 都要 placement**:不留白、不省略——用风格到位的占位框按真实比例摆好(它最终是什么,看一眼就懂)。
@@ -39,8 +39,8 @@
 
 > **可选**(勾哥要才加):需要确认交互态时,在手机框下方补一条**状态条**,把关键件各态画一遍(normal/pressed/disabled/空态/极端值)。默认**不加**,保持纯净。
 
-#### 1B. 同步产出 spec sidecar(2026-07-07 起硬规:无 sidecar 的 mockup 不得交付)
-mockup 是"长什么样",sidecar 是"每块干什么/怎么交互/复用什么/套哪条范式"——实施方(`ui-visual-rework` 的 `references/design-match-parity.md`,原 `ui-design-match`)按它落地,parity 流水线按它逐条核销。
+#### 1B. 同步产出 spec sidecar(硬规:无 sidecar 的 mockup 不得交付)
+mockup 是"长什么样",sidecar 是"每块干什么/怎么交互/复用什么/套哪条范式"——实施方(`ui-visual-rework` 的 `references/design-match-parity.md`)按它落地,parity 流水线按它逐条核销。
 - **一 mockup 一 sidecar**:与 HTML **同名** `.md`,同目录(草稿期 `QA/`,确认后随确认稿一起归档到确认线稿文件夹)。
 - **内容 = 逐区域一行**:从框内每个 `yd-region` 的 `data-*` 抽出 —— 区域 → 功能 / 交互路由(点了去哪·目标·反馈·失败态·返回路径)/ 状态清单 / 复用件 / 套哪条 `Pattern_Catalog/` 范式。套不上范式的区域标出来,提示先扩范式库问勾哥。
 - **产出方式**:HTML 写完后遍历 `yd-region` 的 `data-*` 直接生成 sidecar 初稿(可在 §3 自验证时用同一 headless 浏览器 `javascript` 读 DOM 导出);勾哥确认闭环(§5)时连 sidecar 一起勾错。

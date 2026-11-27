@@ -5,7 +5,7 @@ description: Drive the Unity game in Play Mode via Unity CLI (Coplay MCP as fall
 
 # Play Mode Verify & Iterate (Extraction · Unity CLI 主路)
 
-CC 自己进 Play Mode 真测 → 发现问题 → 回来修 → 重测 → **一轮轮迭代到玩家体验满分**的闭环能力。这是头号铁律("改完先自己测到通过再交")的执行手册。蒸馏自一单实战:Base tab 改动跑了 6+ 轮 Play(按钮挤成方块→资源条被挡→raid 执行验证→loc 缺补 21 条→字体 tofu→驱动找不到按钮),每轮真测发现真问题、回来修、再测,直到全绿。
+CC 自己进 Play Mode 真测 → 发现问题 → 回来修 → 重测 → **一轮轮迭代到玩家体验满分**的闭环能力。这是头号铁律("改完先自己测到通过再交")的执行手册。
 
 > 信条:**截图会骗人,state dump 是权威;不是截一张图就算测了,是真点击走完整链路;每发现一个问题就回来修一个,迭代到满分。**
 
@@ -13,13 +13,13 @@ CC 自己进 Play Mode 真测 → 发现问题 → 回来修 → 重测 → **�
 
 ## 第〇步:进 Play 前
 
-> **ER 进 Play 前要知道的两件事(2026-10-31 从翼德开场挪来)**:
+> **ER 进 Play 前要知道的两件事**:
 > - `playModeStartScene` 的真持久层是 EditorPrefs 键 `PlayModeSceneSelector.StartScenePath.<dataPath>`,每次 domain reload 重新套用;pin / 还原都写这个键,还原值 = 开工时实读的原值(在 Boot 和 HomeScreen 之间来回变,从不是 Expedition)。测远征临时 pin `Expedition`。
 > - Enter Play Mode Options 关了 domain reload 和 scene reload,静态量跨 Play 存活;测"第二次进 Play"类 bug 先想到这条。
 
-> **通道**:**Unity 官方 CLI 是主路,Coplay MCP 只兜底**(Coplay 公司 2026-03 被收购并入 Aura,dev MCP 自 2026-02 停更)。Pipeline 包 **0.9.0-exp.1 起命令全部分组命名,旧扁平名直接报错**(`editor_play`→`editor.playmode start`、`eval`→`script eval`、`console`→`console get`…;全表 `unity command --obsolete-command-names`)。多编辑器并存时**每条命令都带 `--project-path <工程路径>`**(包括 playmode、console、eval_file;cwd 不能当依据,不带时可能连到另一台编辑器且照样返回成功),写类操作前先 eval `return UnityEngine.Application.dataPath;` 确认连的是要动的那台;Pipeline 自有参数放 `--` 之后(`script eval` 的 `timeout` 是毫秒,会被 CLI 自己的 `--timeout` 秒吞掉);`--format json` 的输出末尾可能多一行 `<claude-code-hint …/>`,解析前 `grep -v claude-code-hint`。eval 走 Bash 不走 PowerShell,代码写成 `return <expr>;`,eval 里绝不同步等异步(会把编辑器锁死)。
+> **通道**:**Unity 官方 CLI 是主路,Coplay MCP 只兜底**(Coplay dev MCP 已停更)。Pipeline 包 **0.9.0-exp.1 起命令全部分组命名,旧扁平名直接报错**(`editor_play`→`editor.playmode start`、`eval`→`script eval`、`console`→`console get`…;全表 `unity command --obsolete-command-names`)。多编辑器并存时**每条命令都带 `--project-path <工程路径>`**(包括 playmode、console、eval_file;cwd 不能当依据,不带时可能连到另一台编辑器且照样返回成功),写类操作前先 eval `return UnityEngine.Application.dataPath;` 确认连的是要动的那台;Pipeline 自有参数放 `--` 之后(`script eval` 的 `timeout` 是毫秒,会被 CLI 自己的 `--timeout` 秒吞掉);`--format json` 的输出末尾可能多一行 `<claude-code-hint …/>`,解析前 `grep -v claude-code-hint`。eval 走 Bash 不走 PowerShell,代码写成 `return <expr>;`,eval 里绝不同步等异步(会把编辑器锁死)。
 
-**下面这些事 CLI 有明确优势,默认用 CLI**(验证口径 2026-10-23,Pipeline 0.9 / CLI 1.0.0-beta.14):
+**下面这些事 CLI 有明确优势,默认用 CLI**(按 Pipeline 0.9 / CLI 1.0.0-beta.14 验过;版本升级后命令名以 `unity command --query` 为准):
 
 | 要做的事 | Unity CLI 写法 | 为什么必须用它(Coplay 做不到或做不好) |
 |---|---|---|
@@ -69,7 +69,7 @@ unity command $P editor.playmode set_run_in_background -- --enable false
 
 3. **驱动走真实链路,不静态摆拍**。用 `button.onClick.Invoke()` 触发真实点击 → 服务端 → 回调 → 刷新,验证整条链路。涉及一次性状态(签到/首次)用 Debug 重置后重启 Play 验自动路径。
 
-4. **导航/弹窗用项目 API**:切 tab 用 `UITabNavigationManager.SwitchToTab(i)`;关弹窗点弹窗自己的关闭键(别用 `UIPopupsManager.HideAll()`:它不走弹窗栈，之后礼包类弹窗 `UIOfferStyledPopup` 的 ✕ 会一直关不掉，11-20 实测);关自定义面板走面板自己的 `ReturnToIdle()`/`Hide()`,别 `SetActive(false)` 硬关 UIPanel(状态卡死)。
+4. **导航/弹窗用项目 API**:切 tab 用 `UITabNavigationManager.SwitchToTab(i)`;关弹窗点弹窗自己的关闭键(别用 `UIPopupsManager.HideAll()`:它不走弹窗栈，之后礼包类弹窗 `UIOfferStyledPopup` 的 ✕ 会一直关不掉);关自定义面板走面板自己的 `ReturnToIdle()`/`Hide()`,别 `SetActive(false)` 硬关 UIPanel(状态卡死)。
 
 ---
 
@@ -83,7 +83,7 @@ Debug.Log($"YIDE: mode={panel.CurrentMode} alpha={cg.alpha:F2} " +
           $"resultActive={resultGroup.activeSelf} text=\"{tmp.text}\" " +
           $"gold={data.Resources.StoredGold}");
 ```
-实战靠这个确认 raid 闭环:`mode=Raiding, alpha=1.00, ResultText="Stolen: 256 Gold, 80 Metal", gold 1000→1256`——精确入账,功能铁证。截图同时飘到了别的 tab(焦点漂移),但 dump 不骗人。
+判据是副作用的精确数值(如 `gold 1000→1256` 和结果文字对得上);截图哪怕当时飘到了别的 tab,dump 也不骗人。
 
 **截图只用来判视觉质量**:对齐、配色、字体、瑕疵。全分辨率截图缩略图会骗人(暗色误判、细节糊),关键区域 PowerShell 裁原尺寸 Read 检查。两帧间隔 1-2s 对比证明动画在动。
 
@@ -118,11 +118,11 @@ Debug.Log($"YIDE: mode={panel.CurrentMode} alpha={cg.alpha:F2} " +
 | 界面显示原始 loc key 字符串 | StringTable 缺 key;builder 里 `SharedData.AddKey + enTable.AddEntry` 补,重跑 builder |
 | 驱动脚本点不到按钮 | 重命名过的按钮(如 RaidButton→RaidExecuteButton);驱动按真实节点名找;`execute_script` 每次现编译会拾取改名 |
 | 停 Play 后 builder 报 not found | 切回了 Boot 场景;先 `open_scene HomeScreen` |
-| 面板按预设条件不弹 | 可能是设计门槛(如 Core 面板要先有 CoreVault);先确认是不是 by-design 再当 bug |
+| 面板按预设条件不弹 | 可能是设计门槛;先查设计文档和代码里的解锁条件,确认不是 by-design 再当 bug |
 | 切 tab/MoveTo NRE | 场景对象在 Awake 前被外部调;lazy-resolve 缓存字段(别在 Awake 才初始化) |
-| 上回合 spawn 的预览物/对象突然 `Find` 不到 | 编辑器是勾哥活地盘,active scene 被他中途切走(实测 UIDesign_Gameplay→GameScene→Boot);跨回合先 `list_game_objects_in_hierarchy`/确认 active scene,找不到就重 spawn;临时物 `__` 前缀、尽量"实例化→操作→销毁"一次脚本内闭环 |
+| 上回合 spawn 的预览物/对象突然 `Find` 不到 | 编辑器是勾哥活地盘,active scene 可能被他中途切走;跨回合先 `list_game_objects_in_hierarchy`/确认 active scene,找不到就重 spawn;临时物 `__` 前缀、尽量"实例化→操作→销毁"一次脚本内闭环 |
 | `execute_script` 突然报编译错 | 多半是勾哥 IDE 里 WIP 代码编译不过——**先看报错文件,来自他的活就不碰、只汇报**;验证降级为直接读资产 YAML(.anim 曲线 / .controller 的 `m_Motion` / .meta `externalObjects`),资产层证据同样硬 |
-| Coplay 通道全超时:`get_unity_editor_state` 秒回,但 `execute_script`/`stop_game`/`get_unity_logs` 全 60s 超时,Unity 窗口仍 responding、CPU 三核满转 | **不是编译死锁,是每帧日志风暴**(实例:玩家旁金币 + PlayerData service 缺失,CoinPickup 每帧刷警告+提栈)。鉴别:绕开 MCP 直接 tail `%LOCALAPPDATA%\Unity\Editor\Editor.log`。**卡住时 `stop_game` 只发一次然后等**——超时期间发的会排队迟到生效,连发几发会莫名掐断后续几次 Play。预防:playtest 驱动 warp 后顺手 Destroy 玩家周围 `PickupBase`(2026-08-23)|
+| Coplay 通道全超时:`get_unity_editor_state` 秒回,但 `execute_script`/`stop_game`/`get_unity_logs` 全 60s 超时,Unity 窗口仍 responding、CPU 三核满转 | **不是编译死锁,是每帧日志风暴**(实例:玩家旁金币 + PlayerData service 缺失,CoinPickup 每帧刷警告+提栈)。鉴别:绕开 MCP 直接 tail `%LOCALAPPDATA%\Unity\Editor\Editor.log`。**卡住时 `stop_game` 只发一次然后等**——超时期间发的会排队迟到生效,连发几发会莫名掐断后续几次 Play。预防:playtest 驱动 warp 后顺手 Destroy 玩家周围 `PickupBase` |
 | `save_scene("Name")` 存出 `Assets/Name.unity` 垃圾文件、真场景没动 | 它把 `scene_name` 当相对 Assets 路径;改用 `EditorSceneManager.SaveScene(scene)`(无 path,写回 `scene.path` 原路径),流程 `OpenScene(canonicalPath,Single)`→改→`MarkSceneDirty`→`SaveScene`;改完 `Grep` 真 YAML 核实落地,**别只信工具返回串** |
 | 截出来是横屏 / 尺寸不对 | 脚本切过 Game 视图尺寸;切完回读 `Screen.width/height` 是竖屏再拍,下标只取当前尺寸组,收工留在 1080×2340 |
 

@@ -62,7 +62,7 @@
 - 唯一被许可的"轮询" = 基于单一真值的自愈门(如按 `Time.timeScale` 决定按钮是否可点)——刻意为之,别拿去做通用状态同步。
 
 ## 8. Juice = 美术,不是生成代码
-gradient / metallic / glow 来自套件的 9-slice 精灵(uGUI 没原生 box-shadow / gradient)。你管:layout、层级、state swap(normal/pressed/disabled)、`DOTween` 动效。效果精灵从项目套件里拿,别想"用代码画出光泽"。
+gradient / metallic / glow 默认来自套件的 9-slice 精灵(uGUI 没原生 box-shadow / gradient)。你管:layout、层级、state swap(normal/pressed/disabled)、`DOTween` 动效。效果默认从项目套件里拿;想用 shader 或代码出效果可以试,按实拍并排判。
 
 ## 9. 视效重做到"成品级"(指针)
 > 项目挂了 `ui-visual-rework` skill(如 Extraction)→ **以它为准**,本节不重复(双源必漂移)。未挂 skill 的项目用下面 5 行通用要点兜底:

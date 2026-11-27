@@ -1,15 +1,15 @@
 ---
 name: er-icon-gen
-description: ER(Extraction)出 icon 的规矩和 gemini 备用管线。2026-11-21 起勾哥定「用 codex 生成，减少使用 gemini」:icon 默认走 codex,本 skill 的 gemini 工具箱 CLI(er_icon_cli.py)只在 codex 做不了时用;第 1、4、5 节(攒批、给勾哥点选、入 Unity)两条路都适用。gemini 管线:攒批调本机 gemini 生图工具箱的无头 CLI,一张网格出 9~12 件、程序抠框切图、自动 QA、对照板在 Claude 窗口给勾哥点选,再入 Unity。Trigger on "出 icon" / "做图标" / "生成图标" / "画个图标" / "缺图标" / "这个物品没图" / "icon 攒一批" / "出图" / 物品、资源、货币、道具、弹药、奖励的 2D icon 需求。不管 3D 模型(gaoguang-3d)、KV/宣传图、UI 黑白 glyph。
+description: ER(Extraction)出 icon 的规矩和 gemini 备用管线。勾哥定「用 codex 生成，减少使用 gemini」:icon 默认走 codex,本 skill 的 gemini 工具箱 CLI(er_icon_cli.py)只在 codex 做不了时用;第 1、4、5 节(攒批、给勾哥点选、入 Unity)两条路都适用。gemini 管线:攒批调本机 gemini 生图工具箱的无头 CLI,一张网格出 9~12 件、程序抠框切图、自动 QA、对照板在 Claude 窗口给勾哥点选,再入 Unity。Trigger on "出 icon" / "做图标" / "生成图标" / "画个图标" / "缺图标" / "这个物品没图" / "icon 攒一批" / "出图" / 物品、资源、货币、道具、弹药、奖励的 2D icon 需求。不管 3D 模型(gaoguang-3d)、KV/宣传图、UI 黑白 glyph。
 ---
 
 # ER icon 生成(默认 codex;gemini 工具箱 CLI 备用)
 
-**默认通道(11-21 勾哥「用 codex 生成，减少使用 gemini」):** 物品 / 资源 / 货币 / 装扮 icon 默认走 codex 出图(管线照 `er-shop-mkt` 的 codex 出图做法;功能图标和头像 11-19 / 11-20 起本来就走 codex)。本 skill 的 gemini 工具箱只在 codex 明显做不了、或要接已在 gemini 管线里批过的成套母版续批时才用，用之前在汇报 / 派单里写明理由。下面的攒批规矩(第 1 节描述写法、只收勾哥原话要的)、给勾哥点选(第 4 节)、入 Unity(第 5 节)两条路都照用;已有同套成品可直接派生的(比如衣柜的 track 概念图)先派生，不花钱。vault 记忆:`013 美术/AI记忆/feedback-use-codex-less-gemini-20261121.md`。
+**默认通道(勾哥「用 codex 生成，减少使用 gemini」):** 物品 / 资源 / 货币 / 装扮 / 功能图标和头像默认走 codex 出图(管线照 `er-shop-mkt` 的 codex 出图做法;工具分工真源是 vault `013 美术/AI记忆/现行口径_参考与工具分工.md`)。本 skill 的 gemini 工具箱只在 codex 明显做不了、或要接已在 gemini 管线里批过的成套母版续批时才用，用之前在汇报 / 派单里写明理由。下面的攒批规矩(第 1 节描述写法、只收勾哥原话要的)、给勾哥点选(第 4 节)、入 Unity(第 5 节)两条路都照用;已有同套成品可直接派生的先派生，不花钱。
 
-画风标准(两条路都一样):以仓库物品图标为准,母版是 vault `01 - 星际拓荒重构/011_基地星/art/基地星icon_v4_style_reference.png`,默认参考就用它(勾哥 10-26 定 v4 样张)。可读性标准也是勾哥原话:"过于复杂了,放在手机屏幕上会花"——单一粗轮廓主体、少零件、不要细纹/网格/电路线。
+画风标准(两条路都一样):以仓库物品图标为准,母版是 vault `01 - 星际拓荒重构/011_基地星/art/基地星icon_v4_style_reference.png`,默认参考就用它(勾哥定的 v4 样张)。可读性标准也是勾哥原话:"过于复杂了,放在手机屏幕上会花"——单一粗轮廓主体、少零件、不要细纹/网格/电路线。
 
-工具箱是私有仓 `guxipi/er-imagegen`(10-29 起入 git,kryst、duck center、patri 三台机都装了)。目录 = 环境变量 `ER_IMAGEGEN_DIR`(Claude 进程比 `setx` 先启动时 bash 里读不到这个变量,下面的取值写法会从注册表补读;patri 机在 `C:/AI/Claude/ER`),没设就是 `F:/AI/Claude/ER`;下文命令里的 `$T` 都指它,Bash 状态不跨调用,每条命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。CLI 是 `$T/er_icon_cli.py`,同目录 `HANDOFF_生图工具箱.md` §0.0 记着每条设计的实测依据。开工先 `git -C "$T" pull --ff-only`;目录不存在就按第 0 节装。所有命令用 `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" ...`(Bash,不走 PowerShell 管道喂中文)。
+工具箱是私有仓 `guxipi/er-imagegen`。目录 = 环境变量 `ER_IMAGEGEN_DIR`(Claude 进程比 `setx` 先启动时 bash 里读不到这个变量,下面的取值写法会从注册表补读;各机装的位置不同,以这个变量为准),没设就是 `F:/AI/Claude/ER`;下文命令里的 `$T` 都指它,Bash 状态不跨调用,每条命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。CLI 是 `$T/er_icon_cli.py`,同目录 `HANDOFF_生图工具箱.md` §0.0 记着每条设计的实测依据。开工先 `git -C "$T" pull --ff-only`;目录不存在就按第 0 节装。所有命令用 `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" ...`(Bash,不走 PowerShell 管道喂中文)。
 
 ## 0. 新机器装一次
 
@@ -19,14 +19,14 @@ description: ER(Extraction)出 icon 的规矩和 gemini 备用管线。2026-11-2
 4. 自检路径:`cd "$T" && PYTHONUTF8=1 py -3 -c "import er_icon_cli as c;print(c.VAULT, c.UNITY_PROJECT)"`。CLI 先认环境变量 `ER_VAULT` / `ER_UNITY_PROJECT`,没设就扫 C~Z 盘找 `<盘>:\My Drive\Obsidian\ExtractionRaider` 和 `<盘>:\GitManagedUnityProjects\Extraction`;打出 None 就让勾哥 setx 对应变量。v4 母版在 vault 里,VAULT 是 None 时不许出图。
 5. `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" queue list` 能跑就算装好。
 
-两台机各管各的:队列 `icon_queue.json`、spec、批次产物都不进 git,在哪台机攒的就在哪台机出。图入 Unity 后跟着 Extraction 仓走正常 git 同步。改工具代码在工具仓 commit,push 前照红线问勾哥。
+每台机各管各的:队列 `icon_queue.json`、spec、批次产物都不进 git,在哪台机攒的就在哪台机出。图入 Unity 后跟着 Extraction 仓走正常 git 同步。改工具代码在工具仓 commit,push 前照红线问勾哥。
 
 ## 1. 先攒,不当场出
 
 收到 icon 需求先入队,不花钱:
 
 ```bash
-PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" queue add Ammo_T2 "three rifle cartridges bundled together, silver casings with blue bands" --play item --note "勾哥 10-26 要"
+PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" queue add Ammo_T2 "three rifle cartridges bundled together, silver casings with blue bands" --play item --note "勾哥原话要"
 ```
 
 队列只收勾哥原话说要生成的东西。AI 自己觉得"该补图"的放进汇报让他点,不进队列;"未选""一物多图"也不等于要生成。名字用 ASCII(会成为文件名 `玩法_名称_WxH.png`),play 是命名第一段(item / ui / weapon …,同类沿用已有前缀)。
@@ -79,4 +79,4 @@ cut 做的事:按蓝色面板程序抠框(不再调 AI 去框)、切图、按 `�
 
 CLI 只包了物品 icon 工具的 prompt。装备整套(编辑真实截图那套)、枪械、UI 黑白 glyph、buff 九宫格仍在 GUI(`er_launch.pyw` 双击开 hub),要用这些先告诉勾哥 CLI 还没接,别拿物品 prompt 硬套。头像框(中间镂空、套头像)走 er-frame-gen。
 
-非 icon 的单张图(概念图、场景图、宣传图、拿一张图改图)默认走 codex terra(11-20 勾哥拍板,见 vault `013 美术/AI记忆/现行口径_参考与工具分工.md`);gemini 这边的备用是同目录的通用生图 CLI `er_gen_cli.py`(11-16 加):prompt 原样发、不加风格词,`gen "<prompt>" [--ref 图 ...] [--aspect 16:9] [--size 1K|2K] [--n 1~4] [--name xxx] --yes`,改图把原图放第一张 `--ref`。key / 32s 限流 / 估价和本 CLI 共用,产物在 `$T/imagegen_out/_cli/`,每张旁边有记 prompt 的 .json。细节见 HANDOFF §0.00。
+非 icon 的单张图(概念图、场景图、宣传图、拿一张图改图)默认走 codex terra(见 vault `013 美术/AI记忆/现行口径_参考与工具分工.md`);gemini 这边的备用是同目录的通用生图 CLI `er_gen_cli.py`:prompt 原样发、不加风格词,`gen "<prompt>" [--ref 图 ...] [--aspect 16:9] [--size 1K|2K] [--n 1~4] [--name xxx] --yes`,改图把原图放第一张 `--ref`。key / 32s 限流 / 估价和本 CLI 共用,产物在 `$T/imagegen_out/_cli/`,每张旁边有记 prompt 的 .json。细节见 HANDOFF §0.00。

@@ -1,7 +1,7 @@
 # 翼德 · 打磨一屏(polish / 打磨 / refine)
 
 > 把一个已经"能用但像开发版"的游戏界面(2D UI + 3D 场景 + 动效 + 声音)推到**成品级**的完整工作法。
-> 蒸馏自 2026-10-02~05 ER「简报页 Briefing Room」三批打磨:14 个 topic、~30 张竞品对照图/批、13 次提交,勾哥评价"效果非常好"。
+> 蒸馏自 ER 简报页三批打磨,勾哥认可的做法。
 > 它不是"改一改好看点",而是**讨论 → 调研 → 拍板 → 方案 → 分片施工 → 亲眼验收 → 回填**的闭环。哪些步骤派子 agent、用哪个模型,勾哥当次说了照他说的;没说就主会话自己做,能并行的调研/大批量活可以派。
 
 ## 0. 触发后第一件事:问清四样,别猜
@@ -47,7 +47,7 @@
 **编辑器只有一台 → 施工必须串行**;调研/方案/评审不占编辑器,可与施工并行。派活顺序按「勾哥最想先看到的」和「文件冲突最小」排。
 
 ## 3. 建档(批 1 开头做一次)
-- 交付目录:vault 对应系统文件夹下建 `打磨_<屏名>_<日期>\`(勾哥 11-14 / 11-18:开发资料都放网盘,不放 C 盘、D 盘和 scratchpad):`baseline\`(三档现状)、每片 `S1\`/`B2\`… 截图、`final\BEFORE_AFTER_*.png`、`PLAN_*.md`、`WORKORDER_*.md`、`PLAY_ROUTE.md` + `scripts\`。
+- 交付目录:vault 对应系统文件夹下建 `打磨_<屏名>_<日期>\`(开发资料都放网盘 vault,不放 C 盘、D 盘和 scratchpad):`baseline\`(三档现状)、每片 `S1\`/`B2\`… 截图、`final\BEFORE_AFTER_*.png`、`PLAN_*.md`、`WORKORDER_*.md`、`PLAY_ROUTE.md` + `scripts\`。
 - **先派一棒截基线并写驱动手册**:真实玩家路径(从哪点到哪)、每步的 Unity CLI 调用(写法见 `playmode-verify-iterate`)、怎么切 Game 视图三档分辨率(1080×1920 / 2340 / 2640)、怎么截图(`unity command capture game_view -- --source screen`,含 overlay UI;Coplay capture 看不到 screen-space UI)、怎么干净退出。后面每棒都照抄,省掉重复摸路。
 - 现状裁图:按 topic 从基线裁出局部放大(`now_<id>.png`),写表时放「现状图」列。
 
@@ -72,7 +72,7 @@
 
 ## 6. 拍板 → 方案 → 施工
 ### 6.1 弹窗只问真岔路
-每批 ≤4 问,推荐项放第一并标 (Recommended),每项一句利弊+成本;互相牵连的 topic 先问「整体路线」(如:连续地图 vs 切块模型台)。勾哥答完**立刻落表**(拍板列+备注)并改相关记忆/GDD(以现状为准就回写 GDD,注明日期)。
+每批 ≤4 问,推荐项放第一并标 (Recommended),每项一句利弊+成本;互相牵连的 topic 先问「整体路线」(如:连续地图 vs 切块模型台)。勾哥答完**立刻落表**(拍板列+备注);拍的是游戏设计结论(规则/数值/内容)就回写对应 GDD,拍的是做法和品味才写记忆(分法见 vault `07 - AI上下文/AI记忆/工作法/feedback-what-goes-where-skill-memory-gdd-20261127.md`)。
 
 ### 6.2 方案工单要它回答
 ① 每片改动清单精确到文件/方法/新文件、关键公式与算法可照做;② 数据流只复用已有事件/属性,不新造总线;③ 性能预算(顶点/RT/DC/overdraw/初始化耗时/低端档降级);④ 风险与暗坑(共享资产耦合、关域重载 static、shader strip、烘焙回执、单 mesh 65k);⑤ 验证方法(真流程/三档/防回归);⑥ 切片顺序与工作量;⑦ 只列真岔路。方案文件主脑**落盘保存**(上下文会被压缩),施工工单只引用章节。
@@ -81,7 +81,7 @@
 - **必读**:方案章节、现状截图、参考图(Read)、要改的源码、驱动手册、项目 CLAUDE.md、相关技能/记忆。
 - **验收口径 = 勾哥原话 + 拍板**,并写明「你对好不好看负责,调到截图真的好看为止,不是能跑就交」。
 - **范围围栏**:列出"不要动"的文件/系统(别的棒刚改完的)。
-- **硬性约束**:不改共享资产与烘焙工具(`git diff <共享目录>` 为空 + 回执校验 PASS);2D 回退/旧路径不许坏;float 分支不用 shader_feature;关域重载 static 复位;运行时对象 OnDestroy 销毁;只用确认存在的 API;日志按周围风格;**每次改文件前先 `unity command editor status` 确认 playMode 不是 playing/paused**(五棒里四棒违反过这条,要写进去);按工程 CLAUDE.md 锁协议 v2 拿锁;改完 `unity command console status` + grep `error CS` 再进 Play;不 save 被自动标 dirty 的场景;不碰 ProjectSettings;收尾 stop Play + 还原 Game 视图;不 commit/push;不跑 scope.js;**一回合连续干到底,没有 watcher 会叫你**。
+- **硬性约束**:不改共享资产与烘焙工具(`git diff <共享目录>` 为空 + 回执校验 PASS);2D 回退/旧路径不许坏;float 分支不用 shader_feature;关域重载 static 复位;运行时对象 OnDestroy 销毁;只用确认存在的 API;日志按周围风格;**每次改文件前先 `unity command editor status` 确认 playMode 不是 playing/paused**(执行者最常漏的一条,工单里必须写);按工程 CLAUDE.md 锁协议 v2 拿锁;改完 `unity command console status` + grep `error CS` 再进 Play;不 save 被自动标 dirty 的场景;不碰 ProjectSettings;收尾 stop Play + 还原 Game 视图;不 commit/push;不跑 scope.js;**一回合连续干到底,没有 watcher 会叫你**。
 - **验证清单**:编译零错;真流程三档截图(+ 该片特有视角);**每张 Read 亲眼看并迭代**;真点击回归;state-dump 原值;防回归;`git status --short`。
 - **汇报格式**:改动清单 / 证据(截图绝对路径+dump 原值)/ 画面自评逐项 / **偏离与欠账逐条**(不伪造验证)。
 
@@ -92,26 +92,26 @@
 - 执行者汇报里的「偏离与欠账」原样转给勾哥,不洗白;发现别的工地的东西(DTO 缺字段、ProjectSettings 被编辑器改)只上报不代修。
 
 ## 7. 美术与建模通道(项目缺素材时自产到满意为止,不等美术)
-工具分工以 vault `01 - 星际拓荒重构/013 美术/AI记忆/现行口径_参考与工具分工.md` 第一节为唯一真源(11-20 分工表并进了这份,`art-model-tool-routing.md` 只剩入口说明;勾哥改口只改现行口径那一份);下面只是指路,和它或和各 skill 冲突时以它们为准。
-- **画风标尺**:改外观前,mo.co 参考只用参考登记表(Sheet「jungle lab」组件清单 I 列)里本物件那一行的图,打开原图看(红线 4;怎么选、哪些活不用拉见 vault `013 美术/mo.co截图/README_参考怎么选.md`)。对照只和 mo.co 实机画面并排,不拿 Brawl Stars / Clash of Clans 这类旧口径当标尺。
+工具分工以 vault `01 - 星际拓荒重构/013 美术/AI记忆/现行口径_参考与工具分工.md` 第一节为唯一真源;下面只是指路,和它或和各 skill 冲突时以它们为准。
+- **画风标尺**:改外观前按同一份现行口径第二节取 mo.co 参考(只用登记表里本物件那一行锁定的图,打开原图看;哪些活不用拉见 vault `013 美术/mo.co截图/README_参考怎么选.md`)。对照只和 mo.co 实机画面并排,不拿 Brawl Stars / Clash of Clans 这类旧口径当标尺。
 - **2D**:概念图(所有线)走 codex terra,配方见现行口径 `现行口径_生图与概念图.md`;其余 2D(关键帧、UI 材质、VFX 贴图、decal、局内 sprite / HUD 件)走 codex terra,用 `er-shop-mkt/references/03-出图管线.md` 的 `run_codex.sh` + `check_rollout.py`(发单前核 `-m` 是 terra)。喂哪些参考图按那份管线和 `reference-replicate` 写的来;paint-over 上色单派 terra,喂图按 `er-blender` 08。
 - **图标(物品/资源/货币/奖励/装扮)**:默认 codex,规矩按 `er-icon-gen`(gemini 工具箱只在 codex 做不了时用);**UI 功能图标和头像**:codex(功能图标以底栏 tab 图标当 style ref,头像以六张英雄头像当画风参考);**头像框**:`er-frame-gen`;**礼包/营销 KV**:`er-shop-mkt`。
-- **地形上的植物、地面、崖壁、大量散布件**:默认 Unity 编辑器 + codex 合作(Lab 生成器);Blender、Tripo 或新路线可以试,按 W1 实拍判。POI 里的植物(花坛、垂藤、树池树)是另一类,走 `er-blender`(11-09),分法看它的路由表。
+- **地形上的植物、地面、崖壁、大量散布件**:默认 Unity 编辑器 + codex 合作(Lab 生成器);Blender、Tripo 或新路线可以试,按实拍并排判。POI 里的植物(花坛、垂藤、树池树)是另一类,走 `er-blender`,分法看它的路由表。
 - **复杂刚性单件**(怪物底模、陶罐、残骸、巢穴、基地建筑底模):默认 Tripo **网页版 Studio**(CLI / API 想试先在一件上对比);POI 建筑默认在 Blender 里部件化做(`er-blender` 07);之后 `er-blender` 精修 → `gaoguang-3d` 入库。
 - **制式硬表面、简单道具、Blender 精修**:`er-blender`。**角色**:`er-character-pipeline`。**世界特效**:`vfx-production`。
 - 主会话**逐张亲眼看**,不满意就打回同一执行方;进 Unity 后在真光照下再截一次和 mo.co 并排,达不到成品不进场景。
 
 ### 7.3 音效与音乐(**唯一硬规则:零版权问题**;做法不僵化,勾哥在持续探索怎么把音效/BGM 生成得好,每次都可以试新路)
 - **硬规则**:只用①已购且许可覆盖本项目的音效包/音乐包,②自己生成或合成的素材(AI 生成、程序化合成、自录),③许可明确可商用的来源(CC0 等,记来源)。来源不明、网上随手扒的、带他人作品片段的,一律不用。每条素材在汇报/映射表里写来源与许可。
-- **可用的路(按当时能用的选,不按固定顺序;新工具出现就试)**:Coplay `generate_sfx` / `generate_music`(可用时最省事);codex astra/sol 这类模型若有音频能力也试;已购包(项目里已有 Cyberleaf UI / Cute UI / Epic Toon FX 等,先 Glob 盘点);程序化合成(仓库 `Assets/Audio/SFX/<域>/_gen/gen_*_sfx.py` 的 numpy 范式,适合 UI 点击/确认/tick 类短音);BGM 目前全项目尚无——做之前先问勾哥想要的风格与参考曲,用能生成完整曲子的工具,分段 loop 做成可切换的 intro/loop/outro。勾哥的话:「只要不出现任何版权问题就行」,其余自由发挥、多试、把好的路记回这里。
-- **落地**:按「事件表」配(按钮按下/确认、tab 切换、卡片入场、合约切换、出发确认、建造开始/完工/揭幕、收取、奖励弹窗…),做成项目的 `SoundEvent`/`XxxSfxLibrary` 资产并接 `GameAudioConfig` 的槽位与 AudioService 调用点(主页那次查到 5 个 UI 音效槽与 `DefaultMusicEvent` 全空、代码早在调——先查配置是不是空的);响度统一(峰值/LUFS 对齐同类);**循环音做成点缀**(基地施工循环音太吵,改成近看时的 tick);BGM 与 SFX 分总线、有音量设置项。
+- **可用的路(按当时能用的选,不按固定顺序;新工具出现就试)**:Coplay `generate_sfx` / `generate_music`(可用时最省事);codex astra/sol 这类模型若有音频能力也试;已购包(先 Glob 盘点项目里已有的);程序化合成(仓库 `Assets/Audio/SFX/<域>/_gen/gen_*_sfx.py` 的 numpy 范式,适合 UI 点击/确认/tick 类短音);BGM 做之前先问勾哥想要的风格与参考曲,用能生成完整曲子的工具,分段 loop 做成可切换的 intro/loop/outro。除零版权外自由发挥、多试,把好的路记回这里。
+- **落地**:按「事件表」配(按钮按下/确认、tab 切换、卡片入场、合约切换、出发确认、建造开始/完工/揭幕、收取、奖励弹窗…),做成项目的 `SoundEvent`/`XxxSfxLibrary` 资产并接 `GameAudioConfig` 的槽位与 AudioService 调用点(先查配置槽是不是空的:代码可能早在调、槽却没填);响度统一(峰值/LUFS 对齐同类);**循环音做成点缀**(持续循环音太吵,改成近看时才响的 tick 一类);BGM 与 SFX 分总线、有音量设置项。
 - **验收**:执行者只能验「事件触发→播放调用→clip 非空→音量合理→许可记录齐」+ 导出波形/频谱截图;**听感必须勾哥本人验**,汇报里明写 UNVERIFIED,并给「哪个按钮听哪条」的清单;他听完的反馈回填到本节。
 
 ## 8. 成品级 checklist(交付前逐项过;哪项没做要明写欠账)
-- **2D UI**:字体与字色按工程 CLAUDE.md UI 字体铁规(Saira 屏字色跟底色走;还没迁的旧屏字面白、颜色进描边 UIInk);kit 同族底板不混用;图层完整(底板/高光/厚边/投影/图标/副行);空态有语义(ADD/锁/剪影)不是灰块;主 CTA 与主页同形同级;入场(卡滑入/逐个 pop)、按压(缩放+下沉)、常驻(呼吸/扫光)动效克制只给重点;三档长宽比不出框不互压;交互在 SafeArea 内;返回键栈;Ink Sweep 零命中;新件回填 widget 注册表。
-- **3D 场景**(旧沙盘大地图已退役,这条只留通用项):抗锯齿(MSAA 关着就超采样)+ 网格密度足够;着色默认 Lab/LabLit(别的 shader 可以试,同机位并排比),3D 里不描边;周边不留纯色虚空(云/水/桌面);有厚度(裙边)不悬空;地标夸大+三级 marker 层级+目标光柱脉冲;路线有方向有分段色有 pulse;进页运镜+显形;按需渲染不白跑;性能预算与低端档;**改动只在自己的 shader/网格里,共享烘焙资产零改动**。
-- **动效**:选中态要「大一档 + 外环脉冲/箭头」而不是只缩放 wobble;切换(模式/合约)有过渡(路线生长、镜头跟随);云/水/光柱常驻慢动;所有动效 unscaled 时间,触摸可跳过。
-- **声音**:按 §7.3(零版权问题是唯一硬规则,做法可变)配齐事件表(按钮/确认/tab/卡片入场/合约切换/出发/建造三段/收取/奖励),接 AudioService,循环音做点缀;**简报页那次没做,基地页做了但听感未验——每批施工单必须排一棒音效,收尾请勾哥听**。
+- **2D UI**:字体与字色按工程 CLAUDE.md 的 UI 字体铁规;kit 同族底板不混用;图层完整(底板/高光/厚边/投影/图标/副行);空态有语义(ADD/锁/剪影)不是灰块;主 CTA 与主页同形同级;入场(卡滑入/逐个 pop)、按压(缩放+下沉)、常驻(呼吸/扫光)动效克制只给重点;三档长宽比不出框不互压;交互在 SafeArea 内;返回键栈;Ink Sweep 零命中;新件回填 widget 注册表。
+- **3D 场景**:抗锯齿(MSAA 关着就超采样)+ 网格密度足够;着色默认 Lab/LabLit(别的 shader 可以试,同机位并排比),3D 里不描边;周边不留纯色虚空(云/水/桌面);有厚度(裙边)不悬空;重点目标要有层级和醒目标记;按需渲染不白跑;性能预算与低端档;**改动只在自己的 shader/网格里,共享烘焙资产零改动**。
+- **动效**:选中态要「大一档 + 外环脉冲/箭头」而不是只缩放 wobble;切换有过渡(生长、镜头跟随这类);常驻元素慢动;所有动效 unscaled 时间,触摸可跳过。
+- **声音**:按 §7.3 配齐事件表、接 AudioService、循环音做点缀;**每批施工单都排一棒音效,收尾请勾哥听**。
 - **数据真实**:界面上出现的数字(消耗/负重/奖励)必须接真源,查不到就不显示并写欠账,不编。
 
 ## 9. 坑清单(每条都付过学费)
@@ -129,7 +129,7 @@
 - 勾哥可能正在同一台编辑器里试玩:执行者开工前 `unity command editor status` 若是 playing/paused,**等,不要 stop 他的 Play**(曾有执行者把勾哥的试玩停了)。工单里写明。
 - 后台 `git push` 到 yide 仓被看门狗判 killed 不等于没推上——先 `git ls-remote origin main` 比对 hash 再决定重推。
 
-- **对照图必须是干净实机画面**(2026-10-06 主玩法 25 题踩到):让调研代理自由找图,一半会是商店宣传合成图(叠大标题/立绘)或带主播框的封面,勾哥要的是「和我们实机并排比」。做法:调研工单里直接给 `python -m yt_dlp --download-sections "*MM:SS-MM:SS" --force-keyframes-at-cuts` + `ffmpeg -vf fps=1` 抽帧配方;标杆游戏另派「实机帧收割」(`templates/polish/harvest_prompt_template.md`,每游戏一路,产出带 topic 标签的 catalog + 拼版),调研回来后再派「换图质检」(`swap_prompt_template.md`,每 3 个 block 一路,只许改 img/src/how/game + 补标杆帧)。
+- **对照图必须是干净实机画面**:让调研代理自由找图,一半会是商店宣传合成图(叠大标题/立绘)或带主播框的封面,勾哥要的是「和我们实机并排比」。做法:调研工单里直接给 `python -m yt_dlp --download-sections "*MM:SS-MM:SS" --force-keyframes-at-cuts` + `ffmpeg -vf fps=1` 抽帧配方;标杆游戏另派「实机帧收割」(`templates/polish/harvest_prompt_template.md`,每游戏一路,产出带 topic 标签的 catalog + 拼版),调研回来后再派「换图质检」(`swap_prompt_template.md`,每 3 个 block 一路,只许改 img/src/how/game + 补标杆帧)。
 - 并发子代理上限 20:题数多时侦察+基线+前 16 题先发,其余等通知补派;调研代理 3–6 分钟就回,**比侦察快**,别让它等 RECON——`cause` 由主脑用脚本从 RECON 的 `cause:` 行回填(RECON 每题固定一行 `cause:`)。
 - 多路代理共用 scratchpad 会互相覆盖同名脚本(clips.py/sheet.py 被踩过)——工单给每路指定独立临时目录。
 - 基线截图拆两棒(UI flow 一棒、战斗/场景/POI 一棒),每棒实耗 ~150k token;真 DEPLOY 扣体力、撤离是真结算会入库——工单写明允许几次。
@@ -137,22 +137,18 @@
 - 传图用 base64 JSON 包(每包原图合计 ≤6.3MB,一次 `file_upload`,页内 `atob`→`new File`),比逐张列路径省一个数量级的 token;300 张图嵌格约 20 分钟(~3.7s/张),期间只轮询 `__job`。
 - 表格标签是别的窗口里的后台标签时 `visibilityState=hidden` 嵌不了图;开工先查,hidden 就请勾哥把标签拖成独立窗口。
 
-- **既有设计是背景,不是约束**(2026-10-06 主玩法,勾哥一晚四次校准后的最终口径):代码侦察之外加一路「既有设计侦察」(近 1–2 个月相关提交 + 设计文档)只为**知道每个东西是干什么的、挂了哪些玩法钩子**;**不要把历史「已否决/范围外」清单当现行限制,也不要自己加限制**——他原话「去掉所有的已否决吧,我希望要不受限制地做,这样才能看到 polish 的潜力」。给他看的目标图要有野心:**整体重做版概念图**(功能一眼可读、有分区动线、整点一套语言),他否过保守的 paint-over(「太保守了……仅仅 paint over 是不够的」)。题材上的个人好恶(本次:不要部落图腾)以他当场说的为准。旧决定与新做法不同之处,做出来给他看效果由他裁决。
+- **既有设计是背景,不是约束**:代码侦察之外加一路「既有设计侦察」(近 1–2 个月相关提交 + 设计文档)只为**知道每个东西是干什么的、挂了哪些玩法钩子**;**不把历史「已否决/范围外」清单当现行限制,也不自己加限制**(勾哥要看到 polish 不受限的潜力)。给他看的目标图要有野心:**整体重做版概念图**(功能一眼可读、有分区动线、整套语言),只做保守的 paint-over 不够。题材好恶以他当场说的为准;旧决定与新做法不同之处,做出来给他看效果由他裁决。
 - 续派(SendMessage)同一执行者共用它原来的 token 预算:上一棒已烧到 ~150k 的,续做单会直接 BLOCKED——收尾活另派新棒并把上一棒汇报里的关键参数写进新工单。
 
 ## 10. 收尾(每批)
 1. 知识库:`Competitive Research/<屏>打磨对照_<日期>[_B2].md`(含「实现现状」附录)+ `_manifest_*.md` + README 两行 + `cp` 镜像到 vault `08 - 竞品研究/`(含新图目录)→ 只提交 md。
-2. 记忆:工地文件(状态/提交/拍板/欠账/下一步/出图通道),按 vault 根 `CLAUDE.md` 的写回规则写进对应系统的 `AI记忆/` 并在总索引加一行(MEMORY.md 是脚本生成的,别手改);整条作废的旧记忆挪进同目录 `_archive_<日期>/`。
+2. 记忆和文档:进度、提交、欠账、下一步留在表格施工单和 git,不写记忆;设计拍板回写对应 GDD(§6.1);只有勾哥对做法和品味的纠正、踩到的工具坑,按 vault 根 `CLAUDE.md` 的写回规则写进对应系统的 `AI记忆/` 并在总索引加一行(MEMORY.md 是脚本生成的,别手改)。
 3. 表格:施工单与 Batch 块状态列全部更新(✅+hash / ⚠欠账 / 施工中)。
 4. Planyway:默认建 KAN issue 标完成(assignee 按当次 userEmail);战绩 `progress.js bump` 一次。
 5. 向勾哥汇报:前后对比图路径、每 topic 一两句、**欠账与需要他拍板的**单列,不夸大。
 
-## 先例(vault 记忆里有全套过程资料与教训;基地页、主玩法两条 10-31 已归档,在 `07 - AI上下文/AI记忆/_archive_20261031/`)
-- 简报页 [[briefing-room-polish-worksite]](本法原型:对照表/弹窗拍板/分片施工/ChatGPT 网页出图/v2 地图 Cheat 对照)
-- 基地页 [[base-page-polish-worksite]](3D 场景主题/Blender 建模迭代/实体施工演出/音效库/加速经济,两波)
-- 主玩法 [[main-gameplay-polish-worksite]](25 题 288 图 659 action 的多分页大表;实机帧收割+换图质检两段式;三路代码侦察)
-- 主页 [[home-tab-polish-worksite]](13 题 199 条 action 大表、音频配置为空的侦察)
-- 美术自产路线 [[art-asset-production-routes]]
+## 先例
+简报页、主页两次的过程资料在 vault `034_主页HOME/AI记忆/`(`briefing-room-polish-worksite`、`home-tab-polish-worksite`),基地页、主玩法在 `07 - AI上下文/AI记忆/_archive_20261031/`;只为追溯,做法以本文件为准。
 
 ## 模板与脚本
 `${CLAUDE_SKILL_DIR}/templates/polish/`:`gen_sheet.py`(block JSON → 表格 payload + 知识库 md/manifest;多分页大表用 `gen_sheet_multitab.py`)、`harvest_prompt_template.md` / `swap_prompt_template.md`(实机帧收割 / 换图质检工单)、`contact.py`(拼版验图)、`sheet_helpers.js`(Chrome MCP 页内助手:合成 paste / 嵌图 / 调行高列宽 / 任务标记)、`workorder_template.md`(施工工单)、`research_prompt_template.md`(调研工单)、`play_route_template.md`(驱动手册骨架)。用前先读一遍,路径和表头按本次替换。
