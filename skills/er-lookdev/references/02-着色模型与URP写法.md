@@ -57,7 +57,7 @@
 | DepthNormals | 法线图 | 屏幕空间遮蔽(用 Depth Normals 源时)没有它 |
 | Meta | 给烘焙器固有色和自发光 | 烘光照图时它不贡献反弹色和自发光 |
 
-`UsePass` 借 URP Lit 的 pass 可能破坏 SRP Batcher 兼容(借来的 pass 用的是 Lit 自己的材质常量块,和本 shader 的不一致),资料建议每个 pass 自己写,公共声明放 `HLSLINCLUDE`。借了之后在材质或 shader 的 Inspector 上看「SRP Batcher」那一行是否 compatible,再决定留不留。〔读 Cyanilux;核法推〕
+`UsePass` 借 URP Lit 的 pass 可能破坏 SRP Batcher 兼容(借来的 pass 用的是 Lit 自己的材质常量块,和本 shader 的不一致),资料建议每个 pass 自己写,公共声明放 `HLSLINCLUDE`。实测:CityLit 借三个 Lit pass 时兼容码是 15(`UnityPerMaterial CBuffer inconsistent size inside a SubShader`),改成自写 pass、常量块放 `HLSLINCLUDE` 后是 0。核法:`ShaderUtil.GetSRPBatcherCompatibilityCode(shader, 0)`(内部方法,反射调),0 是兼容;刚导入还没渲染过时返回 1(Not initialized),先渲一帧再读;原因文字用 `GetSRPBatcherCompatibilityIssueReason(shader, 0, code)`。〔读 Cyanilux;测〕
 
 写自己的 ShadowCaster / DepthOnly 时包含 `Shaders/ShadowCasterPass.hlsl`、`DepthOnlyPass.hlsl`,前面要先包含 `CommonMaterial.hlsl` 和 `SurfaceInput.hlsl`;不要包含 `LitInput.hlsl`(它会重定义常量块)。有顶点位移时两个 pass 的顶点函数也要带位移。〔读〕
 
@@ -147,7 +147,13 @@ SSAO 的 After Opaque 模式不需要 shader 支持,它是事后整屏盖一层,
 
 `#pragma multi_compile_fog`;顶点 `ComputeFogFactor(positionCS.z)`,片元 `MixFog(color, fogFactor)`。
 
-## 三、资料点名的坑
+## 三、在编辑器里拍对照图的坑(实测)
+
+- `unity command capture game_view --save_path` 会把路径解析到 `Assets/` 下面,给绝对路径也一样,结果在 Assets 里多出文件夹和 .meta。拍对照图用 eval 脚本自己渲:`cam.targetTexture = RT; cam.Render(); ReadPixels; File.WriteAllBytes(工程外路径)`。
+- 在脚本里用 `m.SetFloat` 临时改材质再还原时,「还原」会把值显式写进内存里的材质;shader 新加的属性原本走默认值,这样一来就不再跟默认值走了。新加属性后要么不碰它,要么最后设成想要的默认。
+- 在脚本里 `feature.SetActive` 开关 SSAO 后用 `cam.Render()` 拍,开和关逐像素相同,这条路验证不了屏幕空间 AO 的影响。
+
+## 四、资料点名的坑
 
 - 插值后的法线要重新归一化。
 - `ComputeScreenPos` 在 URP 11 起弃用。
