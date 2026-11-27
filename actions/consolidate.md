@@ -27,7 +27,7 @@
 6. **修订索引**:更新 `INDEX.md` 使其与现状一致;确认它仍在 ≤200 行的预算内。
 
 7. **归档**:把 `status: archived/superseded` 的 lesson 移到 `~/.yide/lessons/archive/`,保持活跃集精简。
-   (2026-07-25 起 lessons 不再有编译索引与自动浮现——它只是历史档案;真正要常驻/按场景生效的规则见下一条的分流。)
+   (lessons 不自动加载、只是历史档案;要常驻 / 按场景生效的规则按第 4 步分流。)
 
 8. **打整理时间戳**:用 Bash 工具运行
    `node "${CLAUDE_SKILL_DIR}/scripts/stamp-consolidate.js"`

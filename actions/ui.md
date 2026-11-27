@@ -13,6 +13,7 @@
 4. 预设里**缺关键项**(尤其屏幕方向、参考分辨率、确认稿文件夹)→ 用 `AskUserQuestion` 问勾哥一次,**写回项目档案**(学一次以后就有);拿不准别瞎编(红线②)。
 
 ## 1. 看结果:Coplay 的 capture 工具对 screen-space UI 是**瞎的**
+有 Unity CLI 时首选 `unity command capture game_view -- --source screen`(Play 中,含 Overlay UI,写法见 `playmode-verify-iterate`);下面 A/B 是没有 CLI 时的通道。
 `capture_ui_canvas` / `capture_scene_object` 走离屏相机 / RT,**渲不到 Screen Space(Overlay & Camera)的 canvas → 黑 / 灰图**。这类项目 UI **别信它**。用两条通道:
 
 **A. 看像素 = `ScreenCapture.CaptureScreenshot` → `Read` 那张 PNG。**
@@ -25,8 +26,8 @@
 - **在屏判据**:显示中的元素必须 `0 < worldPos.x < 参考宽` 且 `0 < worldPos.y < 参考高`(宽高用项目参考分辨率)。x=1744 在 1440 宽下就是飞出右边——flow/timeScale 测试**抓不到**这类 bug。
 - 不能截图时这是结论性手段。**说"修好了"之前必做**:flow 测试(timeScale 开关)通过 **≠** 面板渲对。
 
-## 2. 改 UI 用 `execute_script`(最稳),别堆 20 个零散 MCP 调用
-单属性微调可用 MCP(`set_rect_transform` / `set_property` / `create_ui_element` / `set_ui_text` / `parent_game_object` 等);**复杂改动写一个 C# 文件**(class + `public static string Method()`)用 `execute_script` 跑——原子、可复现:
+## 2. 改 UI 写脚本文件跑(最稳),别堆 20 个零散 MCP 调用
+单属性微调可用 MCP(`set_rect_transform` / `set_property` / `create_ui_element` / `set_ui_text` / `parent_game_object` 等);**复杂改动写一个 C# 文件**跑——有 CLI 用 `unity command script run` / `script eval_file`(写法见 `playmode-verify-iterate`),没有 CLI 用 MCP `execute_script`(class + `public static string Method()`)——原子、可复现:
 - **稳健找对象**:`FindObjectOfType(type)`(只找 active)或走 `SceneManager.GetActiveScene().GetRootGameObjects()`(含 inactive 根)。`GameObject.Find(path)` 找不到 inactive / 路径错——隐藏面板别信它。
 - **跨程序集解析类型**:遍历 `AppDomain.CurrentDomain.GetAssemblies()` + `asm.GetType("Namespace.Type")`,别假设 `Assembly-CSharp`。
 - **写 `[SerializeField]` 私有**:`var so = new SerializedObject(comp); so.FindProperty("_field").objectReferenceValue = target; so.ApplyModifiedPropertiesWithoutUndo();`。

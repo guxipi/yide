@@ -12,7 +12,7 @@ description: ER(Extraction)出头像框(avatar frame)的管线——调本机 ge
 - **不描黑边**,轮廓用本色压暗(ER 美术规范 + CARGO 物件画法)。旧 `Frame_S1_01~03`、旧 `frame_s2_*` 就是因为黑描边被重做。
 - 手机可读:每个框最多两三个装饰,不要细纹、小雕刻、文字。
 
-工具是私有仓 `guxipi/er-imagegen` 里的 `er_frame_cli.py`(复用同目录 er_icon_cli / er_enemy_engine 的 key、限流和模型调用),目录 = `${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}`,下文记作 `$T`,每条 Bash 命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。开工先 `git -C "$T" pull --ff-only`;目录不在就按 er-icon-gen 第 0 节装,不换别的生图通道。默认头像样张从 Unity 工程里取(`ER_UNITY_PROJECT` 或扫盘找 `<盘>:\GitManagedUnityProjects\Extraction`)。命令一律 `PYTHONUTF8=1 py -3 "$T/er_frame_cli.py" ...`,走 Bash。
+工具是私有仓 `guxipi/er-imagegen` 里的 `er_frame_cli.py`(复用同目录 er_icon_cli / er_enemy_engine 的 key、限流和模型调用),目录 = `${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}`,下文记作 `$T`,每条 Bash 命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。开工先 `git -C "$T" pull --ff-only`;目录不在就按 er-icon-gen 第 0 节装。头像框默认走这个工具箱(10-26 勾哥定);想试别的通道(如 codex),和已批的框放同一张对照板给勾哥判。默认头像样张从 Unity 工程里取(`ER_UNITY_PROJECT` 或扫盘找 `<盘>:\GitManagedUnityProjects\Extraction`)。命令一律 `PYTHONUTF8=1 py -3 "$T/er_frame_cli.py" ...`,走 Bash。
 
 ## 1. 先定需求再出图
 
@@ -53,7 +53,7 @@ PYTHONUTF8=1 py -3 "$CLI" cut "<批次目录>" [--face <头像.png>]
 - 定义:`Assets/ScriptableObjects/Avatar/Frames/<名>.asset`(AvatarFrameDefinition),`_refFrameToFace` 填 qa.json 的 ref,`_accentColor` 填主色(会染资料卡头部渐变条),加进 `Assets/Resources/Core/AvatarFrameRegistry.asset` 的 `_frames`。
 - id 常量:`Core.Services.Cosmetics.CosmeticIds` 和 `Core.Content.CosmeticIds` 两份都补;要在聊天里显示就在 ShortCodes 末尾追加短码(只追加,不改旧码)。
 - 不碰 BP 配置表和 BattlePass 服务端/客户端代码;BP 奖励预览图在 `BPTheme_<season>.asset` 的 RewardIcons,要改先问 BP 那条线。
-- 10-26 入库脚本在当时会话 scratchpad 的 `intake_frames.py`,思路:拷图 → 写 meta → 写/改定义 → 追加 Registry。
+- 入库顺序:拷图 → 写 meta → 写/改定义 → 追加 Registry。
 
 ## 6. 实机看一眼
 

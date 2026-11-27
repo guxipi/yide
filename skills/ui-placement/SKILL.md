@@ -5,9 +5,9 @@ description: Wiring, placing, aligning or building Unity uGUI UI in Extraction �
 
 # UI Placement (Extraction)
 
-> **第 0 步(勾哥 2026-11-14,11-19 补;11-20 改成走 `ui-screen-redo`):新界面 / 页面改版,Unity 里的 UI 一行都不写之前先走 `ui-screen-redo`——页面卡 → 五 persona 盲测、UI/UX lead 重排结构、主美审画风三路独立评审 → 可点击、带按压和出入场动效的 HTML → 二轮盲测 → 勾哥批复。** 派单写「成品级、走 ui-placement」也不豁免;数据层和服务端可以先做。HTML 和它的源稿、构建脚本放 vault 对应 feature 目录,不放 C 盘。只接线、修 bug、照已批的稿落地,不用重走这三步。
+> **第 0 步:新界面 / 页面改版,Unity 里的 UI 一行都不写之前先走 `ui-screen-redo`,勾哥批了 HTML 才进 Unity。** 派单写「成品级、走 ui-placement」也不豁免;数据层和服务端可以先做。HTML 和它的源稿、构建脚本放 vault 对应 feature 目录,不放 C 盘。只接线、修 bug、照已批的稿落地,不用重走。
 
-> **先判这屏用哪套视觉:** 走 `Cargo<Screen>Setup.cs` builder 的屏是 CARGO 屏,按 vault `013 美术/UI_CARGO/`(现行稿 `mock/kit_v12.html`,token `CARGO_tokens.md`;两者冲突或和勾哥 11-16 之后的拍板冲突时,以更新的拍板为准,拍板在每个会话自动加载的 vault MEMORY 清单美术分区)。还没迁的旧屏才用下文 SuperCasual kit 的量法。下文凡是写「kit 是绝对标准」的地方,都只对旧屏和直接拿 SuperCasual 现成件的情况成立。
+> **先判这屏用哪套视觉:** 走 `Cargo<Screen>Setup.cs` builder 的屏是 CARGO 屏,按 vault `013 美术/UI_CARGO/`(现行稿 `mock/kit_v12.html`,token `CARGO_tokens.md`;现行规矩汇总在 vault `013 美术/AI记忆/现行口径_UI视觉kit.md`,和 tokens 冲突时以它为准)。还没迁的旧屏才用下文 SuperCasual kit 的量法。下文凡是写「kit 是绝对标准」的地方,都只对旧屏和直接拿 SuperCasual 现成件的情况成立。
 
 > **CARGO 屏一律走 builder(2026-10-31 勾哥)**:几何、样式、接线都写进该屏的 `Assets/Scripts/Editor/Setup/Cargo<Screen>Setup.cs`(`LoadPrefabContents` 改 prefab → `SaveAsPrefabAsset`;幂等,builder 自建节点前缀 `Cargo`,原节点只改父子和样式、不改名),重跑 `Tools/Setup/CARGO - …` 菜单出结果;不在 Prefab Mode 手摆,也不手改 prefab。尺寸按 1080 设计像素写、`P()` 换 1440 画布;token 和字阶按 vault `013 美术/UI_CARGO/CARGO_tokens.md`。共享件(`CargoUISetup.cs`、货币芯片、底栏)只有 HOME 会话能改(工程 CLAUDE.md 锁协议第 4 条)。可读性不达标直接修,不当选项抛给勾哥。
 
@@ -17,13 +17,13 @@ UI 要达到的视觉水准和验收(一屏一件事、入口分级、红点克�
 
 ## Source of truth — read, never duplicate
 
-- **CARGO 屏的底色与可读性规则(2026-10-26 拍板)**:vault `013 美术/UI_CARGO/CARGO_tokens.md` 第十五节(底色层级)+ 第十六节(可读性五通道:字阶/字色/间距/对齐/一块一事)。接线和手摆改到字号、底色、间距时按它,不按旧 64 标题口径。
+- **CARGO 屏的底色与可读性规则(2026-10-26 拍板)**:vault `013 美术/UI_CARGO/CARGO_tokens.md` 第十五节(底色层级)+ 第十六节(可读性五通道:字阶/字色/间距/对齐/一块一事)。接线和改 builder 改到字号、底色、间距时按它,不按旧 64 标题口径。
 - `UI_Placement_Rules.md` (**bundled in this skill folder**) — hard placement law (band heights, button sizes, casing, banner/ribbon/badge/grid positions, HUD anchors) **measured from the SuperCasual kit prefabs** — the kit is the absolute standard. Read this for any "where/how-big/what-casing" question; match the kit prefab's own size/anchor, don't eyeball. Canvas ref RATIFIED to the kit's 1080×2340 for kit screens.
 - `Claude Feature Docs/UI Visual Design/UI_Visual_Design_Guidelines.md` — 8px grid + tokens, colors, type scale, safe-area, portrait zones, animation timings (§7), feedback/juice (§8), layer manager, performance.
 - `Claude Feature Docs/UI Visual Design/Component_Selection_Matrix.md` — which SuperCasual prefab for which job.
 - `Claude Feature Docs/UI Visual Design/Screen_Layout_Specs.md` — per-screen layouts.
 - Kit: `Assets/AssetPacks/UI/Layer Lab/GUI Pro-SuperCasual/`. Font:所有 UI 文字用 Saira,主页 START 也是,字色按底色定(工程 CLAUDE.md UI 字体铁规第 2、5 条),挂 CJK fallback。新写和改动的 UI 一律照这条;只有原样维护一块还没迁的旧屏时,才会碰到它沿用的 CookieRun 标题 + `Cairo_Line_Black SDF` 正文。Canvas layers: `Core.UI.UICanvasLayerManager` (Background 0 → SystemPopup 600).
-- **Universal 件唯一注册表** = repo `Claude Feature Docs/UI Visual Design/Universal_Widgets_Registry.md`(2026-07-07 起唯一权威,已自 Claude 记忆迁入 repo)。做任何 UI **先查它复用**;新建 universal 件必回填该表。别再指向 Claude memory 的 `universal-ui-widgets`(已废弃)。
+- **Universal 件唯一注册表** = repo `Claude Feature Docs/UI Visual Design/Universal_Widgets_Registry.md`。做任何 UI **先查它复用**;新建 universal 件必回填该表。
 
 ## 真源模型 + 交互底线(2026-07-07 拍板)
 总纲:`Claude Feature Docs/UI Architecture Refactor/HANDOVER_UI真源prefab化_总纲.md`;硬契约:`Claude Feature Docs/UI Visual Design/Visual_Refine_Contract.md`。
@@ -45,7 +45,7 @@ Hand-EDITING `.prefab`/`.unity` stays banned — but **READING them with Grep/Re
 - **Before editing a prefab, grep the scene for `target: {fileID: <that RT's fileID>, guid: <prefab guid>`** — a scene override on the same property masks your prefab edit ([[ui-prefab-not-scene-copy]]). No hits = the prefab edit will take effect.
 
 ## Seeing the result — Unity CLI first; Coplay capture is BROKEN for UI
-**A0. 首选 = `unity command capture game_view -- --source screen --save_path Screenshots/x.png`**(Play 中;含 Screen Space-Overlay UI;需内联加 `--include_inline_image true --max_resolution 512`),写法见 `playmode-verify-iterate`。下面 A/A2 是 CLI 不可用时的老通道。
+**A0. 首选 = `unity command capture game_view -- --source screen --width 1080 --height 2340`**(Play 中;含 Screen Space-Overlay UI;宽高、`--save_path` 落进 Assets、取内联 base64 的写法见 `playmode-verify-iterate` 第〇步截图那行);切过 Game 视图尺寸先回读是竖屏，原尺寸拍现状图的做法见 `ui-screen-redo/references/tooling.md`「拍现状图」。下面 A/A2 是 CLI 不可用时的老通道。
 `capture_ui_canvas` / `capture_scene_object` render through an offscreen camera/RT and **miss Screen Space (Overlay & Camera) canvases → black/grey images**. Do NOT rely on them for this project's UI.
 
 **A. See pixels = `ScreenCapture.CaptureScreenshot` → `Read` the PNG.**
@@ -126,7 +126,7 @@ Gradients/metallic/glow come from kit 9-slice sprites, not code (uGUI has no nat
 8px scale (xs4 / sm8 / md16 / lg24 / xl32 / 2xl48) + documented colors/type scale. No freehand gaps. Equal spacing via Layout Groups.
 
 ## Hard rules (always)
-- Portrait only · place in Edit Mode · **save scene right after editing** · no text-editing of `.unity`/`.prefab` (use execute_script / MCP) · **verify before "fixed": numeric worldPos on-screen OR an F8 PNG — never trust Coplay's capture tools or a flow-only test.**
+- Portrait only · place in Edit Mode · **save scene right after editing** · no text-editing of `.unity`/`.prefab` (use execute_script / MCP) · **verify before "fixed": numeric worldPos on-screen OR a `capture game_view` / F8 PNG — never trust Coplay's capture tools or a flow-only test.**
 
 **一个屏"改了又弹回来"、override 几百条、prefab 里对进场景全歪 → 那是结构性的多作者问题,别在这里硬摆,走 `ui-truth-reclaim` 先收成单一真源(`Tools/UI Truth/Reclaim Window` + `Audit All Screens`)。**
 

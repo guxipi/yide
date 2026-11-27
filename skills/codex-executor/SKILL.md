@@ -5,7 +5,7 @@ description: 主会话当大脑、OpenAI Codex CLI(gpt-5.6-sol)当执行手的�
 
 # Codex (gpt-5.6-sol) 执行手工作法
 
-经 2026-07-10 FTUE 盘点+施工实战验证。核心分工:**主会话=大脑**(读设计 SSOT 做裁决、写工单、抽查报告、Unity Play 验收、commit/deploy);**sol=手**(读大文档、扫代码、按工单写码、出图)。什么活派给 sol 由勾哥当次说;美术工具分工见 vault `01 - 星际拓荒重构/013 美术/AI记忆/现行口径_参考与工具分工.md`(11-20 分工表并进了这份,旧的 `art-model-tool-routing` 只剩入口说明;概念图和其余 2D 件现在走 terra,不默认派 sol)。想让一个 Claude 子 agent 代为调度和核对 diff,派项目里的 `codex-executor` agent。
+经 2026-07-10 FTUE 盘点+施工实战验证。核心分工:**主会话=大脑**(读设计 SSOT 做裁决、写工单、抽查报告、Unity Play 验收、commit/deploy);**sol=手**(读大文档、扫代码、按工单写码、出图)。什么活派给 sol 由勾哥当次说;美术工具分工见 vault `01 - 星际拓荒重构/013 美术/AI记忆/现行口径_参考与工具分工.md`(概念图、paint-over 上色和其余 2D 件走 terra,不默认派 sol)。想让一个 Claude 子 agent 代为调度和核对 diff,派项目里的 `codex-executor` agent。
 
 ## 1. 调用配方(踩坑后的正确姿势)
 
@@ -23,14 +23,15 @@ codex exec --sandbox workspace-write --skip-git-repo-check --cd "<workdir>" \
 - **`--output-last-message`**:最终报告落文件,别从 stdout 抠(进度混在一起)。
 - 工单写成文件再 `"$(cat ...)"` 传入,避免引号地狱。
 - 后台跑(Bash run_in_background),等完成通知,不写 sleep 轮询;一单常 10-40 分钟。
-- **codex CLI 0.160 起已删掉 `--full-auto`**(本机 2026-10-30 为 0.163),施工用 `--sandbox workspace-write`(只读侦察仍 `--sandbox read-only`);带参考图用 `-i a.png -i b.png`(出图/对照任务必带)。
-- 版本:`gpt-5.6-sol` 需 codex CLI ≥0.144(报"requires a newer version"就 `npm install -g @openai/codex@latest`)。模型/登录复用桌面 App 的 `~/.codex/config.toml`,Extraction 已是 trusted 项目。
+- **codex CLI 0.160 起已删掉 `--full-auto`**,施工用 `--sandbox workspace-write`(只读侦察仍 `--sandbox read-only`);带参考图用 `-i a.png -i b.png`(出图/对照任务必带)。`-i` 是可变参数,会把后面的位置参数也当图吞掉:带 `-i` 时 prompt 走 stdin(`- < order.md`,这时不用再加 `< /dev/null`)。一次最多 5 张输入图,超了没有产出。
+- PowerShell 不支持 `<` 重定向,上面的命令一律在 Bash 里跑(或 `cmd /c`)。打回续做用 `codex exec resume <session id> - < feedback.md`(id 在 stdout 日志头)。
+- 模型名看 `~/.codex/config.toml` 和派单脚本里的 `-m`,不凭记忆手打(记忆里先后出现过 5.6 / 6.1 / 6.2 的 sol、terra);报"requires a newer version"就 `npm install -g @openai/codex@latest`。登录复用桌面 App 的配置,Extraction 已是 trusted 项目。
 
 ## 2. 铁律:严格串行,绝不并行
 
 **Windows 下并行跑多个 codex exec 会把沙箱层挤瘫**:每条 shell 命令起一个 `codex-windows-sandbox-setup` 进程,3 个实例并行 → 几十个沙箱进程空转 → 所有 agent 文件读超时 → sol 触发自己的"读不到就不盲改"红线,零改动退出(干净失败,报告说"请恢复终端访问")。
 
-- 一次只跑 **1 个** codex exec(用户上限 5,实测 3 就炸,别赌)。
+- 一次只跑 **1 个** codex exec(用户上限 5,实测 3 就炸,别赌)。出图、上色单(`er-shop-mkt` 的 `run_codex.sh`)也一样一次一张。
 - 炸过之后先清理:`Get-Process codex-windows-sandbox-setup | Stop-Process -Force`(桌面 App 的 codex 主进程别杀,看 StartTime 区分)。
 - sol 会自己 spawn 子 agent(session jsonl `thread_source:"subagent"`),进程数>agent 数是正常的。
 
@@ -60,7 +61,7 @@ workdir = <路径>。共享工作树有别人 WIP——只改本工单列出的�
 2. **载重结论逐条抽查**:sol 报告的 P0 每条用 Read/Grep 定点核实再动工(实测 4/4 属实,但行号/路径偶有小偏差)。
 3. **归因快照**:共享工作树,派单前 `git status --porcelain > snapshot`,收工后 diff 归因——sol 的改动 vs 别人工地的改动要能分开。
 4. **Unity 侧全归大脑**:编译检查、builder 运行、Play 验证由主会话走 Unity CLI(见 `playmode-verify-iterate`);sol 接不到 Editor,headless 下 Coplay 工具也全被自动拒。
-5. **commit/deploy 全归大脑**:显式路径 commit;CloudCode 部署串行且只 `-e development`。
+5. **commit/deploy 全归大脑**:显式路径 commit;CloudCode 部署由大脑照 `cloud-code-deploy` 第四步做(默认 `CloudCode/deploy-dev.ps1`,只到 development)。
 6. **额度监控**:Codex 5h 窗口限额,session jsonl 尾部 `rate_limits.primary.used_percent` 可查;侦察一单约 2 万 token,施工单更多。爆额度前收敛派单。
 
 ## 5. 失败模式速查

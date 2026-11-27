@@ -9,7 +9,7 @@
 1. **写在哪个表格**:Google Sheet URL + 分页(没有就让他建一个空表给链接;表是讨论的真源,不是报告)。
 2. **哪一屏 + 现状截图**(他发的截图路径;没有就自己进 Play 截)。
 3. **他已经看出的问题**(原话逐条记下,后面每个 topic 的「勾哥原话」列要原样放)。
-4. **美术素材要不要自产**:缺素材时按 §7 的现成产线出(2D 走 sol、图标头像框走 gemini 工具箱、单件模型走 Tripo 网页版),先问清这批要不要出。
+4. **美术素材要不要自产**:缺素材时按 §7 的现成产线出(分工以 §7 指的现行口径为准),先问清这批要不要出。
 
 需要整张清单做完时再登记 scope(`scope.js set`),每个 topic 一条「调研」+ 一条「实施+Play 验证」;一般多步活不用登记。
 
@@ -60,7 +60,7 @@
          {"dir":"额外·xxx","game":"灵感来源","action":"…","cost":"S","rec":"可选"}]}
 ```
 主脑拿到后:**contact sheet 抽验**(`templates/polish/contact.py` 拼版一张图,Read 一次看全部)→ 调 `rec`(翼德建议)→ 去重跨 topic 重复图 → 进表。
-**选竞品不限品类**:meta/UI 看 Supercell(Brawl Stars/Clash Royale/Squad Busters)、主机成品(Helldivers 2/DRG/Hades/XCOM)、SLG(Whiteout/RoK);地图/沙盘看 Bad North/Islanders/Dorfromantik/Civ VI/Zelda;同品类撤离(Delta Force/Arena Breakout/头号禁区)看题材语义。**画面质感的标尺只有 mo.co 实机截图**(红线 4、ER美术规范),上面这些只借布局、层级和交互,不当画风参考。
+**选竞品不限品类**:meta/UI 看 Supercell(Brawl Stars/Clash Royale/Squad Busters)、主机成品(Helldivers 2/DRG/Hades/XCOM)、SLG(Whiteout/RoK);地图/沙盘看 Bad North/Islanders/Dorfromantik/Civ VI/Zelda;同品类撤离(Delta Force/Arena Breakout/头号禁区)看题材语义。**3D 画面质感的标尺只有 mo.co 实机截图**(ER美术规范「怎么判断做到了」),上面这些只借布局、层级和交互,不当画风参考;UI 的画风按 vault `013 美术/AI记忆/现行口径_UI视觉kit.md`(绝区零 taste + ER),UI 不拉 mo.co 图,勾哥点名对照 HUD 时才拉 HUD 帧(现行口径_参考与工具分工第二节)。
 
 ## 5. 表格规格(勾哥的讨论真源)
 - 列:`# | 现状图 | 方向 | 参考游戏 | 对照图 | 他们怎么做 | Action 候选 | 成本 | 翼德建议 | 勾哥拍板 | 讨论备注 | 来源`;表头冻结;第 2 行一句用法。
@@ -94,10 +94,10 @@
 ## 7. 美术与建模通道(项目缺素材时自产到满意为止,不等美术)
 工具分工以 vault `01 - 星际拓荒重构/013 美术/AI记忆/现行口径_参考与工具分工.md` 第一节为唯一真源(11-20 分工表并进了这份,`art-model-tool-routing.md` 只剩入口说明;勾哥改口只改现行口径那一份);下面只是指路,和它或和各 skill 冲突时以它们为准。
 - **画风标尺**:改外观前,mo.co 参考只用参考登记表(Sheet「jungle lab」组件清单 I 列)里本物件那一行的图,打开原图看(红线 4;怎么选、哪些活不用拉见 vault `013 美术/mo.co截图/README_参考怎么选.md`)。对照只和 mo.co 实机画面并排,不拿 Brawl Stars / Clash of Clans 这类旧口径当标尺。
-- **2D**:概念图(所有线)走 codex terra,配方见现行口径 `现行口径_生图与概念图.md`;其余 2D(关键帧、UI 材质、VFX 贴图、decal、局内 sprite / HUD 件)走 codex terra,用 `er-shop-mkt/references/03-出图管线.md` 的 `run_codex.sh` + `check_rollout.py`(发单前核 `-m` 是 terra)。喂哪些参考图按那份管线和 `reference-replicate` 写的来;paint-over 上色单不喂 mo.co 图(`er-blender` 08)。
-- **图标(物品/资源/货币/奖励)**:`er-icon-gen`(gemini 工具箱);**UI 功能图标和头像**:codex(功能图标以底栏 tab 图标当 style ref,头像以六张英雄头像当画风参考);**头像框**:`er-frame-gen`;**礼包/营销 KV**:`er-shop-mkt`。
-- **地形上的植物、地面、崖壁、大量散布件**:Unity 里的 Lab 生成器,不走 Tripo、不走 Blender。POI 里的植物(花坛、垂藤、树池树)是另一类,走 `er-blender`(11-09),分法看它的路由表。
-- **复杂刚性单件**(怪物底模、陶罐、残骸、巢穴、基地建筑底模):Tripo **网页版 Studio**,禁 Tripo CLI;POI 建筑不走 Tripo,在 Blender 里部件化做(`er-blender` 07);之后 `er-blender` 精修 → `gaoguang-3d` 入库。
+- **2D**:概念图(所有线)走 codex terra,配方见现行口径 `现行口径_生图与概念图.md`;其余 2D(关键帧、UI 材质、VFX 贴图、decal、局内 sprite / HUD 件)走 codex terra,用 `er-shop-mkt/references/03-出图管线.md` 的 `run_codex.sh` + `check_rollout.py`(发单前核 `-m` 是 terra)。喂哪些参考图按那份管线和 `reference-replicate` 写的来;paint-over 上色单派 terra,喂图按 `er-blender` 08。
+- **图标(物品/资源/货币/奖励/装扮)**:默认 codex,规矩按 `er-icon-gen`(gemini 工具箱只在 codex 做不了时用);**UI 功能图标和头像**:codex(功能图标以底栏 tab 图标当 style ref,头像以六张英雄头像当画风参考);**头像框**:`er-frame-gen`;**礼包/营销 KV**:`er-shop-mkt`。
+- **地形上的植物、地面、崖壁、大量散布件**:默认 Unity 编辑器 + codex 合作(Lab 生成器);Blender、Tripo 或新路线可以试,按 W1 实拍判。POI 里的植物(花坛、垂藤、树池树)是另一类,走 `er-blender`(11-09),分法看它的路由表。
+- **复杂刚性单件**(怪物底模、陶罐、残骸、巢穴、基地建筑底模):默认 Tripo **网页版 Studio**(CLI / API 想试先在一件上对比);POI 建筑默认在 Blender 里部件化做(`er-blender` 07);之后 `er-blender` 精修 → `gaoguang-3d` 入库。
 - **制式硬表面、简单道具、Blender 精修**:`er-blender`。**角色**:`er-character-pipeline`。**世界特效**:`vfx-production`。
 - 主会话**逐张亲眼看**,不满意就打回同一执行方;进 Unity 后在真光照下再截一次和 mo.co 并排,达不到成品不进场景。
 
@@ -142,7 +142,7 @@
 
 ## 10. 收尾(每批)
 1. 知识库:`Competitive Research/<屏>打磨对照_<日期>[_B2].md`(含「实现现状」附录)+ `_manifest_*.md` + README 两行 + `cp` 镜像到 vault `08 - 竞品研究/`(含新图目录)→ 只提交 md。
-2. 记忆:工地文件(状态/提交/拍板/欠账/下一步/出图通道),MEMORY.md 一行索引;被取代的旧记忆加「⚠ 更正」。
+2. 记忆:工地文件(状态/提交/拍板/欠账/下一步/出图通道),按 vault 根 `CLAUDE.md` 的写回规则写进对应系统的 `AI记忆/` 并在总索引加一行(MEMORY.md 是脚本生成的,别手改);整条作废的旧记忆挪进同目录 `_archive_<日期>/`。
 3. 表格:施工单与 Batch 块状态列全部更新(✅+hash / ⚠欠账 / 施工中)。
 4. Planyway:默认建 KAN issue 标完成(assignee 按当次 userEmail);战绩 `progress.js bump` 一次。
 5. 向勾哥汇报:前后对比图路径、每 topic 一两句、**欠账与需要他拍板的**单列,不夸大。

@@ -5,11 +5,11 @@ description: ER(Extraction)出 icon 的规矩和 gemini 备用管线。2026-11-2
 
 # ER icon 生成(默认 codex;gemini 工具箱 CLI 备用)
 
-**2026-11-21 改口径(覆盖下面 10-26 那句):** 勾哥看商店 track 图标 v1(gemini 出的)后原话「用 codex 生成，减少使用 gemini」。从此物品 / 资源 / 货币 / 装扮 icon 默认走 codex 出图(管线照 `er-shop-mkt` 的 codex 出图做法;功能图标和头像 11-19 / 11-20 起本来就走 codex)。本 skill 的 gemini 工具箱只在 codex 明显做不了、或要接已在 gemini 管线里批过的成套母版续批时才用，用之前在汇报 / 派单里写明理由。下面的攒批规矩(第 1 节描述写法、只收勾哥原话要的)、给勾哥点选(第 4 节)、入 Unity(第 5 节)两条路都照用;已有同套成品可直接派生的(比如衣柜的 track 概念图)先派生，不花钱。vault 记忆:`013 美术/AI记忆/feedback-use-codex-less-gemini-20261121.md`。
+**默认通道(11-21 勾哥「用 codex 生成，减少使用 gemini」):** 物品 / 资源 / 货币 / 装扮 icon 默认走 codex 出图(管线照 `er-shop-mkt` 的 codex 出图做法;功能图标和头像 11-19 / 11-20 起本来就走 codex)。本 skill 的 gemini 工具箱只在 codex 明显做不了、或要接已在 gemini 管线里批过的成套母版续批时才用，用之前在汇报 / 派单里写明理由。下面的攒批规矩(第 1 节描述写法、只收勾哥原话要的)、给勾哥点选(第 4 节)、入 Unity(第 5 节)两条路都照用;已有同套成品可直接派生的(比如衣柜的 track 概念图)先派生，不花钱。vault 记忆:`013 美术/AI记忆/feedback-use-codex-less-gemini-20261121.md`。
 
-勾哥 2026-10-26 拍板(已被上一段改掉默认通道，只留画风标准):以后所有 icon 都走他自己调的 gemini 工具箱,不走 codex image_gen(他原话:"它的画风一致性调教比 codex 好")。画风以仓库物品图标为准,母版是 vault `01 - 星际拓荒重构/011_基地星/art/基地星icon_v4_style_reference.png`,默认参考就用它(勾哥 10-26 定 v4 样张)。可读性标准也是勾哥原话:"过于复杂了,放在手机屏幕上会花"——单一粗轮廓主体、少零件、不要细纹/网格/电路线。
+画风标准(两条路都一样):以仓库物品图标为准,母版是 vault `01 - 星际拓荒重构/011_基地星/art/基地星icon_v4_style_reference.png`,默认参考就用它(勾哥 10-26 定 v4 样张)。可读性标准也是勾哥原话:"过于复杂了,放在手机屏幕上会花"——单一粗轮廓主体、少零件、不要细纹/网格/电路线。
 
-工具箱是私有仓 `guxipi/er-imagegen`(10-29 起入 git,kryst、duck center、patri 三台机都装了)。目录 = 环境变量 `ER_IMAGEGEN_DIR`(Claude 进程比 `setx` 先启动时 bash 里读不到这个变量,下面的取值写法会从注册表补读;patri 机在 `C:/AI/Claude/ER`),没设就是 `F:/AI/Claude/ER`;下文命令里的 `$T` 都指它,Bash 状态不跨调用,每条命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。CLI 是 `$T/er_icon_cli.py`,同目录 `HANDOFF_生图工具箱.md` §0.0 记着每条设计的实测依据。开工先 `git -C "$T" pull --ff-only`;目录不存在就按第 0 节装,不要改用别的生图通道。所有命令用 `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" ...`(Bash,不走 PowerShell 管道喂中文)。
+工具箱是私有仓 `guxipi/er-imagegen`(10-29 起入 git,kryst、duck center、patri 三台机都装了)。目录 = 环境变量 `ER_IMAGEGEN_DIR`(Claude 进程比 `setx` 先启动时 bash 里读不到这个变量,下面的取值写法会从注册表补读;patri 机在 `C:/AI/Claude/ER`),没设就是 `F:/AI/Claude/ER`;下文命令里的 `$T` 都指它,Bash 状态不跨调用,每条命令前带 `T="${ER_IMAGEGEN_DIR:-F:/AI/Claude/ER}"`。CLI 是 `$T/er_icon_cli.py`,同目录 `HANDOFF_生图工具箱.md` §0.0 记着每条设计的实测依据。开工先 `git -C "$T" pull --ff-only`;目录不存在就按第 0 节装。所有命令用 `PYTHONUTF8=1 py -3 "$T/er_icon_cli.py" ...`(Bash,不走 PowerShell 管道喂中文)。
 
 ## 0. 新机器装一次
 
@@ -73,10 +73,10 @@ cut 做的事:按蓝色面板程序抠框(不再调 AI 去框)、切图、按 `�
 
 ## 5. 入 Unity
 
-只搬他点过的图,放到同类现有图标所在的文件夹(资源/货币在 `Assets/Art/UI/CurrencyIcons/`,装备在 `Assets/Art/Equipment/Icons/Designed/`;别的类先 Glob 同类图标在哪,找不到就问)。导入设置照现有图标:textureType 8(Sprite)、spriteMode 1、enableMipMap 0、alphaIsTransparency 1、filterMode 1、maxTextureSize 2048、textureCompression 1。换物品图要不要改 `ItemDefinition._icon` 和 `GameContentCatalog` 快照,按 Item 视觉登记表的流程走(见项目记忆 er-item-visual-registry),勾哥没说换就只放文件不接线。
+只搬他点过的图,放到同类现有图标所在的文件夹(资源/货币在 `Assets/Art/UI/CurrencyIcons/`,装备在 `Assets/Art/Equipment/Icons/Designed/`;别的类先 Glob 同类图标在哪,找不到就问)。导入设置照现有图标:textureType 8(Sprite)、spriteMode 1、enableMipMap 0、alphaIsTransparency 1、filterMode 1、maxTextureSize 2048、textureCompression 1。换物品图要不要改 `ItemDefinition._icon` 和 `GameContentCatalog` 快照,按 Item 视觉登记表的流程走(读写方法见 vault `019_装备界面/AI记忆/item-visual-registry-sheet-access.md`),勾哥没说换就只放文件不接线。
 
 ## 6. 现在不覆盖的
 
 CLI 只包了物品 icon 工具的 prompt。装备整套(编辑真实截图那套)、枪械、UI 黑白 glyph、buff 九宫格仍在 GUI(`er_launch.pyw` 双击开 hub),要用这些先告诉勾哥 CLI 还没接,别拿物品 prompt 硬套。头像框(中间镂空、套头像)走 er-frame-gen。
 
-非 icon 的单张图(概念图、场景图、宣传图、拿一张图改图)走同目录的通用生图 CLI `er_gen_cli.py`(11-16 加):prompt 原样发、不加风格词,`gen "<prompt>" [--ref 图 ...] [--aspect 16:9] [--size 1K|2K] [--n 1~4] [--name xxx] --yes`,改图把原图放第一张 `--ref`。key / 32s 限流 / 估价和本 CLI 共用,产物在 `$T/imagegen_out/_cli/`,每张旁边有记 prompt 的 .json。细节见 HANDOFF §0.00。
+非 icon 的单张图(概念图、场景图、宣传图、拿一张图改图)默认走 codex terra(11-20 勾哥拍板,见 vault `013 美术/AI记忆/现行口径_参考与工具分工.md`);gemini 这边的备用是同目录的通用生图 CLI `er_gen_cli.py`(11-16 加):prompt 原样发、不加风格词,`gen "<prompt>" [--ref 图 ...] [--aspect 16:9] [--size 1K|2K] [--n 1~4] [--name xxx] --yes`,改图把原图放第一张 `--ref`。key / 32s 限流 / 估价和本 CLI 共用,产物在 `$T/imagegen_out/_cli/`,每张旁边有记 prompt 的 .json。细节见 HANDOFF §0.00。

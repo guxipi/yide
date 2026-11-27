@@ -26,17 +26,17 @@
 - 提醒:翼德不能替他按 Play/出包/上真机;但证据落盘后,翼德能读回来做三查。
 
 ## D. 跑测 + 三查(triage)
-- **若有 Unity CLI 或 Unity MCP**(CLI 优先,写法见 `playmode-verify-iterate`;MCP 见 `integrations/unity-mcp/`,且 Unity 开着):`check_compile_errors` 看编译错、`get_unity_logs` 读 Console、`play_game` + 驱动脚本验运行时行为——真·在引擎里验证。**Coplay 没有 `run_tests`**,跑 NUnit 套件只能走下一条 CLI 或让勾哥在 Test Runner 手动跑(见 `playmode-verify-iterate` 第〇步)。
-- **否则**(纯 CLI,需本机 Unity 编辑器 + license):`Unity -runTests -batchmode -projectPath . -testPlatform EditMode -testResults r.xml`(冒烟子集 `-testCategory Smoke`)。**别看退出码**(Unity 无统一约定),**解析 NUnit XML**。
+- **若有 Unity CLI 或 Unity MCP**(CLI 优先,写法见 `playmode-verify-iterate`;MCP 见 `integrations/unity-mcp/`,且 Unity 开着):`unity command console status` 看编译错、`console get` 读 Console、`editor.playmode start` + 驱动脚本验运行时行为(MCP 对应 `check_compile_errors` / `get_unity_logs` / `play_game`)——真·在引擎里验证。跑 NUnit 套件走 `unity command test run` 或无头 `unity test`(Coplay 没有 `run_tests`;写法见 `playmode-verify-iterate` 第〇步)。
+- **否则**(没有 Unity CLI,只有本机 Unity 编辑器可执行文件 + license):`Unity -runTests -batchmode -projectPath . -testPlatform EditMode -testResults r.xml`(冒烟子集 `-testCategory Smoke`)。**别看退出码**(Unity 无统一约定),**解析 NUnit XML**。
 - 读 `Player.log` / `adb logcat` / NUnit XML,聚类失败,产出结构化报告(按 SOP)。
 - **报错 → 自己定位、修、重跑,到全绿为止**;别把没修绿的东西丢给勾哥手测(见 F)。
 - 没有以上条件就如实说"跑不了",别假装跑过。
 
 ## E. 可选:行为快照测试(治"修一个 bug 坏六个")
-> 2026-10-12 起不再是默认动作:只在勾哥点名、或改交易 / PvP / 服务端这类强一致核心时做;其他改动靠 Play Mode 真跑验收。
+> 默认不做:只在勾哥点名、或改交易 / PvP / 服务端这类强一致核心时做;其他改动靠 Play Mode 真跑验收。
 针对屎山/高耦合代码改动 —— 不是验证它"对不对",而是先**记录它现在的行为**,改完比对,**一动坏就当场报警**(业界叫 characterization test)。
 1. **先拍快照**:动手前,围绕"将要改的那块 + 它现在还正常的相邻功能",让 **Claude 自己写**几个 EditMode/PlayMode 测试,断言**当前的实际行为**(哪怕这行为本身不完美——先锁住现状)。
-2. **改完真跑**:EditMode/PlayMode 测试走 Unity CLI `-runTests` 或勾哥 Test Runner 手动跑(Coplay 没有 `run_tests`),运行时行为用 `play_game` + 驱动脚本真跑;**绿了才算修好**,红了说明碰坏了别处,立刻回头。
+2. **改完真跑**:EditMode/PlayMode 测试和运行时行为的跑法同 D;**绿了才算修好**,红了说明碰坏了别处,立刻回头。
 3. **怎么不烦人(重要)**:
    - **只对非琐碎 / 改到耦合处或关键路径的改动做**;琐碎、可逆、独立的小改**跳过**,别为它写测试拖慢手感。
    - **Claude 自动写、自动跑**,勾哥只看结果——别把写测试甩给他(他不爱写测试)。
@@ -44,7 +44,7 @@
 
 ## F. 安卓真机实测(可选;**全绿之后才问勾哥**)
 > 顺序很重要:**翼德先自己测 + 自己修到全绿,才惊动勾哥;真机实测是锦上添花的可选项,不是用来抓基础 bug 的。**
-1. **先全绿(不打扰勾哥)**:逻辑+集成测试在电脑上跑(Unity CLI `-runTests` 跑套件,Coplay `play_game`/`get_unity_logs`/`check_compile_errors` 验运行时),报错自己定位修,**循环到全绿**。没绿之前别喊勾哥手测。
+1. **先全绿(不打扰勾哥)**:逻辑+集成测试在电脑上跑(套件和运行时验证的跑法同 D),报错自己定位修,**循环到全绿**。没绿之前别喊勾哥手测。
 2. **绿了再问一句**:"都测过了、全绿 ✅。**要不要在真机上实测一下?(可选)**" 勾哥说不用 → 直接交付收工。
 3. **他说要 → 第一次 guide**:教他插数据线、开「USB 调试」(步骤在 `integrations/android/SETUP.md`),`adb devices` 确认连上。
 4. **他在手机上玩,翼德后台取证**:游戏里 `EvidenceCapture.cs` 在任何异常时自动把 截图 + 完整 log + 机型 存到手机;翼德 `adb pull <persistentDataPath>/yide-evidence` 拉回(没装 EvidenceCapture 就 `adb logcat -d` 抓栈)。

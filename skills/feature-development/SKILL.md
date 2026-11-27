@@ -83,27 +83,14 @@ dump 真相的方法:写一次性探针 .cs 放 **Assets 外**(项目根 `Temp/`
 
 ## 第五步:验证 → 收尾(不测不算完)
 
-1. **编译干净**:`unity command console status`(编译失败标志)+ grep Editor 日志 `error CS` **交叉验证**(单一工具偶发说谎)。
+1. **编译干净**:按 `playmode-verify-iterate` 第〇步交叉验证(`console status` + grep `error CS`;`unity recompile` 非 0 当失败)。
 2. **进 Play 端到端真测 + 迭代到满分**:这是头号铁律,驱动方法见 `playmode-verify-iterate`,测哪些 flow、过哪些门禁见 `qa-testing`——不是截一张图就完,是真点击走全链路、发现问题回来一轮轮修到玩家体验满分。
-3. **收尾**:写一条 project 记忆(可复用的非显然事实:builder 入口、部署方式、踩的坑);推进了 ER 产品就 `progress.js bump`;玩家可见的推进按 `todo-to-planyway` 模式 B 直接上传 Planyway,不用问(工具/文档/纯重构不发)。
+3. **收尾**:写一条记忆(可复用的非显然事实:builder 入口、部署方式、踩的坑;ER 的写进 vault 对应系统的 `AI记忆/`,不写 C 盘 `~/.claude/projects/.../memory/`);推进了 ER 产品就 `progress.js bump`;玩家可见的推进按 `todo-to-planyway` 模式 B 直接上传 Planyway,不用问(工具/文档/纯重构不发)。
 4. 非琐碎改动跑一次内置 `/code-review`(或"翼德 评审")让独立上下文挑正确性/耦合。
 
 ---
 
-## 已验证的"会拖慢/翻车"的坑速查
-
-| 坑 | 真相 |
-|---|---|
-| 自己顺序读大功能全部代码 | 慢且爆上下文;改用并行 Explore agent fan-out |
-| 信 agent/工具的二手数值 | 关键值亲自 Read 原文核实(hex 解错过) |
-| 假设旧功能"没做" | 多半"做了一半没接通";先 dump 真相找断点 |
-| 改错层 | 已 prefab 化的屏改 prefab、禁重跑 builder;旧屏改 builder;两者都不在场景实例上手摆 |
-| 只看一个编译通道 | `console status` + grep `error CS` 交叉验证 |
-| 改完不进 Play 就交 | 头号红线;走 `playmode-verify-iterate` |
-
----
-
-## 附录:卡住急救(原 unstuck-playbook,2026-10-30 并入)
+## 附录:卡住急救
 
 意识到自己在打转(同一个动作试第 3 次、改一处冒一处、说不清现在在干嘛)——先停,别蛮干。
 

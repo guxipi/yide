@@ -2,7 +2,7 @@
 
 usage: py -3 check_rollout.py <codex exec log file> <expected ref count>
 Reads 'session id: <uuid>' from the log, finds ~/.codex/sessions/**/rollout-*<uuid>.jsonl,
-counts .png paths inside each tools.image_gen__imagegen({referenced_image_paths:[...]}) call.
+counts image paths (.png/.jpg/.jpeg/.webp) inside each tools.image_gen__imagegen({referenced_image_paths:[...]}) call.
 Exit 0 = every image_gen call carried exactly the expected refs and no ER art skill was read.
 """
 import glob, json, os, re, sys
@@ -25,7 +25,7 @@ for line in open(hits[0], encoding='utf-8'):
     inp = d.get('input') if d.get('type') == 'custom_tool_call' else None
     if inp and 'image_gen__imagegen' in inp:
         arr = re.search(r'referenced_image_paths\s*:\s*\[(.*?)\]', inp, re.S)
-        calls.append(len(re.findall(r'\.png', arr.group(1))) if arr else 0)
+        calls.append(len(re.findall(r'\.(?:png|jpe?g|webp)\b', arr.group(1), re.I)) if arr else 0)
         if not arr and re.search(r'referenced_image_paths\s*:\s*[A-Za-z_]', inp):
             via_var += 1
 ok = bool(calls) and all(c == want for c in calls) and skill == 0

@@ -1,17 +1,12 @@
 # 踩过的坑总表(症状 → 根因 → 预防 → 在哪一步)
 
-> **读表前先知道(2026-11-20 标注):这张表是按时间往下加的,前面的条目有被后面推翻的;和 SKILL.md 冲突时以 SKILL.md 为准。** 已知这几处:
-> - 坑 67「头单独生成再拼到身体上」已被 10-26 的做法取代:头小的角色整身高面数生成 + 保脸减面,不分头(SKILL.md)。
-> - 坑 103 写「动作 FBX 一律 CreateFromThisModel 自建 avatar」,SKILL.md 的「一副骨架铁律」(10-24)写的是动作 FBX 用 CopyFromOther 借模型 avatar。两条相反,哪条在后没有查到,动手前看最近一个入库成功的角色实际怎么设的,拿不准问勾哥。
-> - 坑 53、106 要求对动画 FBX 也跑 enforce / canon T-pose,`07-Unity入库.md` 写的是动作 FBX 不跑。同样没有定论,处理办法同上。
-> - 坑 76 说的「黑色 = Outline pass 画出的背面」是 ToonLit 时代的现象。现在 3D 着色现行统一用 Lab/LabLit,没有描边 pass。
-> - 编号 #73–#79、#81–#85 各出现了两次,别处写「见坑 77」这类引用时要对症状,不能只对号。
+> **读表前先知道:这张表按时间往下加,和 SKILL.md 冲突时以 SKILL.md 为准。** 2026-11-27 整理:删掉已被取代的坑 53、103(动作 FBX 现在是一副骨架 + CopyFromOther,canon / enforce T-pose 只对模型 FBX 跑,见 SKILL 总纪律、07 §8.2 / §8.8)和坑 67(头小角色现在整身高面数生成 + 保脸减面,见坑 116);第二条坑 81 并进 117;原先重复的编号,后一组 #73–79 改成 138–144、#82–85 改成 145–148。
 
 | # | 症状 | 根因 | 预防 / 修法 | 阶段 |
 |---|---|---|---|---|
 | 1 | 模型脸"蛇精脸":正脸平、眼窝深、V 下巴 | 只喂平光四视图,Tripo 读不出脸深度 | 两套参考图:结构参考(体积光)只建白模,平光厚涂只上贴图;clay 灰模从正/侧/3/4/俯 70° 看脸 | 2、3、5 |
 | 2 | 建模图被打回"细节偏了" | 为重建把识别件简化成别的形状(Rook 绳袋/头盔、Wren 方罐) | 只删悬空件,识别件形状照定稿图;逐件对照表 | 1 |
-| 3 | 头身比卡在 6.3 或一下跳到 4.7 | sol 按文字给立绘比例;"放大 25%"过冲 | edit 喂上一张,每次 10~12% | 1 |
+| 3 | 头身比卡在 6.3 或一下跳到 4.7 | sol 按文字给立绘比例;"放大 25%"过冲 | edit 喂上一张,每次 10~12%;两轮还差 ≥0.02 走 mock 法(坑 117) | 1 |
 | 4 | 改脸改不动 | 喂了旧版本当参考,脸被锁回去 | 改脸结构时去掉旧版,只用文字 + 定稿图特写 | 1、7 |
 | 5 | 以为颜色偏色相,改了没用 | 实际差在饱和度/明度 | 先 `crop_compare.py --hsv` 量 | 1 |
 | 6 | 对着 prompt 打勾交付,实际没改到 | 没看像素 | 每版和上一版裁同一区域并排看 | 全程 |
@@ -61,21 +56,19 @@
 | 50 | 贴脸开火枪口压向地面 | 只限制了左右;瞄准点只放枪口前 1 m,绕挂点转时角度放大 | 俯仰 ±12°、点放 ≥8 m | 9 |
 | 51 | 死亡后角色还举着枪 | 死亡同帧 timeScale=0,按游戏时间淡出永不结束 | 死亡立即让出;淡出用 unscaledDeltaTime | 9 |
 | 52 | 白人角色肤色偏黄 | Tripo 贴图皮肤橘黄 | skin_recolor.py 身体+图集同参;遮罩挡虹膜和靴子 | 8 |
-| 53 | 预览动作手臂扁平、比心变平伸 | 动画 FBX 的 Avatar 没做 enforce T-pose | 动画 FBX 也跑 enforce_tpose | 8 |
 | 54 | 弹簧裙子:窄了穿腿、宽了翻领、后片钟形,怎么调都不对 | 短裙贴着腿,插件先碰撞后限制 + 惯性 | 短裙改 HeroSkirtFollow 跟大腿走,删裙摆 SpringBone;弹簧只给头发 | 8 |
 | 55 | 外八字、膝盖外翻 | Tripo 模型脚尖外撇 + 预设动作两腿外分 | HeroLegTidy 每帧收膝收脚尖;别改 Avatar 基准 | 8 |
 | 56 | 白人肤色改成纸白,"像鬼" | 饱和砍太多、亮度提太多,亮灯下无血色 | sat 0.70 lift 0.16;三档在装备页灯光下挑 | 8 |
 | 57 | QA 在 Play 时我写了 .cs 和 prefab,那轮结果作废 | 多 agent 共用编辑器 | 写 .cs/prefab 前先 editor_status,QA 在测就等它收尾 | 9 |
 | 58 | 建模图头身比 5.5 的角色(Rook/Vesper)prompt 里写着"4.7-5 heads" | body.txt 写死了 Wren 的头身 | 已改成按 sheet.head_ratio 算 {HEADS};模板图用同头身的角色(Rook 用 Vesper front) | 1 |
 | 59 | 左右视图朝向门 FAIL,目视朝向是对的 | 背包+头盔把 bbox 往后撑,"皮肤质心偏 bbox 中心"失效 | 大背负件角色朝向门只作参考,以不对称件逐件目视为准 | 1 |
-| 60 | 侧面视图头比正面小 0.015 | sol 侧面按自己的比例画 | finalize 后用放大刻度量下巴(skin 检测会把脖子算进去),侧面 edit 喂 front final 作比例参考放大 10% | 1 |
+| 60 | 侧面视图头比正面小 0.015 | sol 侧面按自己的比例画 | finalize 后用放大刻度量下巴(skin 检测会把脖子算进去),侧面 edit 喂 front final 作比例参考放大 10%;差得多以领口 / 肩线对齐 front 做 mock(坑 118) | 1 |
 | 61 | 头盔(琥珀面罩)被当成头发/挂着脖子权重,远距权重报几百 | 颜色规则看色相,琥珀=棕 | 背上悬空硬件单独一根 rigid + capsule_radius,max_head 放开 | 6 |
 | 62 | 长脸角色嘴落在 face_calib 蓝带下面 | 默认投影按圆脸 Head 骨推 | 看 calib 调 center_z/ortho_scale(Rook 0.884/0.185);棕发角色 hair_hue_ranges 留空 | 7 |
 | 63 | sol 出图 1254x1254,face_atlas 判 FAIL size | sol 偶尔不按要求尺寸 | 缩回 1024,原图留 *-1254 | 7 |
 | 64 | hero_swap 后 HeroGunHoldPose/HeroPreviewShow/HeroLegTidy 全没了;或删旧模型报错 | 标准版只搬 UnitAnimator;Hero 里模型是嵌套预制体实例,子物体删不掉 | 用 hero_swap_keepall.cs;spring_spec 打印的命令清单行号别数错(Rook 误跑标准版,靠工程外备份还原) | 8 |
 | 65 | ingame_check 后坐截图人弯着腰 | anim_state 只切指定层,base 层还停在上一个 death | 默认顺序改成 Sprint → Recoil → death | 9 |
-| 66 | 实机脚本从 Expedition 直接起,装备页按钮全 none | playModeStartScene 是"当前场景" | 跑前设 Boot;**跑完还原成原来的值(正常就是 Boot),不要设 null**——从当前场景进会有一批服务不初始化 | 9 |
-| 67 | 整身生成的头糊成碎块(发刺、鼻子平、骨棱碎、耳机熔在头发里),贴图怎么修都不像 | 整身一次生成,头只分到几千面 | 头单独出四视图(只有头颈+耳机,平光+结构两套)单独生成,在 Blender 拼到身体上(Rook 参考实现 character-art-lab/tools/rook_assemble.py) | 3 |
+| 66 | 实机脚本从 Expedition 直接起,装备页按钮全 none | playModeStartScene 是"当前场景" | 跑前设 Boot;**跑完还原成开工时实读的原值(Boot 和 HomeScreen 之间会变,见 playmode-verify-iterate 第〇步),不要设 null**——从当前场景进会有一批服务不初始化 | 9 |
 | 68 | Blender 里头盔/小件好好的,Unity 里边条和高光全黑 | 面朝里,Blender 默认双面看不出,Unity 剔除背面 | 生成件逐面检查法线朝外;进 Unity 前开背面剔除渲一遍 | 8 |
 | 69 | rig_build 拉伸门"全过",减面后又不过 | p99 是全身顶点百分位,高面数的头不受拉伸,把百分位稀释了 | 比较拉伸门时面数要一致;看 deform_crops 原图 | 6 |
 | 70 | 换了头的大小/位置后表情鼻梁双线鬼影 | 表情底图是在旧头上画的,和新几何错位 | 新旧 face_front 原始渲染做 ECC 仿射(ROI 偏移换回整图坐标),warpAffine(WARP_INVERSE_MAP) 把所有表情对到新头,残差 <0.5px | 7 |
@@ -88,13 +81,13 @@
 | 77 | 胶片条每帧一样 / 永远是绑定姿势 / 拍的是上一次的姿势 | SampleAnimation 对 Humanoid 在编辑器里只生效一次;Animator 在子节点上时采根节点无效;编辑器下蒙皮不随骨骼即时重算 | film_strip.cs 改用 AnimationMode 采 Animator 所在节点 + 预热一次 + forceMatrixRecalculationPerRender | 8 |
 | 78 | 借来的 fold_arms 抱臂时手摊平、指尖外翘像劈掌 | 动作按 Wren 身材做,宽袖撑粗前臂,手不收进胳膊 | 借别人的手部接触类动作先拍特写;Vesper 撤掉 fold_arms 只留 look_around | 8 |
 | 79 | 身高比例按"旧主角"换,结果矮 1% | hero_swap 以当前 Hero 里的模型为基准,现在是 Rook(0.99 倍宇航员)不是宇航员 | 换前从 git 历史取宇航员版 Hero.prefab 量高(3.649),按它算目标高度 | 8 |
-| 73 | 带尾巴/长吻的角色竖图放不下 | 侧面宽度接近身高 | 四视图改 1024×1024 方图(sheet.size/top 跟着改),人形 body.txt 换成角色专用 prompt | 1 |
-| 74 | 宽体角色跑步肚子和围裙下摆被腿撕开 | Tripo 把大腿权重刷到肚子中间 | `rig.upleg_cut` 渐隐给 Hips,且必须在接缝平滑之后再复核一次(平滑会扩散回去) | 6 |
-| 75 | 左右不对称的义肢肩轴歪 | 左右平均把机械臂肩点挪了 5% | `rig.mirror_skip` 跳过手臂;机械件用 `hard_skin` 按段硬绑 | 6 |
-| 76 | 躯干剥了手臂权重后手掌开黑洞 | 手掌贴肚那面没被连通识别收进手臂 | `sleeve_flood.keep_hand_dominant`;黑色 = Outline pass 画出的背面,说明网格破了 | 6、9 |
-| 77 | 人形动画手臂插进大肚子 | 动画手臂垂到贴身,短臂宽体角色进肚子 | 改该角色 Avatar 肌肉范围(HumanLimit z=Down-Up,上臂 -25、锁骨 -5),不改动画不改网格 | 8 |
-| 78 | 深眼窝外悬眼睑的角色闭眼格残留眼白 | 眼睑内侧面被法线/射线/后脑门全排除 | `face_swap.py --force-ellipses ... --force-ymax` 强制纳入眼眶椭圆内的面 | 7 |
-| 79 | Chrome 下载卡住,Downloads 只有 .tmp | 浏览器等下载确认 | .tmp 读 glTF 头 12 字节,长度字段等于文件大小就是完整 GLB,直接拷走 | 3 |
+| 138 | 带尾巴/长吻的角色竖图放不下 | 侧面宽度接近身高 | 四视图改 1024×1024 方图(sheet.size/top 跟着改),人形 body.txt 换成角色专用 prompt | 1 |
+| 139 | 宽体角色跑步肚子和围裙下摆被腿撕开 | Tripo 把大腿权重刷到肚子中间 | `rig.upleg_cut` 渐隐给 Hips,且必须在接缝平滑之后再复核一次(平滑会扩散回去) | 6 |
+| 140 | 左右不对称的义肢肩轴歪 | 左右平均把机械臂肩点挪了 5% | `rig.mirror_skip` 跳过手臂;机械件用 `hard_skin` 按段硬绑 | 6 |
+| 141 | 躯干剥了手臂权重后手掌开黑洞 | 手掌贴肚那面没被连通识别收进手臂 | `sleeve_flood.keep_hand_dominant`;开洞说明网格破了 | 6、9 |
+| 142 | 人形动画手臂插进大肚子 | 动画手臂垂到贴身,短臂宽体角色进肚子 | 改该角色 Avatar 肌肉范围(HumanLimit z=Down-Up,上臂 -25、锁骨 -5),不改动画不改网格 | 8 |
+| 143 | 深眼窝外悬眼睑的角色闭眼格残留眼白 | 眼睑内侧面被法线/射线/后脑门全排除 | `face_swap.py --force-ellipses ... --force-ymax` 强制纳入眼眶椭圆内的面 | 7 |
+| 144 | Chrome 下载卡住,Downloads 只有 .tmp | 浏览器等下载确认 | .tmp 读 glTF 头 12 字节,长度字段等于文件大小就是完整 GLB,直接拷走 | 3 |
 | 80 | 改 HeroPreviewShow 的 Playable 对装备页没效果 | 装备页预览走 HeroPreviewAnimatorController | 先在 Play 里读 Animator.runtimeAnimatorController 确认走哪条 | 9 |
 | 81 | 机械臂/硬件在错的位置弯、看着像拧碎 | Tripo 自动摆骨的肘腕离硬件关节轴 10cm 级 | 按深色关节环测中心,`rig.bone_overrides` 放骨;硬件按段整块绑 | 6 |
 | 82 | 改了骨点/重建 FBX 后 Unity 里手臂拧成麻花 | .meta 里的 Avatar skeleton 还是旧骨向 | 每次换 FBX 都重跑 enforce_tpose(不只 avatar_check);硬件手臂 armTwist=0 | 8 |
@@ -103,16 +96,15 @@
 | 85 | 装备页看不到长吻角色的脸 | 预览相机在头下方 ~14°;待机动作仰头 | 选平视待机;另做头颈下压的预览专用待机,只给 HeroShowcase | 8 |
 | 86 | 动画 FBX 换 Avatar 报 hierarchy 不匹配 | 只有骨架的 FBX 被 Unity 吞掉根节点 | 导出时加一个空物体兄弟节点,保住 `<Name>_Armature` 层 | 8 |
 | 87 | rig_build 区域参数总是差一点 | 权重阶段网格还没最终归一(Tuba 1.11 倍) | 新参数用 final_space;旧参数是按当时空间试出来的,别混用 | 6 |
-| 81 | sol 按"6.5 heads"出四视图实际约 8 头身 | sol 默认画立绘比例 | 写"头占身高 X%"并 PIL 量；+12% 只给 4%，直接写"现在 0.13 要变 0.15" | 1 |
-| 82 | 无袖上衣抬手时袖窿布被拽成袖子 | Tripo 给袖窿附近上衣刷了手臂权重 | `rig.garment_arm_strip` 按位置剥（肩关节内侧），absx_fade 软过渡；别按颜色挑（夹克炭灰≈上衣黑） | 6 |
-| 83 | 覆盖旧角色 FBX 后 Avatar isHuman=False | .meta 里旧 humanDescription 引用了新模型没有的骨 | 先清空 humanDescription 设 Generic 再设 Human 重新自动映射，再 enforce_tpose | 8 |
-| 84 | 改了外部 basecolor.png 渲染没变 | rig blend 里贴图是打包的 | 改贴图走 rig_build --texture | 6、7 |
-| 85 | 表情丢痣 / happy 画成睁眼 | sol 重画整脸 | 闭眼 prompt 写死无虹膜无眼白；痣从 neutral 移植 | 7 |
+| 145 | 无袖上衣抬手时袖窿布被拽成袖子 | Tripo 给袖窿附近上衣刷了手臂权重 | `rig.garment_arm_strip` 按位置剥（肩关节内侧），absx_fade 软过渡；别按颜色挑（夹克炭灰≈上衣黑） | 6 |
+| 146 | 覆盖旧角色 FBX 后 Avatar isHuman=False | .meta 里旧 humanDescription 引用了新模型没有的骨 | 先清空 humanDescription 设 Generic 再设 Human 重新自动映射，再 enforce_tpose | 8 |
+| 147 | 改了外部 basecolor.png 渲染没变 | rig blend 里贴图是打包的 | 改贴图走 rig_build --texture | 6、7 |
+| 148 | 表情丢痣 / happy 画成睁眼 | sol 重画整脸 | 闭眼 prompt 写死无虹膜无眼白；痣从 neutral 移植 | 7 |
 | 88 | 硬件手/机械手"用指尖夹着枪" | 持枪按人手算掌心+弯手指,硬件拳不会弯 | 拳心挂点 GripSocket(+Z 枪管、+Y 枪顶),持枪走挂点分支、不弯手指;手腕伸直反推枪位置;实机从手背/拳心/正面三个方向看 | 9 |
 | 89 | 拳头下伸出一根黑杆 | 拇指权重被 Tripo 刷在前臂,手一转被拉长 | 拇指球锁到手 + hard_skin_vote 去孤岛;用"弯腕 45° 找拉伸边"脚本定位 | 6 |
 | 90 | 实机脚本卡在简报室进不去远征 | 测试账号体力耗尽(弹 UINotEnoughStaminaPopup) | 用 StaminaService.GrantFromAdAsync 补(等同看广告),别改存档 | 9 |
 | 91 | 5.5 头身做到绑骨被勾哥否("没法接受,正常头身比"),整轮作废 | 套了 Rook 的 5.5;老人/高大角色 Q 化 | 阶段 0 问头身比时给出对照(Rook 5.5 / Vesper 6.5 实物图),不默认沿用上一个角色 | 0、1 |
-| 92 | sol 改头身比"放大 1.4x"只动了 15% | 百分比描述 sol 不认 | 写全身地标坐标(下巴/肩/腰带/裆/膝占身高比例),量格式模板得出,一轮到位;侧/背同一组地标 | 1 |
+| 92 | sol 改头身比"放大 1.4x"只动了 15% | 百分比描述 sol 不认 | 现行默认走 mock 法(坑 117);Harrow 当时写全身地标坐标(下巴/肩/腰带/裆/膝占身高比例,量格式模板得出)一轮到位,侧/背同一组地标 | 1 |
 | 93 | 分体拼头后领口一圈锯齿碎片、旧胡子残留、橙色色带 | 按贴图颜色删旧头:颜色判断在领口必漏必多 | 先按旧帽子对齐新头,再用新头"皮肤+帽子"的切片半径删旧头;领口乱涂交给贴图层按 3D 位置重染,不在网格上按色删 | 3、5 |
 | 94 | Unity 里新脖子和领子之间一圈黑块(双面时是白块) | Tripo 领子是单面壳,背面露出;LabLit 剔除背面(`_Cull` 默认 Back)后看到领子后面的东西(当时是描边色) | 新脖子侧向加宽+伸长塞进领口;立领加一层反向内壁(内缩 0.8mm,2mm 会在边沿露黑线) | 5、8 |
 | 95 | 拉长脖子把山羊胡也拉长 | 拉伸按高度一刀切 | 胡子(前方顶点)单独 goatee_stretch | 5 |
@@ -123,10 +115,9 @@
 | 100 | 背挂长枪挂在一根脊柱骨上,驼背/跑动时下半截悬空、侧面看是隔着身体的竖杆 | 单骨挂点只跟胸转,下端不跟髋 | 上贴点挂 Spine2、下贴点挂 Hips,AimConstraint 让枪身每帧从上贴点指向下贴点;贴点在本角色待机姿势下按背部表面量(tools/harrow/unity_rifle_sling.cs) | 8 |
 | 101 | 改了脊柱前弯的动画,人看着站在脚跟上、往后仰 | 人形动画的身体朝向(RootQ)取骨盆和胸口的平均,脊柱前弯 → 骨盆后仰、腿往前伸;改 RootT 没用 | 同时把 RootQ 往前俯仰补偿(Harrow 脊柱 -0.17 配 14°),用"髋部在脚踝前后多少/身高"量到接近原动画 | 8 |
 | 102 | 重建 .anim 后装备页轮播变成别人的动作 | 脚本先 DeleteAsset 再 CreateAsset,GUID 变了,HeroShowcase/AOC 引用断 | 覆盖已有资产用 EditorUtility.CopySerialized 保留 GUID | 8 |
-| 103 | 动作 FBX 导进来人躺着/腿全坏,数值审计却说膝盖正常 | 动作 FBX 的 avatarSetup 改成 CopyFromOther 借了模型 avatar,骨架静止姿势和模型不一致;之后在坏结果上叠 leg_fix / Blender 重烘焙补丁越修越坏;knee_probe 只量腿不量整体朝向 | 动作 FBX 一律 CreateFromThisModel 自建 avatar,靠 Unity 肌肉空间重定向(Wren 就是这样);审计必看正侧全身渲染,人不在画面里就是朝向坏了(Rook2 10-23) | 8 |
 | 104 | eval 里 `EditorApplication.delayCall += SaveAndReimport` 永远不执行 | 无焦点编辑器不跑 delayCall | 同步 `imp.SaveAndReimport()`,`EVAL_TIMEOUT=300 bash ucli.sh eval …` | 8 |
-| 105 | 预设 idle/walk 到角色身上两腿交叉/内八,Blender 里源动作脚距正常;Enforce T-Pose 跑过也没用 | Unity MakePoseValid 只把腿摆进合法范围,动画 FBX avatar 腿外展 12°、模型 avatar 6°,肌肉重定向把差值当成内收 | 模型和动画 FBX 的 skeleton T-pose 腿部都强制拉直到正下方、脚尖朝前(character-art-lab/tools/rook2/leg_tpose.cs),零肌肉姿势 ankleSpread/hip=1.00 才算过;改完重生成所有派生 .anim(Rook2 10-23) | 8 |
-| 106 | 待机时手臂僵硬外撑、肘外弯、手垂在大腿前;与 Wren 并排一看就假 | 同 105 的手臂版:两份 avatar 手臂/手 T-pose 差异变成每个动作的恒定偏移;Enforce T-Pose 不管这个 | `eval/canon_tpose.cs` 对模型 FBX 和每个动画 FBX 都跑;验收=`fullbody.cs` 正侧背 3/4 四视图和 Wren 同机位并排(Rook2 10-24) | 8 |
+| 105 | 预设 idle/walk 到角色身上两腿交叉/内八,Blender 里源动作脚距正常;Enforce T-Pose 跑过也没用 | Unity MakePoseValid 只把腿摆进合法范围,动画 FBX avatar 腿外展 12°、模型 avatar 6°,肌肉重定向把差值当成内收 | 根治是一副骨架:动作烘到模型最终骨架 + CopyFromOther(05 §6.8,坑 108/109),不给动作 FBX 另建 avatar;模型 FBX 跑 canon_tpose(07 §8.2 4a),`tpose_probe.cs` 零肌肉 ankleSpread/hip=1.00 才算过;改完重生成所有派生 .anim(Rook2 10-23/24) | 8 |
+| 106 | 待机时手臂僵硬外撑、肘外弯、手垂在大腿前;与 Wren 并排一看就假 | 同 105 的手臂版:两份 avatar 手臂/手 T-pose 差异变成每个动作的恒定偏移;Enforce T-Pose 不管这个 | 根治同坑 105(一副骨架);`eval/canon_tpose.cs` 只对模型 FBX 跑;验收=`fullbody.cs` 正侧背 3/4 四视图和 Wren 同机位并排(Rook2 10-24) | 8 |
 | 107 | 规范 T-pose 后空投舱里角色背对镜头,渲染板却正常 | Unity 人形约定面朝 +Z 时左侧在 -X;脚本把左髋→右髋定成 +X,人形参考系转 180°;audit 相机跟着 transform.forward 所以看不出 | canon_tpose 左髋方向=-X;改完必跑 `eval/facing_probe.cs`(零肌肉 LHand.x<0、toes.z>0 = FACING OK);改 avatar 后舱内/挂点类 clip 全部重解(Rook2 10-24) | 8 |
 | 108 | 脚尖点地/脚跟离地,离线板子只看出一点,实机明显 | 模型 avatar T-pose 脚掌俯仰 37.5°、动作 avatar 15.9°,差 22° 转嫁到每个动作;两副骨架问题的脚部版 | 不再做两份 avatar:动作烘到模型骨架(05 §6.8)+ CopyFromOther;`eval/foot_probe.cs` 待机脚掌俯仰应≈模型绑定姿势(Rook2 40°)(10-24) | 8 |
 | 109 | 动作 FBX CopyFromOther 模型 avatar 后人躺倒/下沉 9 m | 动作 FBX 只有骨架一个顶层对象,Unity 把唯一顶层节点折叠成文件根,`Armature`(270° X)这一层没了,借来的 avatar 骨架层级对不上 | 导出动作 FBX 时多放一个空顶层对象(anim_bake_to_rig.py 已加 `Rook2` Empty),Unity 里 `eval/hier_probe.cs` 看到 文件根(0°)→Armature(270°)→Hips 和模型一致才算过(10-24) | 8 |
@@ -136,8 +127,8 @@
 | 113 | 头贴图"脏"其实是设计 | Wren 的 `tex_clean.py` 在 Rook2 头上标出 2.1%,全是胡茬和耳廓阴影 | 头部不跑 tex_clean;先看 dirt_flags 渲到模型上再决定 | 5 |
 | 114 | Blender 里几何饰线/补片都在,导进 Unity 一半不见 | 面朝向错:Unity LabLit 背面剔除(`_Cull` 默认 Back),Blender EEVEE 默认不剔除,所以 Blender 看不出 | 生成贴布几何时按布面法线定每个面的朝向(`dot(face.normal, surface_normal) < 0` 就翻),不要按坐标符号猜;导入后在 Unity 渲染一遍再算过 | 5、7 |
 | 115 | 待机看着"上臂夹躯干、肩压低",调上臂 Down-Up/Front-Back 两轮都没改善 | 根因在锁骨:Shoulder Down-Up 均值被重定向压到 -1.2 以下(超范围)、Shoulder Front-Back 前卷;上臂值其实和 Wren 一样 | 先用 `tools/rook2/pose_tune.cs`/`muscle_means.cs` 把肩+上臂六个肌肉均值和 Wren 同类 clip 并排对数,再用 Wren 的 clip 套到本角色上做判别(clip 问题还是身体问题),定位到哪块再调;全套动作都塌肩就回 avatar 肩骨 T-pose 根修 | 7、8 |
-| 116 | 6.5 头身角色整身生成,头只有 3~4 千面,眼睛成两道缝、唇软(Vesper gen-1,同坑 67) | 头占身高 15%,60k 面按面积分配 | ~~分头~~(10-26 改):整身 200,000 面生成 + `protect_decimate.py` 保脸减面到 58,000。Coda 实测头 22,944→11,213、脸前部 2,460→2,470,脸特写 SSIM 0.9745,上身衣服白模 SSIM 0.938(身体用 meshoptimizer、头用 collapse),无拼缝。10-24 那次"20 万面整身试"只看了头面数、没做保脸减面,所以判错了 | 0、3 |
-| 117 | sol 改头身比每轮只给目标差 1/3,三轮到不了 | sol 对比例描述不敏感,数字和百分比都一样 | PIL 以领口为轴缩身体做 mock + sol 只融缝(01 §1.4) | 1 |
+| 116 | 6.5 头身角色整身生成,头只有 3~4 千面,眼睛成两道缝、唇软(Vesper gen-1) | 头占身高 15%,60k 面按面积分配 | 整身 200,000 面生成 + `protect_decimate.py` 保脸减面到 58,000。Coda 实测头 22,944→11,213、脸前部 2,460→2,470,脸特写 SSIM 0.9745,上身衣服白模 SSIM 0.938(身体用 meshoptimizer、头用 collapse),无拼缝。只生成 20 万面不做保脸减面、只看头面数,会误判这条路不行 | 0、3 |
+| 117 | sol 改头身比每轮只给目标差 1/3,三轮到不了 | sol 对比例描述不敏感,数字和百分比都一样(按"6.5 heads"出图实际约 8 头身;"+12%"只给 4%) | PIL 以领口为轴缩身体做 mock + sol 只融缝(01 §1.4) | 1 |
 | 118 | 侧/背视图头比 front 小 30% | 图 3 喂了 9 头身转面图,比例被它带走 | 侧背只喂 front+设计稿;头高不一致同样走 mock 对齐 front 的领口/肩线 | 1 |
 | 119 | 分头角色换头后,Tripo 身体的长发与上背/臀部融合成一体,删掉旧发就是洞,压平/成膜/切平五轮都不收敛(Vesper 10-25) | 整身生成时长发贴着背,Tripo 把发和背做成同一张壳,背面没有独立表面 | 分头角色的**身体**用去长发的四视图生成(sol edit 把长发剪成下颌长度短 bob、背面补衬衫/背心),头照旧单独生成;换头只做:领口 bisect 切平 + 脖子收进 + 材质合一 | 1、3、6 |
 | 120 | 换头后脖子穿出领口/撕裂、领口顶一排白齿 | 脖子中心与领口中心偏 6 mm 还整体放大;脸材质顶点没跟着平移;按面中心删领口留锯齿;头自带领子上的肤色面被当脖子留下 | 领口用 bisect_plane 在 cut_z 切平;头部 z<cut+0.03 的**全部**顶点(含脸材质,UV 不动)平移到领口中心再绕中心径向缩 k(逐 15° 分箱 脖半径 ≤ 领口半径−0.002),smoothstep 到 0.85 衰减;neck_keep=0 | 6 |
@@ -158,3 +149,5 @@
 | 135 | Gear 展示动作候选别只看名字 | Tripo 预设 WaveGoodbye01 retarget 成坐姿、Complain01 是蹲冲甩臂 | 先用 Blender -b 对 rig blend + Anims.fbx 每条 8 帧出 contact sheet 再选;Vesper 这类冷角色选 LookAround/Clap/StandingRelax | 8 |
 | 136 | 表情图集 2048×1152 进 Unity 实际是 2048×1024 | TextureImporter nPOTScale=ToNearest 把非 2 次幂边缩了 | 4×3 格 UV 是比例取样所以不错位,只损失竖向精度;要全精度得把 .meta 的 npotScale 改 None(10-25 未改,与旧图集口径一致) | 8 |
 | 137 | 表情按"幅度大"写出来全是凶相(Vesper 10-26 勾哥:"太 mean 了") | 把人设的"冷"理解成"凶",angry 龇牙、jealous 撇嘴、focus 盯死 | 先从手册性格句定情绪底色(Vesper=从容+一点玩味),勾哥只要 neutral/blink/wink/happy/smug 五格;其余槽填 neutral 别留凶脸;出图前先把十一格文字方案给勾哥批再花点数 | 7 |
+| 149 | rig_build 报 ZeroDivision,下载的绑骨 GLB 骨头是 NaN、顶点 1e30 | Tripo 绑骨导出选了 4K 贴图(Vesper 10-07) | 绑骨导出选 2K;下载后 `inspect_model.py` 必看骨头坐标 | 3、6 |
+| 150 | 换主角时冲掉了别的会话在改的 Hero.prefab(Vesper 10-07,靠工程外备份还原) | 多个角色会话共用一份本地 Hero.prefab | 阶段 8/9 前先问有没有别的会话在改 Hero.prefab;要临时换先约好、备份对方最新版、测完逐字节还原。HeroDefinition.ModelPrefab 当时运行时没人读,不能拿来切角色(10-07,用前再查) | 8、9 |

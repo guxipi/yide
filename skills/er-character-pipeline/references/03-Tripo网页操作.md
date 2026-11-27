@@ -3,16 +3,17 @@
 Tripo Studio:`https://studio.tripo3d.ai/workspace/generate`(还有 /texture、/rigging、/animate)。勾哥已登录。**点 Generate / Generate Texture / Auto Rig 都花点数,不能撤销**——勾哥在对话里说过"上 Tripo 生成、不满意可以 retry"就算授权;子 agent 不认转述的授权,这一步本会话自己做。不输入任何凭据。
 
 ## 3.0 浏览器验身(每次会话第一件事,不过不动手)
-2026-10-07 整个下午操作的 Chrome 其实是另一台机器 DUCKCENTER(同 Tripo 账号、同 Google 同步),症状:勾哥看不到点击、导出提示成功但本机 Downloads 没文件、截图常超时。`list_connected_browsers` 的 `isLocal:true` 只说明系统相同,不可信。
+勾哥几台机器的 Chrome 都装了 Claude 扩展,操作的可能是另一台机器(10-07 整个下午、11-24 又一次),症状:勾哥看不到点击、导出提示成功但本机 Downloads 没文件、截图常超时。`list_connected_browsers` 的 `isLocal:true` 只说明系统相同,不可信;会话用哪个浏览器还会自己漂,`tabs_context_mcp` 返回的标签组 id 变了就重新验。
 
 1. 一次性加载工具:ToolSearch `select:mcp__claude-in-chrome__tabs_context_mcp,mcp__claude-in-chrome__tabs_create_mcp,mcp__claude-in-chrome__navigate,mcp__claude-in-chrome__computer,mcp__claude-in-chrome__find,mcp__claude-in-chrome__read_page,mcp__claude-in-chrome__javascript_tool,mcp__claude-in-chrome__file_upload,mcp__claude-in-chrome__list_connected_browsers,mcp__claude-in-chrome__select_browser`。
-2. 在受控标签跑:
+2. 本机回环探测(11-24 定,做法见 vault `07 - AI上下文/AI记忆/工具与坑/feedback-chrome-two-browsers-probe-local-first-20261124.md`):Bash 后台限时跑 `python -I -m http.server <端口> --bind 127.0.0.1`(目录里放一个带随机串的 index.html),让受控标签打开 `http://127.0.0.1:<端口>/index.html`,读到那个随机串才是本机;读不到就 `select_browser` 换另一个再试。
+3. 辅助核对(可选):在受控标签跑下面的 JS,和本机 Chrome 版本对:
    ```js
    (async()=>{const u=await navigator.userAgentData.getHighEntropyValues(['uaFullVersion']);
    const g=document.createElement('canvas').getContext('webgl');const e=g.getExtension('WEBGL_debug_renderer_info');
    return JSON.stringify({ver:u.uaFullVersion,gpu:g.getParameter(e.UNMASKED_RENDERER_WEBGL),dpr:devicePixelRatio});})()
    ```
-3. 和本机对:PowerShell `(Get-Item "C:\Program Files\Google\Chrome\Application\chrome.exe").VersionInfo.ProductVersion`。本机特征:GPU 含 NVIDIA/Intel、devicePixelRatio=1(DUCKCENTER 是 AMD)。版本号会随更新变,以当场查到的为准。
+   本机版本:PowerShell `(Get-Item "C:\Program Files\Google\Chrome\Application\chrome.exe").VersionInfo.ProductVersion`(会随更新变,以当场查到的为准)。
 4. 对不上就停:请勾哥在本机 Chrome 的 militarypineapple 档案(Profile 2)里登录 Claude 扩展,然后 `select_browser`。不要在错的机器上"修下载/修权限"打转。
 5. **开一个新的前台标签干活**(`tabs_create_mcp`)。后台标签会被节流:页面加载不完、截图失败。别用别的会话正在用的标签(10-07 共用标签里出现过别人的"石头遗迹门"项目)。
 
@@ -33,7 +34,7 @@ Tripo Studio:`https://studio.tripo3d.ai/workspace/generate`(还有 /texture、/r
    - 上贴图时,贴图页会自动带入生成时用的结构参考,要按垃圾桶清掉四张,再按槽名传平光定稿四视图;分辨率选 4K,Remove Lighting 关(10-26 Coda 照此做)。
 5. 导出 GLB(带不带贴图都行),下载落在本机 `C:\Users\kryst\Downloads`。按时间找最新文件(`ls -t ~/Downloads | head`),拷到 `out/<slug>-tripo/tripo-web/gen-N/`,文件名写进 config `files.geo_glb`。
 6. **每个下载文件先过 `inspect_model.py`**:10-07 拿到过一个"迟到落盘"的旧导出(时间戳 16:09,没有骨骼),差点当成新文件用。
-7. 进阶段 5 的形状门(clay)。不过就重试:**改选项不改图**,最多 3 次,每次记选项。
+7. 进阶段 5 的形状门(clay)。不过就重试:先试白模页工具栏的 Free Retry(不扣点,旧版留在历史;Vesper 10-07 重试版脸明显好);再不行**改选项不改图**,最多 3 次,每次记选项。
 
 ## 3.2 上贴图(平光厚涂四视图 → 只要颜色)
 1. 左栏 Texture → 选中刚生成的白模。
@@ -46,16 +47,16 @@ Tripo Studio:`https://studio.tripo3d.ai/workspace/generate`(还有 /texture、/r
 
 ## 3.3 绑骨(Tripo 自动人形骨)
 1. 左栏 Rig → 选中**带贴图的**模型。Rigging Type: Humanoid;Skeleton Preset: **Mixamo**(出 `mixamorig:` 命名,Unity 直接认 Humanoid);Auto Rig = 20 点。
-2. 导出 GLB(带骨骼),存 `tripo-web/rig-N/`,填 `files.rig_glb`。`inspect_model.py` 应看到 ~65 根 mixamorig 骨 + 一个 42/80 顶点的 Icosphere(杂物,rig_build 会删)。
+2. 导出 GLB(带骨骼,贴图选 2K;4K 导出的绑骨 GLB 骨头是 NaN,坑 149),存 `tripo-web/rig-N/`,填 `files.rig_glb`。`inspect_model.py` 应看到 ~65 根 mixamorig 骨 + 一个 42/80 顶点的 Icosphere(杂物,rig_build 会删)。
 3. 注意:绑骨后的网格 UV 可能和生成时不同(Wren gen-1:顶点位置差 0.03mm,UV 差到 1.37)。**之后所有贴图处理(脏手臂清理、emission 遮罩)都在 rig GLB 上做**,不要拿生成版的贴图套。
 
 ## 3.4 预设动作(免费重定向,备用素材)
 1. 左栏 Animate → Preset library。**每点一个预设,它就排进重定向队列,不扣点**。
 2. 点慢一点:10-07 连点 26 个只成了 14 个,漏的 12 个**每个隔约 6 秒**补点才全到。
-2b. 10-25 实测可靠做法:`find` 拿搜索框 ref → `form_input` 填预设名 → JS `[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===name).click()` → JS 轮询 `/Retargeting/.test(document.body.innerText)` 为 false 再点下一个(30~60 s,fold_arms/cheer 60 s+);两个一批放 browser_batch(三个会超时)。导出用 Choose Animations 的 Select All,计数要等于点的数;Export 后 Downloads 里是 .tmp,glTF 头 12 字节长度=文件大小即完整,直接拷走(坑 79/125)。
+2b. 10-25 实测可靠做法:`find` 拿搜索框 ref → `form_input` 填预设名 → JS `[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===name).click()` → JS 轮询 `/Retargeting/.test(document.body.innerText)` 为 false 再点下一个(30~60 s,fold_arms/cheer 60 s+);两个一批放 browser_batch(三个会超时)。导出用 Choose Animations 的 Select All,计数要等于点的数;Export 后 Downloads 里是 .tmp,glTF 头 12 字节长度=文件大小即完整,直接拷走(坑 144/125)。
 3. 导出面板里的动作列表不会自动刷新:关掉再打开看真实数量,对上了再导。
-4. Export:格式 FBX,骨架预设 **Mixamo**,"Number of Animations" 选全部。下载是 zip,解开得到 `tripo_convert_<uuid>.fbx`,填 `files.anim_fbx`;`inspect_model.py` 列出 actions 和帧范围,数量要和点的一致。
-5. 这些动作目前只是素材:游戏里先用工程现有 Humanoid 动画跑通。逐条 QA(手脚配合、滑步、穿模)和接进控制器是后续单独任务(`character-art-lab/prompts/wren-anim-qa.txt` 是写好的 QA 任务书)。
+4. Export:格式 **GLB**,勾选全部动作 + Animation stay in Place(一个 GLB 里每个动作是独立 animation;FBX 会被合成一条),`inspect_model.py` 列出 actions 和帧范围,数量要和点的一致。不要把这份 GLB 骨架直接转 FBX 进 Unity:先用 `anim_bake_to_rig.py` 烘到模型最终骨架(05 §6.8),再按 07 §8.8 导入。
+5. 现在这些动作用在装备页 / 背包预览的性格动作(07 §8.8);接进局内控制器、逐条 QA(手脚配合、滑步、穿模)是单独任务(`character-art-lab/prompts/wren-anim-qa.txt` 是写好的 QA 任务书)。
 
 ## 3.5 其他事实
 - 价格(10-07 页面标价):HD 默认 30;关贴图 15;4K +10;Ultra +15;Quad +5;PBR +5;贴图页 2K/4K/8K = 10/20/30;Auto Rig 20;文生动作 20;预设重定向 0。

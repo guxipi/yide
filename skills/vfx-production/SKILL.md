@@ -7,7 +7,7 @@ description: Build production-grade ("成品级") 3D/world-space VFX in Extracti
 
 把"一坨色块/软光团"的世界特效做到上线级精品。这是 `ui-visual-rework` 的 3D/VFX 对偶面 —— UI 那套是 screen-space uGUI(材质底纹+DOTween 飘窗),**本 skill 是世界空间的粒子/网格/材质/动效**,方法论与坑都不同。
 
-**目标水准和验收以 ER 美术规范为准**(目标和红线;特效的逐帧观察在 `ER美术规范_参考资料.md` 第 10 节,只是参考):vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 实机特效的质量和节奏)。要达到的样子简单说:局内 VFX 默认半透明 / 叠加发光(11-20 勾哥拍板,推翻原先的「硬边主形」「不透明」口径;现行规矩见 vault `013 美术/AI记忆/现行口径_怪Boss与局内VFX.md` 第 8 节):烟和能量半球中心透、边缘实,靠透明度淡出,亮核、星芒、火花用叠加发光,材质走 `Lab/LabFx`;只有碎片、宝石这类实物做实心,不许用中性白灰的不透明实心件凑。主色取主体本色并推艳,同屏配一两种互补色,饱和靠固有色加窄的透明边,不靠白芯和大片软辉光;一个特效分节拍、颜色跟着节拍变(亮核 → 星芒 + 主色半球 → 碎片 → 淡出),不是单色放大缩小。主形(环、斩击弧、地面印章)仍要一眼读得出"这是什么、打到哪";颜色按敌我、治疗、拾取的语义分开;没事发生的时候画面干净,不常驻装饰光效;特效再大也不盖住角色、怪和敌方预警。验收看动态,按参考资料 10.10 录屏逐帧看,截图不够。本 skill 下面写的是工程里验证过的工具和做法,不是唯一做法,结果过总纲门槛即可。
+**目标水准和验收以 ER 美术规范为准**(目标和红线;特效的逐帧观察在 `ER美术规范_参考资料.md` 第 10 节,只是参考):vault `01 - 星际拓荒重构/013 美术/ER美术规范.md`(对标 mo.co 实机特效的质量和节奏)。要达到的样子简单说:局内 VFX 默认半透明 / 叠加发光(现行规矩见 vault `013 美术/AI记忆/现行口径_怪Boss与局内VFX.md` 第 8 节):烟和能量半球中心透、边缘实,靠透明度淡出,亮核、星芒、火花用叠加发光,材质走 `Lab/LabFx`;只有碎片、宝石这类实物做实心,不许用中性白灰的不透明实心件凑。主色取主体本色并推艳,同屏配一两种互补色,饱和靠固有色加窄的透明边,不靠白芯和大片软辉光;一个特效分节拍、颜色跟着节拍变(亮核 → 星芒 + 主色半球 → 碎片 → 淡出),不是单色放大缩小。主形(环、斩击弧、地面印章)仍要一眼读得出"这是什么、打到哪";颜色按敌我、治疗、拾取的语义分开;没事发生的时候画面干净,不常驻装饰光效;特效再大也不盖住角色、怪和敌方预警。验收看动态,按参考资料 10.10 录屏逐帧看,截图不够。本 skill 下面写的是工程里验证过的工具和做法,不是唯一做法,结果过总纲门槛即可。
 
 > 信条:**先盘资产再动手;能改色复用就别自建;泡泡/壳子用 mesh 求清晰,光晕/爆开用粒子求生动;动效叠在静态视觉之上;静态先在 edit mode 看,运动+反馈再进 play 看。**
 
@@ -96,7 +96,7 @@ root
 **先 edit mode 定静态,再 play mode 验运动+反馈。** 别一上来全在 play 里调——play 有怪/暂停/升级面板/失焦坏帧干扰。
 
 1. **静态(edit mode,最可靠)**:脚本(`unity command script run`,Coplay `execute_script` 兜底)把各 type prefab `PrefabUtility.InstantiatePrefab` 排一行到一个 parent → `capture_scene_object(parent)` 一张图看**颜色对不对、模型读不读得出、壳子在不在**。粒子在 edit 里不自动播没关系,这步只判静态。用完删 parent、别存场景。
-2. **运动 + 反馈(play mode)**:走 `playmode-verify-iterate` 的纪律(`runInBackground=true` 第一行、分步驱动、state dump 是权威)。
+2. **运动 + 反馈(play mode)**:走 `playmode-verify-iterate` 的纪律(失焦不冻结、分步驱动、state dump 是权威)。
    - 进局内主玩法走真入口(从主页一路点进远征)。这里原来写的 `GameModeContext.CurrentMode` + `LoadGameSceneAsync(arena)` 捷径已经用不了:arena 模式已退役。
    - 直接 `PoolService.Get(prefab)+Initialize(pos)` 在玩家周围生成各 type,看悬浮/飞-停/壳子光晕。
    - 验拾取反馈:生成在玩家身上触发 collect,**state dump 数 popup 数 / body-glow 实例 / 玩家 StatusEffectHandler.ActiveEffects**(overlay canvas 的 popup 截图是盲的,只能 dump);`ScreenCapture.CaptureScreenshot` + PowerShell 裁中心区 Read 判 3D 视觉。
@@ -119,10 +119,10 @@ root
 | 别人同开编辑器,脚本执行偶发 timeout / play 态被清 | 并发 domain reload;重试 + 关键值 dump 核实,只在别 session 占 Play 时才等 |
 | dump 实例 `GameObject.Find("X")` 得 null 假阴性 | `Instantiate` 出的实例名是 `X(Clone)`;用子串匹配或 reflect 控制器持有的实例字段,别用精确 Find |
 | dump 池化对象数=0 假阴性 | 池化对象秒级归池,`FindObjects(Exclude inactive)` 漏掉曾生成的;用 `Include` inactive(池对象不销毁=曾用过)或生成后即时 dump |
-| 找模型/资产 Glob/Grep/Read 全找不到 + subagent 编造路径 | asset 包常被 `.gitignore` 忽略 → ripgrep 系工具(Glob/Grep/Read)+ Explore agent **全盲**;改用 Unity `AssetDatabase.FindAssets("name t:GameObject")` 经 `execute_script` 查真库,渲染 contact sheet 肉眼挑 |
+| 找模型/资产 Glob/Grep/Read 全找不到 + subagent 编造路径 | asset 包常被 `.gitignore` 忽略 → ripgrep 系工具(Glob/Grep/Read)+ Explore agent **全盲**;改用 Unity `AssetDatabase.FindAssets("name t:GameObject")` 经 `unity command script eval`(Coplay `execute_script` 兜底)查真库,渲染 contact sheet 肉眼挑 |
 
 ---
 
 ## 收尾(同 feature 流程)
 
-编译干净(`unity command console status` + grep 日志 `error CS` 交叉验证)→ edit-mode 静态过 + play-mode 运动/反馈 dump 过 → 写一条 project 记忆(builder 入口、配方、踩坑)→ 推进了产品就 `progress.js bump` → 问勾哥上传 Planyway。配套:`ui-visual-rework`(UI 面)、`playmode-verify-iterate`(测试闭环)、`gaoguang-3d`(AI 模型入库与修观感)。
+编译干净(`unity command console status` + grep 日志 `error CS` 交叉验证)→ edit-mode 静态过 + play-mode 运动/反馈 dump 过 → 按 vault 记忆规矩写进对应系统的 `AI记忆/`(builder 入口、配方、踩坑)→ 推进了产品就 `progress.js bump` → 问勾哥上传 Planyway。配套:`ui-visual-rework`(UI 面)、`playmode-verify-iterate`(测试闭环)、`gaoguang-3d`(AI 模型入库与修观感)。

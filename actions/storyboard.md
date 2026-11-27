@@ -17,7 +17,7 @@
    - **精细度够确认就行**(清楚 > 漂亮):占位色块 + 图标即可,需求没定时别砸时间做真实美术/精确比例。
    - **自适应**:`svg` 用 `width:100%;height:auto`,放进一张居中 card;别缩在角落留白。
 3. **嵌入手绘批注层**:把 `${CLAUDE_SKILL_DIR}/templates/storyboard/draw-layer.html` 的内容**原样**贴到分镜的 `</body>` 之前(它会自动在 `#board` 上盖一张画布 + 右上角浮动工具条:笔色/粗细/橡皮/撤销/清空/**导出PNG**,让勾哥直接在分镜上**圈画 → 导出 PNG** 贴回来当反馈)。
-4. **自动弹给勾哥看**:`node -e "require('${CLAUDE_SKILL_DIR}/scripts/lib.js').openUrl('<那个html的绝对路径>')"`(`YIDE_NO_OPEN=1` 时跳过,改为告诉他路径让他自己开)。**交付必附完整绝对路径**(见 give-full-file-path 教训)。
+4. **自动弹给勾哥看**:`node -e "require('${CLAUDE_SKILL_DIR}/scripts/lib.js').openUrl('<那个html的绝对路径>')"`(`YIDE_NO_OPEN=1` 时跳过,改为告诉他路径让他自己开)。**交付必附完整绝对路径**(charter「交付路径」)。
 5. **确认闭环**:勾哥要么直接说"②帧镜头再往右、③帧停顿太久",要么在图上**圈画 → 点「导出PNG」→ 把图贴回来** → 你据此改分镜 → 再弹 → 直到他说"对了"。**确认后才进实现**。
 6. **存确认稿(供 yide / 其他 AI 以后提取复用)**:勾哥说"对了"后——
    - 把这张存到项目档案记录的**确认线稿文件夹**(和 mockup 同一个);默认 `<项目>/Docs/UX/mockups/<功能>-storyboard-<日期>.html`。**该文件夹首次使用时用 AskUserQuestion 问勾哥确认路径**,并写进项目档案。

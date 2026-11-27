@@ -5,7 +5,7 @@ description: Change/build/deploy Extraction's UGS Cloud Code server module — d
 
 # Cloud Code: Change & Deploy (Extraction · UGS C# module)
 
-把服务端代码改对、编对、部署上,且知道"怎么和服务器代码协作"。两次实战蒸馏:① RaidEndpoints(FindRaidTarget/CompleteRaid/GetDefenseLog)→ 编译 → 部署 → 端点有响应;② clan 多人(create/donate/leave)→ 才发现①的"端点有响应"**只证明端点跑了、没证明 CloudSave 真持久化**——整个 module 的 `IGameApiClient` 是 null、所有 CloudSave 端点一直假成功走 fallback(详见下「血泪前提」)。所以先读那一节,它是 cloud 到底有没有真工作的根。
+把服务端代码改对、编对、部署上,且知道"怎么和服务器代码协作"。"端点有响应"**只证明端点跑了、没证明 CloudSave 真持久化**(详见下「血泪前提」),先读那一节,它是 cloud 到底有没有真工作的根。
 
 > 架构怎么设计(server-first / optimistic / operation queue / version tracking)读同目录 `../server-service-pattern.md`。本 skill 只管:**改了之后怎么编、怎么部、怎么确认部上了(且没在假成功)。**
 
@@ -46,13 +46,12 @@ public class ModuleConfig : ICloudCodeSetup {
         config.Dependencies.AddSingleton<IGameApiClient>(GameApiClient.Create());
 }
 ```
-> 一个 ModuleConfig 管整个 module 的所有端点。前人漏了它,全项目 cloud 持久化(Shop/LoginReward/Base/Clan...)从没真工作过、全靠 fallback,没人发现。加这一个类,所有端点的 CloudSave 一起活。
+> 一个 ModuleConfig 管整个 module 的所有端点;工程里现在已有这个类,别删、别另起第二个。
 
 **坑B — CloudSave 写 value 必须用 JSON `string`,不能用 `JsonElement`。** `new SetItemBody(key, JsonHelper.Serialize(obj))`(string,对齐能工作的 `ShopEndpoints`)。用 `SerializeToElement(obj)`(JsonElement)写进去**读不回**——下次请求 `Deserialize` 失败→空对象→字段全丢(表现:create 成功但下一次读 player state 是空、ClanId 没了)。
 
 **怎么确认真工作(别被假成功骗,这是部署后验证的核心):**
 - **必须另起一次请求读回**。create/save 的返回值是**内存**序列化,不证明写进了 CloudSave。要 create 后用**另一个端点调用**去 read,确认读到刚写的字段。
-- 现成诊断端点:调 `GetLoginRewardState`,它 `Error` 字段里有 `api?{_gameApiClient==null} cs?{...}` 诊断(前人留的);`api?True` = IGameApiClient 没注册。
 - 隔离 module 级 vs 端点级:在任一已知端点临时加 `[CloudCodeFunction("Ping")] public async Task<bool> Ping(IExecutionContext c){ await Task.CompletedTask; return _gameApiClient==null; }`,部署后客户端 `CallModuleEndpointAsync<bool>(...,"Ping",...)` 调它。整个 module 共享 ModuleConfig,一个端点 null 基本就是全 null = 没注册;某个端点单独 null 才往别处查。
 
 ---
@@ -68,6 +67,7 @@ public async Task<CompleteRaidResult> CompleteRaid(IExecutionContext context, st
 }
 ```
 - CloudSave 读写经 `_gameApiClient.CloudSaveData.GetItemsAsync / SetItemAsync`,key 用常量(`player_base` 等)。写 value 用 `JsonHelper.Serialize(obj)`(**string,不是 `SerializeToElement` 的 JsonElement——写进去读不回**,见血泪前提坑B);读用 `Results[0].Value?.ToString()` + `JsonHelper.Deserialize<T>`。
+- **写入 token 一律 `context.ServiceToken`**:11-18 起 dev / staging / production 都开了 UGS 禁写策略,玩家身份(`context.AccessToken`)写 Cloud Save / Economy 一律被拒,`ServerWriteIdentityTests` 扫源码把关;服务身份下 UGS 不查写的是谁的档,目标玩家 id 只取 `context.PlayerId` 或服务端自己存的状态;客户端不许有直连写入。详见 vault 记忆 `cloud-save-no-access-control-client-can-write-20261118`。
 - 推送/跨端点调用:`new NotificationEndpoints(_gameApiClient, NullLoggerFactory...)` 直接 new(无 DI 也能手动构)。
 
 ### 2) 模型 `Models/<Domain>Models.cs`
@@ -86,13 +86,7 @@ public async Task<CompleteRaidResult> CompleteRaid(IExecutionContext context, st
 
 ---
 
-## 强一致核心的写法(交易 / 经济 / 异步 PvP;2026-10-31 从翼德开场挪来)
-碰这几类别就近补丁,默认按下面写:
-- **交易 / 经济 = 强事务核**:服务端权威校验、按 Request ID 幂等、扣 A 增 B 原子、防溢出负数、增减带来源去向枚举进审计流水。
-- **异步 PvP = 纯函数确定性核**:防守方快照深拷贝独立存、战斗核剥离 UI、不依赖本地时间、随机走 seed、服务端结算或验录像、BattleToken 防重放。
-- 核心逻辑写边界测试:钱不够 / 并发扣 / 0 血 / 溢出。
-
-## 第一步半:写端点前过一遍零信任 checklist(原教训 L-0014,2026-07-25 由 lessons 迁入)
+## 第一步半:写端点前过一遍零信任 checklist
 
 服务端 / 交易经济 / 异步 PvP 结算是**强一致 + 防作弊红线区**,AI 写这类逻辑时最容易默认"信客户端、走 happy path",埋下刷钱/越权/重放/封不掉外挂的坑。按场景过:
 
@@ -100,9 +94,11 @@ public async Task<CompleteRaidResult> CompleteRaid(IExecutionContext context, st
 
 **交易 / 拍卖行 / 商城扣费**:扣 A 的钱 + 给 B 发货必须原子(要么全成要么全败,不能半成功);校验数量与总价**非负**且不超类型上限(防负数刷钱、溢出绕过);执行前重拉双方最新余额;用唯一 **TradeID/RequestId 判重**,重复请求只生效一次(网络重发是常态)。
 
-**异步 PvP 结算**:校验本局 **BattleToken** 合法且未被用过,用过即拒(防重放);做合理性校验(1 秒内打赢 10 万战力对手这种 → 拒绝/标记/封禁),别照单全收;结算用**服务端存的防守方快照**,不信客户端回传的防守方数据。
+**异步 PvP 结算**:战斗核写成纯函数确定性核(防守方快照深拷贝独立存、剥离 UI、不依赖本地时间、随机走 seed、服务端结算或验录像);校验本局 **BattleToken** 合法且未被用过,用过即拒(防重放);做合理性校验(1 秒内打赢 10 万战力对手这种 → 拒绝/标记/封禁),别照单全收;结算用**服务端存的防守方快照**,不信客户端回传的防守方数据。
 
 **客户端协议 Handler(C2S RPC/API)**:套用通用四条。典型如 `C2S_UpgradeEquipment`——校验 `EquipmentID` 存在且属于该玩家、满足升级前置、清理字符串参数。
+
+核心逻辑写边界测试:钱不够 / 并发扣 / 0 血 / 溢出。
 
 详细镜头见 `experts/architect.md` 的「数据纪律 / 安全」段。
 
@@ -126,24 +122,30 @@ dotnet build ExtractionCloudCode.sln --configuration Release
 
 ---
 
-## 第四步:部署(`ugs deploy .` 让 ugs 自己编译,**别手动 zip .ccm**)
+## 第四步:部署(默认用工程自带 `CloudCode/deploy-dev.ps1`)
 
 **🚫 红线(勾哥 2026-06-13):手动部署一律只到 `development`,绝不 `-e production`。** 客户端 Boot `_environment: development`,玩家/测试连 dev——手动只需部 dev。**prod 由 build job 迁移,不手动碰**(误部 prod = 白部 + 污染发布环境 + 留 stray);误部到 prod 的残留也别手动 delete prod,留给 build job,要破例先问勾哥。详见记忆 `cloud-deploy-dev-only`。
 
-凭据:全局 `ugs` CLI 已认证(`ugs env list --json` 能列出环境就行;project-id `ugs config get project-id`)。Unity 内 `Deploy/Cloud Code` 窗口(`CloudCodeDeployWindow.cs`)用 EditorPrefs 凭据 `CloudCode_ProjectId/ServiceKeyId/ServiceSecretKey`,是另一条路。
+**部署前(多台机器、多条线共用一个 dev module,谁最后部谁的代码就是 dev 的全部)**:`git fetch`,部署树要同时含 origin/main 和各线已部到 dev 的已提交服务端(逐个 `git merge-base --is-ancestor` / `git cat-file -t <hash>` 核,缺的先合,找不到对象就停下问勾哥);工作区里别人未提交的 CloudCode / UGSConfig 改动不带;部前部后给在用 dev 的线发一句(部署树 id、含什么),部前设 `$env:OWNER`。依据 vault 记忆 `feedback-dev-deploy-from-merged-tree-and-sheet-push-backup-20261125`、`cloudcode-deploy-dev-check-missing-server-commits-20261121`。
 
-**正路 —— 目录形式,让 ugs 读 `.ccmr` 编译 `.sln` 生成正确 `.ccm`**:
+**默认路 —— 工程脚本**(在工程根跑):
+```powershell
+powershell -ExecutionPolicy Bypass -File CloudCode\deploy-dev.ps1 -SkipTests   # -DryRun 只跑部署前的闸
+```
+- 脚本硬锁 development,用 `BuildDependencies\ugs.exe`;凭据先读环境变量,没有就从编辑器 EditorPrefs(`CloudCode_ServiceKeyId/ServiceSecretKey`,和 Unity 内 `Deploy/Cloud Code` 窗口同一套)读,会话不用碰凭据。本机裸 `ugs` 报 `project-id is not set` / `not logged into any service account` 是正常的,别据此说部不了。
+- 自带两道闸:HEAD 不含 origin/main 就拒(`-AllowBehindMain` 放行)、`CloudCode/src` 或 `UGSConfig` 有未提交改动就拒(`-AllowDirty` 放行);「含各线已提交服务端」它拦不了,仍要人核。
+- 流程是 `dotnet publish` → 打 `.ccm` → `ugs deploy <ccm>` → 回读模块列表,成功往 `Library/deploy_dev.log` 记一行。
+- 不带 `-SkipTests` 会先跑全量 `dotnet test`,一条红就中止;先自己跑和本次改动相关的测试,过了再带 `-SkipTests`。
+
+**备用路 —— `ugs deploy .` 目录形式**(脚本跑不通、裸 ugs 已认证时;让 ugs 读 `.ccmr` 编译 `.sln`):
 ```powershell
 cd CloudCode/src
 ugs deploy . -e development --json    # Result 里 path 是 .sln 才对
 ```
-
-**部署的坑(全踩过,血泪)**:
-- **`ugs deploy .` 的 `"Up to date"` 状态不可信**——它有本地缓存,删了远端 module 它还说 up-to-date。**用 module DateModified 核实**:`ugs cloud-code modules list -e development --json` 看时间戳是不是刚刚(对比 `(Get-Date).ToUniversalTime()`)。这是唯一可信的"部上了"信号。
-- **src 里别留手动 zip 的 `ExtractionCloudCode.ccm`**——它会和 ugs 编译产物冲突报 `was found duplicated`。删掉,让 ugs 自己生成。
+- **`"Up to date"` 状态不可信**——它有本地缓存,删了远端 module 它还说 up-to-date。**用 module DateModified 核实**(两条路都适用):`modules list -e development --json` 看时间戳是不是刚刚(对比 `(Get-Date).ToUniversalTime()`)。这是唯一可信的"部上了"信号。
+- 走这条路前删掉 src 里的 `ExtractionCloudCode.ccm`(脚本打的或手动 zip 的),否则和 ugs 编译产物冲突报 `was found duplicated`。
 - 改了代码 `ugs deploy .` 仍 `"Up to date"` → 删 temp 缓存 `Remove-Item "$env:TEMP\ExtractionCloudCode" -Recurse -Force`;还不行就**强制**:`ugs cloud-code modules delete ExtractionCloudCode -e development` 再 `ugs deploy .`(delete 后 DateModified 必然刷新 = 真部署了)。
 - `ugs deploy <.ccmr文件>`(直接指文件)Result 空、不生效——必须**目录**形式 `ugs deploy .`。
-- 手动 `publish → zip .ccm → ugs deploy <.ccm文件>` 这条**老路能让 DateModified 刷新但缺正确 manifest/会留冲突 .ccm**,已弃用——除非 `ugs deploy .` 彻底跑不通才回退。`dotnet build -c Release` 仍可单独用来验证编译(不部署)。
 
 ---
 
@@ -153,9 +155,10 @@ ugs deploy . -e development --json    # Result 里 path 是 .sln 才对
 - **另起一次请求读回**:create/save 后用**另一个端点调用**去 read,确认读到刚写的字段。create 的返回值是内存序列化,不算。**实战:CREATE 返回 clan 数据 ✅ 但紧接 DONATE 报 "Not in a clan" —— 就是坑B(写进去读不回)被读回验证暴露的。**
 - **验证 server-authoritative 副作用真发生**:donate 后看 GOLD 真的被**服务端** Economy 扣了(不是客户端扣)、fund 真加了。
 - 端点写死一个可识别特征字符串,进游戏看到它 = 新代码在跑(不是旧版/fallback)。
+- 部署后约 30 秒内的请求可能还打到旧实例,半分钟后连测几轮再下结论;除了自己改的端点,至少再调一个和本次无关、会写存档的端点确认没回退。
 
 **驱动 play 验证 cloud 的坑**(Unity CLI 主路,Coplay 兜底):
-- play 必须从 **Boot** 起,否则 services 全 null。进 Play(`unity command editor.playmode start` / Coplay `play_game`)不保证从 active scene 起——先确认 `playModeStartScene` 指向 Boot(持久层是 EditorPrefs 键 `PlayModeSceneSelector.StartScenePath.<dataPath>`,改了要还原成开工实读的原值);写个一次性脚本查 `SceneManager.GetActiveScene().name` + `GameObject.Find("ServiceRoot")` 确认真从 Boot 起来了(`activeScene=HomeScreen` + `ServiceRoot=null` = 没从 Boot 起)。
+- play 必须从 **Boot** 起,否则 services 全 null。怎么钉 / 还原 `playModeStartScene` 见 `playmode-verify-iterate` 第〇步;写个一次性脚本查 `SceneManager.GetActiveScene().name` + `GameObject.Find("ServiceRoot")` 确认真从 Boot 起来了(`activeScene=HomeScreen` + `ServiceRoot=null` = 没从 Boot 起)。
 - **domain reload 会杀掉 play session 的 services**(跑外部命令让 Unity 失焦 / asset refresh 都可能触发,ClanService 突然变 NULL)。别分多次脚本调用慢慢测——用**一个自等待脚本**一口气跑完:`for(int i=0;i<50;i++){ svc=ClanService.Instance; if(svc!=null&&svc.IsReady) break; await Task.Delay(400);}` 然后顺着 create→donate→leave,在一个稳定窗口内做完。
 - 完整 Play 验证纪律见 `playmode-verify-iterate`。
 
@@ -164,7 +167,7 @@ ugs deploy . -e development --json    # Result 里 path 是 .sln 才对
 ## 第六步:收尾
 
 - 改了端点 → 更新 `CloudCode/README.md` 对应段落(参数/返回/行为)。
-- `.ccm` 是构建产物,别纠结它的 git 状态;手动 zip 出来的那个该删(见第四步,会和 ugs 编译冲突)。
+- `.ccm` 是构建产物(脚本每次重打),别纠结它的 git 状态;走备用路前要删(见第四步,会和 ugs 编译冲突)。
 - 红线提醒:**不主动 commit/push**,除非勾哥明说。
 
 ---
@@ -178,9 +181,9 @@ ugs deploy . -e development --json    # Result 里 path 是 .sln 才对
 | **🚫 数据安全红线** | 改 Cloud Save 端点绝不能丢玩家数据:model 字段与客户端全对齐(round-trip 缺字段=静默清空)、改结构向后兼容、写前自问会不会盖掉没加载的字段。备份/snapshot 回滚见记忆 `server-data-safety`,建前先对齐方案 |
 | 编译服务端 | `cd CloudCode/src && dotnet build ExtractionCloudCode.sln -c Release` |
 | 客户端编译 | `unity command console status` + grep 日志 `error CS` |
-| 部署 | `cd CloudCode/src && ugs deploy . -e development`(先删 src 里手动 zip 的 .ccm) |
-| 强制重部署 | `ugs cloud-code modules delete ExtractionCloudCode -e development` 再 `ugs deploy .` |
+| 部署 | 工程根 `powershell -ExecutionPolicy Bypass -File CloudCode\deploy-dev.ps1 -SkipTests`(部署树含 origin/main + 各线已提交服务端);备用 `cd CloudCode/src && ugs deploy . -e development`(先删 src 里的 .ccm) |
+| 强制重部署(备用路) | `ugs cloud-code modules delete ExtractionCloudCode -e development` 再 `ugs deploy .` |
 | **核实部上了** | `ugs cloud-code modules list -e development --json` 看 DateModified(**别信 "Up to date"**) |
-| 验证真工作 | **另起请求读回**写的字段 / 调 `GetLoginRewardState` 读 Error 诊断(`api?True`=没注册) |
-| MCP play 验证 | `EditorSceneManager.playModeStartScene=Boot` + 自等待脚本一口气跑(domain reload 杀 services) |
+| 验证真工作 | **另起请求读回**写的字段;半分钟后连测,再调一个无关的写存档端点 |
+| Play 验证 | 按 `playmode-verify-iterate` 钉 Boot 起 + 自等待脚本一口气跑(domain reload 杀 services) |
 | 架构怎么设计 | 读 `../server-service-pattern.md` |

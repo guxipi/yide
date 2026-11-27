@@ -22,7 +22,7 @@
 ## 第一步 · 真源采集 —— 一行码都不写,先把所有未知消掉
 
 1. **Mockup 截图**:读图,把每个视觉元素翻译成"规格语言"(行=图标框+`当前/需求`文本+右侧对号/按钮;按钮内=时钟图标+时长…)。
-2. **通用件登记表**:先查 repo `Claude Feature Docs/UI Visual Design/Universal_Widgets_Registry.md`(2026-07-07 起唯一权威,已自 Claude memory 迁入 repo)——要动的件是否已有 universal 版(改造 vs 新建),避免重复造。
+2. **通用件登记表**:先查 repo `Claude Feature Docs/UI Visual Design/Universal_Widgets_Registry.md`(唯一权威)——要动的件是否已有 universal 版(改造 vs 新建),避免重复造。
 3. **设计场景数值化(核心动作)**:写一次性 dump 脚本(放 Assets 外,`unity command script eval_file` / `script run` 跑;Coplay `execute_script` 只兜底)把参考对象的完整 spec 导出成文本再 `Read`:
    - 每节点:name/activeSelf、`anchorMin/Max`、`pivot`、`anchoredPosition`、`sizeDelta`、(stretch 时)`offsetMin/Max`;
    - Image:sprite 名 + `AssetDatabase.GetAssetPath`(拿到 kit 资产精确路径)+ `ColorUtility.ToHtmlStringRGBA` 色值 + type(Sliced/Simple);

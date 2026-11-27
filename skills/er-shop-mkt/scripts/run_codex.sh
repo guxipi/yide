@@ -2,7 +2,7 @@
 # Run one prompt file through codex image_gen and verify refs reached the image model.
 # usage: bash run_codex.sh <work_dir> <name> <expected_ref_count>
 #   work_dir holds p_<name>.txt (from mkprompt.py); image lands in work_dir/img/<name>.png, log in work_dir/log_<name>.txt
-# Run several in parallel with run_in_background; never pipe Chinese through PowerShell.
+# Run with run_in_background, one at a time (parallel codex exec jams the Windows sandbox, see codex-executor sec 2); never pipe Chinese through PowerShell.
 # stdin is closed (< /dev/null): without it a backgrounded codex exec can sit on "Reading additional input from stdin..." forever (2026-11-23).
 #   model: env CODEX_MODEL, default gpt-6.1-sol. Paint-over colouring jobs run with CODEX_MODEL=gpt-6.1-terra (er-blender 08).
 set -u

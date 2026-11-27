@@ -1,8 +1,7 @@
 # 阶段 8:Unity 入库(F:\GitManagedUnityProjects\Extraction,Unity 6000.3.5f2,URP)
 
 ## 8.0 操作 Unity 的规矩(每次进这一阶段前读一遍)
-- 首选 Unity CLI(`scripts/unity/ucli.sh` 包了一层),Coplay 只做备用。**从 Git Bash 调**,PowerShell 会吞掉 eval 代码里的双引号。
-- eval 代码是语句形式,以 `return <表达式>;` 结尾;不能写 using,类型写全名;**不能同步等异步**(`.Result/.Wait()/GetAwaiter().GetResult()`)——会把编辑器主线程锁死,只能杀进程。
+- 首选 Unity CLI,Coplay 只做备用。`scripts/unity/ucli.sh` 包了一层，但还是旧命令名(`cmd editor_status` / `cmd eval` / `cmd capture_game_view`),现版 CLI 会报 Command Not Found;改好之前按 playmode-verify-iterate 手拼新命令(每条带 `--project-path`),下文的 `ucli.sh guard/stop/capture` 指同样的动作。CLI 通用写法(从 Git Bash 调、eval 以 `return <表达式>;` 结尾、绝不同步等异步)见 playmode-verify-iterate 第〇步;eval 里不能写 using,类型写全名。
 - **写任何 .cs 之前 `ucli.sh guard`**:编辑器设的是"Play 结束后再编译",Play 中写 .cs 会让所有会话的通道一起卡死,只有人手点 Stop 能解;"日志里没有 error CS"不等于编译过,以 editor_status 的 compiling=false 为准。别信"Unity 空了"这类旧消息,当场查。
 - 不切场景;非切不可时先查有没有 dirty 场景(Coplay open_scene 会静默丢掉未保存的改动)。
 - 不改无关文件(工作区里本来就有别人的改动,比如 Expedition.unity、CloudCode 产物,别碰)。不 commit。
@@ -30,7 +29,7 @@ py -3 scripts/unity/spring_spec.py --config <cfg> --face-type "Gameplay.Actors.W
 | 1 | `ucli.sh guard` | GUARD OK |
 | 2 | `import_setup.cs` | animationType=Human;embedded materials 列表(= remap 键,形如 `tripo_mat_<uuid>`、`<Name>Face`) |
 | 3 | 一次性:把 `templates/unity/CharacterEnforceTPose.cs` 拷到 `Assets/Editor/CoplayTemp/`(写 .cs,先 guard),等编译完(compiling=false) | — |
-| 4a | `canon_tpose.cs FBX=<模型 FBX>`(10-24 新增,**必跑**,在 enforce_tpose 之后) | 返回 `Left arm=(-1,0,0) hand=(-1,0,0) idxlit=(0,0,1) leg=(0,-1,0)`、右侧镜像、`avatar valid=True`;动作 FBX **不跑**(它共用模型 avatar,见 8.8);只对模型 FBX 跑。原因:Unity 的 Enforce T-Pose 只把骨头摆进"合法范围",模型和动画两份 avatar 的 T-pose 各自偏几度,肌肉重定向把差值当成恒定内收/外撑(Rook2 10-23:腿交叉内八、手臂僵硬外撑都是它)。两份都规范到同一标准(臂/前臂/手沿 ±X 掌心朝下、手指伸直、脊柱头竖直、腿正下脚尖朝前)后,世界角度原样搬运。只改 avatar 参考姿势,网格和权重不动。 |
+| 4a | `canon_tpose.cs FBX=<模型 FBX>`(10-24 新增,**必跑**,在 enforce_tpose 之后) | 返回 `Left arm=(-1,0,0) hand=(-1,0,0) idxlit=(0,0,1) leg=(0,-1,0)`、右侧镜像、`avatar valid=True`;动作 FBX **不跑**(它共用模型 avatar,见 8.8);只对模型 FBX 跑。原因:Unity 的 Enforce T-Pose 只把骨头摆进"合法范围",模型 avatar 的 T-pose 会偏几度,外来的共享 Humanoid clip(Death、Pod_SeatBrace 等)经肌肉重定向就带上恒定内收/外撑(Rook2 10-23 还是两份 avatar 时,腿交叉内八、手臂僵硬外撑都是它)。规范到同一标准(臂/前臂/手沿 ±X 掌心朝下、手指伸直、脊柱头竖直、腿正下脚尖朝前)后,世界角度原样搬运。只改 avatar 参考姿势,网格和权重不动。 |
 | 4c | `facing_probe.cs ASSETS=<模型 prefab;动画 FBX>` | 每份 `FACING OK`(零肌肉姿势左手 x<0、脚尖 z>0);WRONG = T-pose 左右定反了,人会在挂点上背对镜头 |
 | 4b | `tpose_probe.cs ASSETS=<模型 prefab;动画 FBX>` | 两份 `zeroMuscle: ankleSpread/hip=1.00` 且 `Lleg dir(lat,y)=(0.00,-0.98)`;不一致就回 4a |
 | 4 | `enforce_tpose.cs` | `IsPoseValid before=False … after=True`、`patched skeleton bones=N/N` |
@@ -44,7 +43,7 @@ py -3 scripts/unity/spring_spec.py --config <cfg> --face-type "Gameplay.Actors.W
 
 ## 8.3 着色门:Unity 里和 Tripo 里必须是同一个人
 - 先看 `UNLIT=1`(URP/Unlit 纯贴图):应和 Blender 里的 tex 渲染几乎一样。不一样 = 贴图/UV/材质 remap 有问题(常见:新 FBX 的材质名变了,旧 remap 不生效,身体变素色、脸上贴了整张图集——重跑 materials_setup)。
-- 再看 `UNLIT=0`(`Lab/LabLit` + LightSet 真光):不能"崩坏"。原 ToonLit 已于 2026-10-30 换成 LabLit;10-30 起参数以 `Assets/Art/3DModelsfromGu/J01Creatures_20261030/battery_goblin_revised/battery_goblin_revised.mat` 为准:`_BaseColor 0.82 灰`、`_ShadowThreshold -0.03`、`_ShadowSoftness 0.82`、`_ShadowTint (0.74,0.76,0.9)`、`_AmbientStrength 0.32`、`_RimColor (0.55,0.65,0.85,0)`(alpha = rim 强度,0 = 关)、`_RimPower 5.37`;发光走 `_UseEmissionMap` + `_EmissionMap` + `_EmissionColor`。这些是 materials_setup 的默认值,由 spring_spec 从配置 `unity.lablit` 填。LabLit 没有描边。别照抄 engineer.mat(KayKit 低模平色角色的旧材质),叠在自带厚涂明暗的 AI 角色上明暗会算两遍(10-07 勾哥:"跟 Tripo 里像两个人")。
+- 再看 `UNLIT=0`(`Lab/LabLit` + LightSet 真光):不能"崩坏"。3D 着色现行统一 Lab/LabLit(默认不是上限),参数表和发光键见 gaoguang-3d 第 1 节(以 `battery_goblin_revised.mat` 为准);这组值是 materials_setup 的默认值,由 spring_spec 从配置 `unity.lablit` 填。LabLit 没有描边。别照抄 engineer.mat(KayKit 低模平色角色的旧材质),叠在自带厚涂明暗的 AI 角色上明暗会算两遍(10-07 勾哥:"跟 Tripo 里像两个人")。
 - 看:脸干净、厚涂色阶保住、头发和膝盖后面没有黑描边、没有过曝;受光面和背光面各一张;top70 俯视能认出角色。
 
 ## 8.4 换主角时的三个结构要求(hero_swap.cs 已经做对,手改时别破坏)
@@ -55,7 +54,7 @@ py -3 scripts/unity/spring_spec.py --config <cfg> --face-type "Gameplay.Actors.W
 3. **SpringBone**:马尾/刘海链**不挂任何碰撞球**——根部天然陷在 Head/Neck/Spine2 的球里,挂了就被推成水平"翅膀",缩半径也没用;裙摆只和腿上的球碰撞。测弹簧参数要改 prefab → 重进 Play → 生成新实例,运行时反复开关骨头会把模拟状态搞乱。包是 `com.unity.springbone`(git `https://github.com/unity3d-jp/UnityChanSpringBone.git#release/1.2`),命名空间 `Unity.Animations.SpringBones`(10-07 写成 `UnityChan.*` 编译不过)。Wren 参数:马尾 18/0.34/0.018、刘海 22/0.38/0.014、裙摆 55/0.58/0.022、罐子 180/0.82/0.018;Manager 60Hz、dynamicRatio 0.75、gravity (0,-0.08,0)、碰撞开、长度限制关、地面碰撞关;腿球 UpLeg 0.09、Leg 0.075。
 
 ## 8.5 表情控制器
-现在工程里只有 `Gameplay.Actors.WrenFaceController`(按材质名前缀 "WrenFace" 找脸)。新角色要用通用版 `templates/unity/CharacterFaceController.cs`(按材质名后缀 "Face" 找,枚举顺序 = 图集顺序)。这是共享代码改动:先问勾哥,guard 后再写,不要为了复用把新角色的脸材质也叫 "WrenFace..."。Expression 枚举顺序必须和 config `face.expressions` 一致。
+工程里已有通用版 `Gameplay.Actors.CharacterFaceController`(按材质名后缀 "Face" 找脸,枚举顺序 = 图集顺序;模板 `templates/unity/CharacterFaceController.cs`),新角色用它;`WrenFaceController` 只给 Wren(按前缀 "WrenFace" 找),不要把新角色的脸材质也叫 "WrenFace..."。要改控制器是共享代码改动,先问勾哥,guard 后再写。Expression 枚举顺序必须和 config `face.expressions` 一致。
 
 ## 8.6 出口门
 AVATAR PASS(+ .meta diff);材质 remap 覆盖全部 embedded 名;UNLIT 和 LabLit 两组渲染看图门过;prefab OK;(本地)Hero 换好、WeaponMount 赋上;编辑器 stopped、compiling=false、Console 无新错误;Assets/Temp 里只剩 HeroOld.prefab(阶段 9 后删)。

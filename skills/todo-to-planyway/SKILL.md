@@ -24,7 +24,7 @@ Planyway 没有公开 API，它只是 Jira 数据的视图。**加 todo = 建 Ji
 - **Due date**（`fields.duedate` = `YYYY-MM-DD`）：模式 B 已完成的填**上传当天**；模式 A 待排期的可留空（进 Planyway 左侧 Unscheduled 由用户排）。
 
 ## 通道 —— 按优先级，能用上面那条就别用下面（缺了别硬上）
-1. **通道①·官方 Atlassian Rovo MCP（首选）** —— `mcp__claude_ai_Atlassian_Rovo__*` 工具**直读直写 duckgames Jira，不需要浏览器 / Chrome MCP / API token**。先 `getAccessibleAtlassianResources` 拿 duckgames 的 `cloudId`（当前 `5c8b1014-3b9a-4b07-a050-0f9b3980a628`，每次以查到的为准），之后所有 Jira 操作都带这个 cloudId。建卡 / 查 / transition 的工具映射见下方「通道① 操作映射」。**模式 A/B 的逻辑步骤（整理 → 预览 → 确认 → 建 → 验证）一字不变，只是把 `fetch(...)` 换成对应 MCP 工具。**
+1. **通道①·官方 Atlassian Rovo MCP（首选）** —— `mcp__claude_ai_Atlassian_Rovo__*` 工具**直读直写 duckgames Jira，不需要浏览器 / Chrome MCP / API token**。先 `getAccessibleAtlassianResources` 拿 duckgames 的 `cloudId`（当前 `5c8b1014-3b9a-4b07-a050-0f9b3980a628`，每次以查到的为准；KAN project id `10000`，team-managed），之后所有 Jira 操作都带这个 cloudId。建卡 / 查 / transition 的工具映射见下方「通道① 操作映射」。**模式 A/B 的逻辑步骤（整理 → 预览 → 建 → 验证）一字不变，只是把 `fetch(...)` 换成对应 MCP 工具。**
 2. **通道②·Chrome MCP（退路）** —— 仅当有 Chrome MCP 且有标签页**已登录 `duckgames.atlassian.net`** 时用。所有 Jira REST 靠该标签页 session cookie（`credentials:'same-origin'`），不需要 API token。即模式 A/B 正文里的 `fetch(...)` 写法。
 3. **两条都没有** —— 不要假装能建 issue。退路二选一告诉用户：把清单导出成 Jira CSV importer 能吃的 CSV（summary 必填列）手动一次导入；或把模式 A 第 3–4 步的 JS 交给用户自己粘到浏览器 DevTools 控制台跑（控制台支持顶层 await，可去掉 `.then()` 链）。
 
@@ -33,6 +33,7 @@ Planyway 没有公开 API，它只是 Jira 数据的视图。**加 todo = 建 Ji
 - **查项目元数据 / issue type**：`getVisibleJiraProjects({cloudId, searchString:'KAN', action:'create'})` → 返回 `issueTypes` 按 `hierarchyLevel` 认：`0`=任务、`1`=长篇故事(Epic)、`-1`=子任务（**别按名字硬编码，每次查**）。
 - **建 issue**：`createJiraIssue({cloudId, projectKey:'KAN', issueTypeName:'任务', summary, description, contentFormat:'markdown'})`
   - 挂 Epic：加 `parent:'KAN-67'`（team-managed 直接传 Epic key，同 REST 的 parent 字段）。
+  - `issueTypeName` 传类型名不是 id；本站是中文站，传「任务」/「长篇故事」/「子任务」（英文名不一定被接受，以 `getVisibleJiraProjects` 查到的 `name` 为准）。
   - 描述：传纯文本字符串 + `contentFormat:'markdown'`，**不用手搓 ADF**。
   - 建 Epic：`issueTypeName:'长篇故事'`，建完记下返回的 `KAN-xx` key 当 parent。
   - **无 bulk**：官方 MCP 逐条建，循环 `createJiraIssue`（不像通道② 有 `/issue/bulk`）。
@@ -44,7 +45,7 @@ Planyway 没有公开 API，它只是 Jira 数据的视图。**加 todo = 建 Ji
 
 ## 输入来源（两种）
 - **A. 用户直接贴清单** —— 任意格式文本。
-- **B. 从 yide Telegram inbox 拉** —— `G:\My Drive\yide\yide-brain\notes\inbox\telegram-2026-MM.md`（手机 Telegram bot 落点）。**靠显式标记筛，不靠猜**：勾哥在 Telegram 写笔记时会带「**planyway**」字样（如"重构 Clan，上传 planyway"/"发 planyway"/"#planyway"）。规则：**条目正文含 `planyway`（不分大小写）= 要上传**，其余一律跳过。匹配到的条目把 `planyway` 标记词从标题里剥掉再建 issue。推送成功后，把处理过的条目移到 `notes/inbox/_done/`（保留原时间戳头），避免下次重复导入。
+- **B. 从 yide Telegram inbox 拉** —— Drive 侧 `yide-inbox` 文件夹里的 `telegram-YYYY-MM.md`（路径在指针文件 `~/.yide-inbox-location`，kryst 机是 `H:\My Drive\yide-inbox`；已被 `翼德 笔记 整理` 搬进大脑的在 `<大脑>/notes/inbox/`；这是手机 Telegram bot 落点）。**靠显式标记筛，不靠猜**：勾哥在 Telegram 写笔记时会带「**planyway**」字样（如"重构 Clan，上传 planyway"/"发 planyway"/"#planyway"）。规则：**条目正文含 `planyway`（不分大小写）= 要上传**，其余一律跳过。匹配到的条目把 `planyway` 标记词从标题里剥掉再建 issue。推送成功后，把处理过的条目移到 `notes/inbox/_done/`（保留原时间戳头），避免下次重复导入。
 
 ## 模式 A — 批量导入 todo（严格按序）
 
@@ -107,7 +108,7 @@ Promise.all(['KAN-67','KAN-68'].map(k=>
 触发：完成一个推进 ER 的小功能 / 修完一个 bug 后，**直接走本流程，不问**(2026-07-10 勾哥:「以后不用问发不发 planyway,默认发 planyway」)；勾哥也可以主动说「传一下 Planyway」。**口径**：要发 = 玩家可见的功能/内容、修了影响玩家的 bug；改工具/配置/文档/纯重构这类不发（跟战绩 bump 同一口径）。Epic 由翼德读现有结构**自动决定**，**不让勾哥操心**；找不到合适的就**留空不挂**（不擅自新建 Epic）。
 
 ### B-1. 拟标题 + 描述
-标题 = 这次功能/修复的一句话；描述（可空）= 做了啥 + 关键文件/commit。先给勾哥扫一眼，点头再建。
+标题 = 这次功能/修复的一句话；描述（可空）= 做了啥 + 关键文件/commit。直接建，不等点头（见上方触发口径）。
 
 ### B-2. 查 issue type id
 同模式 A 第 2 步（查 `/rest/api/3/project/KAN`，按 `hierarchyLevel` 认 Task=0 / Epic=1，当场查不硬编码）。
@@ -167,10 +168,3 @@ fetch('/rest/api/3/issue/KAN-XX?fields=summary,status,parent,assignee,labels,due
 6. Epic 的 issue type 名称随站点语言变（中文站"长篇故事"），按 `hierarchyLevel===1` 找。
 7. Planyway iframe 页面 CDP 截图会超时，视觉验证留给人工。
 8. issue 不填日期 → 自动落 Planyway 左侧 Unscheduled 面板，符合预期（让用户排期）。
-
-### 通道① 官方 MCP 注意点（getAccessibleAtlassianResources / getVisibleJiraProjects 已接通实测；createJiraIssue / transition 的细节首次实跑时回填校正）
-9. `createJiraIssue` 用 **`issueTypeName`（类型名，不是 id）**；本站是中文站，传中文名「任务」/「长篇故事」/「子任务」（英文 Task/Story 不一定被接受，以 `getVisibleJiraProjects` 查到的 `name` 为准）。
-10. 描述用 `description` 纯文本 + `contentFormat:'markdown'`，**不必手搓 ADF**（只有通道② 的 fetch 才需要 `adf()` helper）。
-11. 官方 MCP **没有 bulk 接口**，批量导入靠循环 `createJiraIssue` 逐条建；条数多时悠着点别一次发太猛。
-12. 挂 Epic 同样用 `parent` 传 Epic key（team-managed，与通道② 一致）。
-13. duckgames `cloudId` 当前 `5c8b1014-3b9a-4b07-a050-0f9b3980a628`、KAN project id `10000`（team-managed / next-gen）；cloudId 仍每次用 `getAccessibleAtlassianResources` 查一遍兜稳。

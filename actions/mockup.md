@@ -8,7 +8,7 @@
 
 ## 怎么做
 
-> **ER 项目先看这三条(2026-11-20 标注):** ① ER 的现行 kit 是 CARGO(vault `013 美术/UI_CARGO/`,现行稿 `mock/kit_v12.html`),下文「数值的绝对标准 = 项目 UI kit 的实物」在 ER 里指它,不指 SuperCasual 的 Preview / demo scene。② ER 的稿要可点击并带按压、出入场、切换动效(勾哥 11-19),图内嵌进 HTML,资源和货币图标用 Unity 里的真图(11-16)。③ ER 的 HTML、源稿、构建脚本写进 vault 对应 feature 目录(勾哥 11-14 / 11-18),不写 `<项目>/QA/`,也不放 scratchpad。
+> **ER 项目先看这三条(2026-11-20 标注):** ① ER 的现行 kit 是 CARGO(vault `013 美术/UI_CARGO/`,现行稿 `mock/kit_v12.html`),下文「数值的绝对标准 = 项目 UI kit 的实物」在 ER 里指它,不指 SuperCasual 的 Preview / demo scene。② ER 的稿要可点击并带按压、出入场、切换动效(勾哥 11-19),图内嵌进 HTML,资源和货币图标用 Unity 里的真图(11-16)。③ ER 的 HTML、源稿、构建脚本写进 vault 对应 feature 目录(勾哥 11-14 / 11-18),不写 `<项目>/QA/`,也不放 scratchpad。④ ER 新做或改版界面的整套流程(页面卡、三路独立评审、二轮盲测、评审页)走 yide skill `ui-screen-redo`,本 action 只提供画法(§1A)和自验证(§3)。
 
 ### 0. 先拿到项目的"真值",再动手
 - 读 `~/.yide/projects/<当前项目>.md` 的「🎨 UI/UX 设计预设」(屏幕方向 / **基准分辨率·安全区** / UI 框架 / 美术基调 / 控件约定 / **确认线稿文件夹** / 已确认线稿)+ `unity-context` 技术事实。
