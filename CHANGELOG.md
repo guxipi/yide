@@ -2,6 +2,11 @@
 
 > 精选高亮日志(非逐版本穷举)。最新在上。
 
+### v0.80.5 — 2026-11-27 LabLit 改成「现行默认不是上限」,剩余 skill 去路线禁令(勾哥)
+- 大脑模板 executor、actions/polish:「3D 模型一律 / 只用 Lab/LabLit」改成现行默认,别的 shader 可以试、同机位并排比;3D 不描边的结果要求不变。大脑仓 charter-extra-er、projects/extraction、experts/executor 同步改(yide-brain)。
+- er-character-pipeline:短裙 SpringBone、Tripo DCC Bridge、CLI / 重定向 API「别再试 / 不用」改成默认做法 + 失败记录,可以换思路再试;pitfalls 里「只用 LabLit」改成现行。
+- 扫过 vfx-production、codex-executor、ui-placement、ui-visual-rework、ui-screen-redo、ui-truth-reclaim、er-icon-gen、er-frame-gen、er-shop-mkt:剩下的「只 / 不」都是结果要求、技术坑或单一真源约束,没有手段禁令,没改。
+
 ### v0.80.4 — 2026-11-27 美术 skill 去掉堵新技术路线的禁令(勾哥:「把一些可能会 block 新的技术路线尝试的表达都删掉」)
 - er-blender:Tripo 只走网页版、地形植物不进 Blender / 不走 Tripo、POI 植物固定做法、「别在会话里再写脚本」「别另写评审」、Tripo 贴图一律 paint-over、「代码不许代画」、LabLit 只吃 BaseMap、Blender 后处理「只有……才试」、每块固有色 2~3 个,全部改成「默认做法 + 别的路线可以试、按实拍并排判」;结果要求(画风、铁规 0、验收门)不动。
 - reference-replicate:「描,不要生成」改成默认先描、生成路线过同一套 regress 指标。

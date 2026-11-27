@@ -4,7 +4,7 @@
 > - 坑 67「头单独生成再拼到身体上」已被 10-26 的做法取代:头小的角色整身高面数生成 + 保脸减面,不分头(SKILL.md)。
 > - 坑 103 写「动作 FBX 一律 CreateFromThisModel 自建 avatar」,SKILL.md 的「一副骨架铁律」(10-24)写的是动作 FBX 用 CopyFromOther 借模型 avatar。两条相反,哪条在后没有查到,动手前看最近一个入库成功的角色实际怎么设的,拿不准问勾哥。
 > - 坑 53、106 要求对动画 FBX 也跑 enforce / canon T-pose,`07-Unity入库.md` 写的是动作 FBX 不跑。同样没有定论,处理办法同上。
-> - 坑 76 说的「黑色 = Outline pass 画出的背面」是 ToonLit 时代的现象。现在 3D 着色只用 Lab/LabLit,没有描边 pass。
+> - 坑 76 说的「黑色 = Outline pass 画出的背面」是 ToonLit 时代的现象。现在 3D 着色现行统一用 Lab/LabLit,没有描边 pass。
 > - 编号 #73–#79、#81–#85 各出现了两次,别处写「见坑 77」这类引用时要对症状,不能只对号。
 
 | # | 症状 | 根因 | 预防 / 修法 | 阶段 |

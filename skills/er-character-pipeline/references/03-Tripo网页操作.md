@@ -59,6 +59,6 @@ Tripo Studio:`https://studio.tripo3d.ai/workspace/generate`(还有 /texture、/r
 
 ## 3.5 其他事实
 - 价格(10-07 页面标价):HD 默认 30;关贴图 15;4K +10;Ultra +15;Quad +5;PBR +5;贴图页 2K/4K/8K = 10/20/30;Auto Rig 20;文生动作 20;预设重定向 0。
-- DCC Bridge(推到本机 Blender/Unity)要装插件,没装,不用它。
-- Tripo CLI(`tripo.cmd`,PowerShell 里直接 `tripo` 会撞脚本策略)能生成和绑骨,但:人形绑骨要显式 `model=v1.0-20240301`(默认 v2.5 是给非人形的);动作重定向 API 在勾哥账号上全是 1004,别再试;CLI 出的模型朝 +X。网页端选项更全,首选网页。
+- DCC Bridge(推到本机 Blender/Unity)要装插件,现在没装;想试可以装,先在一件上和网页导出对比。
+- Tripo CLI(`tripo.cmd`,PowerShell 里直接 `tripo` 会撞脚本策略)能生成和绑骨,但:人形绑骨要显式 `model=v1.0-20240301`(默认 v2.5 是给非人形的);动作重定向 API 在勾哥账号上当时全是 1004(再试先确认账号权限或 API 版本变了);CLI 出的模型朝 +X。网页端选项更全,默认用网页;CLI / API 可以试。
 - 页面偶尔显示余额 0 + "Unknown server error",刷新即恢复。

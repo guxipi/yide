@@ -61,8 +61,8 @@ py -3 scripts/unity/spring_spec.py --config <cfg> --face-type "Gameplay.Actors.W
 AVATAR PASS(+ .meta diff);材质 remap 覆盖全部 embedded 名;UNLIT 和 LabLit 两组渲染看图门过;prefab OK;(本地)Hero 换好、WeaponMount 赋上;编辑器 stopped、compiling=false、Console 无新错误;Assets/Temp 里只剩 HeroOld.prefab(阶段 9 后删)。
 
 ## 8.7 裙子和头发:裙子跟大腿走,头发才用弹簧(10-08 定,三轮调物理失败后换方案)
-**短裙不要用 SpringBone。** 三轮实测:前片限制窄 → 跑步深蹲大腿穿出前片(插件先算碰撞后算角度限制,限制把推开的裙子拽回腿里);放宽到 80° → 被大腿胶囊顶成翻领;后片 → 冲刺起步被惯性甩成钟形。怎么调都按下葫芦起瓢。
-**现做法:`Gameplay.Animation.HeroSkirtFollow`**(挂 Animator 节点,执行序 -90,在 HeroLegTidy 之后、SpringManager 之前)。每片裙摆根骨按"最近那条大腿朝这片抬了多少度"直接转出去,没有惯性:不可能穿腿、不会钟形、不会卡在掀起状态。参数 Wren:gain 2(裙子顶点保留约 45% Hips 权重,骨头要多转一倍才够)、maxLift 90、deadZone 6、falloff 1.6、hemFlare 0.25。prefab 上必须**删掉裙摆骨的 SpringBone、它们在 SpringManager 列表里的条目和大腿胶囊**,否则两套系统打架。
+**短裙默认不用 SpringBone**(要再试,先看这三轮为什么失败,换思路再试)。三轮实测:前片限制窄 → 跑步深蹲大腿穿出前片(插件先算碰撞后算角度限制,限制把推开的裙子拽回腿里);放宽到 80° → 被大腿胶囊顶成翻领;后片 → 冲刺起步被惯性甩成钟形。怎么调都按下葫芦起瓢。
+**现行默认做法:`Gameplay.Animation.HeroSkirtFollow`**(挂 Animator 节点,执行序 -90,在 HeroLegTidy 之后、SpringManager 之前)。每片裙摆根骨按"最近那条大腿朝这片抬了多少度"直接转出去,没有惯性:不可能穿腿、不会钟形、不会卡在掀起状态。参数 Wren:gain 2(裙子顶点保留约 45% Hips 权重,骨头要多转一倍才够)、maxLift 90、deadZone 6、falloff 1.6、hemFlare 0.25。prefab 上必须**删掉裙摆骨的 SpringBone、它们在 SpringManager 列表里的条目和大腿胶囊**,否则两套系统打架。
 **头发**仍用 `spring_limits.cs`,SKIRT 填 `NONE`:LIMITS `Hair_F|25|0.45;Hair|45|0.45`,DYN 1。角度限制要 `pivotNode` 才生效(脚本会建),头发不挂碰撞体。
 **验收**:① 离线:编辑器里 SampleAnimation 后用反射调组件的 Awake/LateUpdate(把 _response 设很大)拍开/关对照,run/jump_down/laugh_01/cheer;注意 SampleAnimation 不会复位裙摆骨,关组件那组要把 gain 设 0 再调一次 LateUpdate 复位。② 远征:`PlayerController.OnControlStarted(true)` + `OnControlInput(new Vector3(1,0,0.3f), true)` 冲刺,起步和稳定各拍一组。③ Gear 页强制大动作。看:大腿不穿出前片、后片不钟形、前片不翻领。
 **已知遗留**:大腿根和裙摆下沿偶见小白碎片,贴图里没有白面(全贴图近白三角形 1 个),疑似边缘光打在裙子内侧薄面上,未修。
