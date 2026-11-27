@@ -44,6 +44,8 @@ description: ER 局内 3D 画面的光、影、遮蔽、shader、后处理和地
 
 `scripts/unity_lookdev_lab.cs`:在 Unity 编辑器里验证 URP 的光照行为,不动打开的场景和工程资产。`unity command --timeout 240 script run --file <这个文件的完整路径> --entry LookdevLab.Run`,内存编译;它在预览场景里搭一个小场景,用 Mobile_RPAsset 和 Mobile_Renderer 的内存副本渲染(期间临时把 `QualitySettings.renderPipeline` 换成副本,结束时换回),按列表改阴影距离、软阴影档、环境光、SSAO 参数各拍一张,在已知的世界坐标上取色、量影边宽度,图和 `results.json` 写到系统临时目录的 `LookdevLab/`。跑之前确认编辑器不在 Play、不在编译;要验别的开关就在它的拍摄列表里加一行。换成自己的 shader 来验时改 `Mat()` 里的 `Shader.Find`。
 
+`scripts/ao_lab3_export.py` 加 `scripts/unity_layer3_lab.cs`:把标定货车和烘好的遮蔽图搬进 Unity,在实时光下拍遮蔽的各种接法并量侧壁剖面。先用 Blender 跑导出脚本,再把输出目录设进环境变量 `LOOKDEV_L3_DIR`(或改脚本里的 `Dir`)后 `script run`。shader 是用 `ShaderUtil.CreateShaderAsset` 从字符串内存编译的,不写 Assets;要在不落盘的前提下试一段 shader 写法时照这个做。
+
 ## 工作纪律
 
 - 改 shader 前先读它现在的全文,对着 02 的清单逐项核(缺哪些 pass、哪些关键字、遮蔽乘在哪),不在不了解的情况下加参数。
