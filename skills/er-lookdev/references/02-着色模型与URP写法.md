@@ -26,7 +26,7 @@
 ### 环境光
 
 - 单色:没有形体。
-- 三色渐变(天 / 赤道 / 地):`lerp(地, 赤道, saturate(N.y+1))` 再 `lerp(…, 天, saturate(N.y))`。Unity 的 Gradient 环境光模式就是它,会烘进 SH。地面色那一档就是最便宜的地面反弹。〔推〕
+- 三色渐变(天 / 赤道 / 地):自己写是 `lerp(地, 赤道, saturate(N.y+1))` 再 `lerp(…, 天, saturate(N.y))`。Unity 的 Gradient 环境光模式不是这条分段线性:它把三色投影成球谐,实测地面色在竖直墙上只占约 11%、正朝下也只有 54%,不随高度变。它能给背光面染一点地面的颜色,当不了像样的地面反弹(04 第六节)。想要 three.js 半球光那样的两色线性过渡,用 URP 传下来的 `unity_AmbientSky`、`unity_AmbientGround` 自己 lerp(10 第三节)。〔测〕
 - SH:`SampleSH(normalWS)`。裸调它不认光照图和 APV;要认就走 `SAMPLE_GI` 那条路(见下)。〔读 Cyanilux〕
 - TF2 用六色方向环境光让角色「落在环境里」;VALORANT 取最近的间接光缓存样本,漫反射和高光分别缩放,并按地图区域钳制最暗和最亮值保可读性。〔读〕
 
@@ -141,7 +141,7 @@ AmbientOcclusionFactor aoF = GetScreenSpaceAmbientOcclusion(normalizedScreenSpac
 #endif
 ```
 
-SSAO 的 After Opaque 模式不需要 shader 支持,它是事后整屏盖一层,所有东西(包括受光面)一起压暗。〔读文档;后半句推〕
+SSAO 的 After Opaque 模式不需要 shader 支持,它是事后整屏乘一层(源码是 `Blend One SrcAlpha`),受光面连主光一起压暗,Direct Lighting Strength 对它不起作用;已经有烘焙遮蔽的地方会被再乘一遍。实测受光墙脚 After Opaque 乘 0.61,shader 内接、Direct 0.25 时乘 0.83(03 第四节)。另外 SSAO 的 Falloff 按相机距离衰减,远镜头下先查它。〔读源码加测〕
 
 ### 雾
 

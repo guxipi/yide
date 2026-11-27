@@ -1,6 +1,6 @@
 ---
 name: er-lookdev
-description: ER 局内 3D 画面的光、影、遮蔽、shader 这类活的知识底子和做法:光与色的原理和截图自查、风格化着色模型与 URP 手写 shader、环境光遮蔽(AO)的烘焙与叠法、Unity 光照系统选型和手机成本。Trigger on "调光" / "光影" / "打光" / "阴影不对" / "影子发灰" / "发脏" / "ambient occlusion" / "AO" / "遮蔽" / "软阴影" / "烘焙" / "bake" / "lightmap" / "光照探针" / "APV" / "改 shader" / "写 shader" / "CityLit" / "LabLit" / "高光" / "玻璃反射" / "多光源" / "点光源" / "画面 plain" / "没有 mo.co 的质感"。只修导入模型的材质和 pivot 走 gaoguang-3d;建模和 paint-over 走 er-blender;粒子特效走 vfx-production。
+description: ER 局内 3D 画面的光、影、遮蔽、shader、后处理和地编画面的知识底子和做法:光色原理和截图自查、URP 手写 shader、AO 烘焙与叠法、Unity 光照选型、后处理调色、Blender 建模表面与导出、城市专项(玻璃反射 / 假室内 / 发光招牌 / 贴花)、构图可读性、手机性能、three.js 到 Unity 的换算。Trigger on "调光" / "光影" / "阴影不对" / "发灰" / "发脏" / "AO" / "遮蔽" / "软阴影" / "烘焙" / "lightmap" / "写 shader" / "CityLit" / "玻璃反射" / "点光源" / "画面 plain" / "没有 mo.co 的质感" / "后处理" / "调色" / "tonemap" / "bloom" / "招牌发光" / "贴花" / "可读性" / "画面乱" / "倒角" / "合批" / "three.js"。只修导入模型的材质和 pivot 走 gaoguang-3d;建模和 paint-over 走 er-blender;粒子特效走 vfx-production。
 ---
 
 # ER 画面光影与 shader(lookdev)
@@ -20,7 +20,13 @@ description: ER 局内 3D 画面的光、影、遮蔽、shader 这类活的知�
 | 影子发灰发脏、暗部没颜色、画面平、分不清是贴图还是光的问题、要判一张截图对不对 | `references/01-光与色原理.md` |
 | 改或写 shader:明暗交界、带色阴影、环境光、rim、高光、玻璃反射、点光源、SRP Batcher | `references/02-着色模型与URP写法.md` |
 | 环境光遮蔽:烘什么、距离多少、存哪、在 shader 里乘到哪些项上、和屏幕空间 AO 怎么并存 | `references/03-遮蔽与烘焙.md` |
-| 一种光用实时、烘焙还是假的;光照图、探针、APV;阴影软硬和距离;灯的数量上限 | `references/04-Unity光照选型.md` |
+| 一种光用实时、烘焙还是假的;光照图、探针、APV;阴影软硬和距离;灯的数量上限;编辑器里的四条实测 | `references/04-Unity光照选型.md` |
+| tonemap、调色各项改的是什么、LUT、bloom 的参数和成本;调色放哪层才不和材质标定打架 | `references/05-后处理与调色.md` |
+| 倒角、加权法线、4.1 之后的平滑 API、模块化套件、trim sheet、贴图密度、顶点色、FBX 导出 Unity | `references/06-Blender建模与表面.md` |
+| 玻璃反射怎么做、窗内假室内值不值、发光招牌配 bloom、路面标线和污渍用哪种贴花 | `references/07-城市专项.md` |
+| 画面乱、角色融进背景、看不出哪里能走;明度分层、一屏一个重点、细节密度、强调色;十二条截图自查 | `references/08-地编构图与可读性.md` |
+| 合批、合网格、贴图压缩、透明和镂空、面数、shader 精度、分辨率、剔除、怎么量 | `references/09-手机性能.md` |
+| three.js 里的颜色、灯、环境光、aoMap、雾、色调映射搬到 URP 怎么换算 | `references/10-threejs到Unity的光照差异.md` |
 
 ## 每次交付前的五个取色自查
 
@@ -34,7 +40,9 @@ description: ER 局内 3D 画面的光、影、遮蔽、shader 这类活的知�
 
 ## 实验脚本
 
-`scripts/ao_lab.py` 和 `scripts/ao_lab2.py`:后台 Blender 建一辆标定货车,换遮蔽距离、地面、合壳、采样数,出并排板和数字。学新的烘焙参数或换 Blender 版本时先跑它确认行为,再去烘正式件。用法:`<blender.exe> -b --factory-startup -P ao_lab.py --python-exit-code 1 -- <输出目录>`。
+`scripts/ao_lab.py`、`ao_lab2.py`、`ao_lab3.py`:后台 Blender 建一辆标定货车。一是换遮蔽距离、地面、合壳、采样数;二是两层叠加、归一化、带色遮蔽;三是第三层(竖直面的高度渐变)的五种来源和对参考的拟合。都出并排板和数字。学新的烘焙参数或换 Blender 版本时先跑它确认行为,再去烘正式件。用法:`<blender.exe> -b --factory-startup -P ao_lab.py --python-exit-code 1 -- <输出目录>`。
+
+`scripts/unity_lookdev_lab.cs`:在 Unity 编辑器里验证 URP 的光照行为,不动打开的场景和工程资产。`unity command --timeout 240 script run --file <这个文件的完整路径> --entry LookdevLab.Run`,内存编译;它在预览场景里搭一个小场景,用 Mobile_RPAsset 和 Mobile_Renderer 的内存副本渲染(期间临时把 `QualitySettings.renderPipeline` 换成副本,结束时换回),按列表改阴影距离、软阴影档、环境光、SSAO 参数各拍一张,在已知的世界坐标上取色、量影边宽度,图和 `results.json` 写到系统临时目录的 `LookdevLab/`。跑之前确认编辑器不在 Play、不在编译;要验别的开关就在它的拍摄列表里加一行。换成自己的 shader 来验时改 `Mat()` 里的 `Shader.Find`。
 
 ## 工作纪律
 
@@ -43,3 +51,4 @@ description: ER 局内 3D 画面的光、影、遮蔽、shader 这类活的知�
 - 光、遮蔽、shader 的改动一律在游戏镜头下同机位拍「改前 / 改后 / 参考」三联,附取色数字。开和关看不出区别的改动等于没做,要回去查原因而不是加大参数。
 - 手机成本是硬约束:每加一种效果先在 04 查它的代价,能烘就烘,能在顶点算就不在像素算。
 - 新学到的东西(读到的、实测的、踩的坑)当回合补进对应的 reference,下个会话才用得上。
+- 05 到 10 里标〔推〕的配方(发光招牌不吹白、窗格连贯的反射、路面元素用哪种贴花、three.js 的换算系数、明度分带)都没有出处也没验证过,第一次用到时先在标定件上并排验,验完把〔推〕改成〔测〕。
